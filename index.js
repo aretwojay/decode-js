@@ -2,14 +2,12 @@ function HashRouter(rootElement, routes) {
   function refreshPage() {
     const pathname = window.location.hash.slice(1);
     const generator = routes[pathname] ?? routes["*"];
-
     if (rootElement.childNodes[0]) {
       rootElement.replaceChild(generator(), rootElement.childNodes[0]);
     } else {
       rootElement.appendChild(generator());
     }
   }
-
   window.addEventListener("hashchange", refreshPage);
   refreshPage();
 }
@@ -22,7 +20,35 @@ function HashLink(url, title) {
   return a;
 }
 
-const Link = HashLink;
+function BrowserRouter(rootElement, routes) {
+  function refreshPage() {
+    const pathname = window.location.pathname;
+    const generator = routes[pathname] ?? routes["*"];
+    if (rootElement.childNodes[0]) {
+      rootElement.replaceChild(generator(), rootElement.childNodes[0]);
+    } else {
+      rootElement.appendChild(generator());
+    }
+  }
+  window.addEventListener("popstate", refreshPage);
+  window.addEventListener("pushstate", refreshPage);
+  refreshPage();
+}
+
+function BrowserLink(url, title) {
+  const a = document.createElement("a");
+  a.href = url;
+  const aTextNode = document.createTextNode(title);
+  a.appendChild(aTextNode);
+  a.addEventListener("click", (event) => {
+    event.preventDefault();
+    window.history.pushState({}, undefined, url);
+    window.dispatchEvent(new Event("pushstate"));
+  });
+  return a;
+}
+
+const Link = BrowserLink;
 
 function generateTablePage() {
   const div = document.createElement("div");
@@ -105,4 +131,4 @@ const routes = {
 };
 
 const root = document.getElementById("root");
-HashRouter(root, routes);
+BrowserRouter(root, routes);
