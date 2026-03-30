@@ -1,11 +1,55 @@
+const generateStructure = function (structure) {
+  const element = document.createElement(structure.type);
+  if (structure.attributes) {
+    for (let attribute of structure.attributes) {
+      if (attribute[0] === "class") {
+        for (let className of attribute[1]) {
+          element.classList.add(className);
+        }
+      } else if (attribute[0] === "style") {
+        const customStyle = Object.fromEntries(attribute[1]);
+        element.style = Object.assign(element.style, customStyle);
+      } else if (attribute[0].startsWith("data-")) {
+        const dataKey = attribute[0].replace("data-", "");
+        element.dataset[dataKey] = attribute[1];
+      } else {
+        element.setAttribute(attribute[0], attribute[1]);
+      }
+    }
+  }
+
+  if (structure.events) {
+    for (let event of structure.events) {
+      element.addEventListener(event[0], event[1]);
+    }
+  }
+
+  if (structure.children) {
+    for (let child of structure.children) {
+      let childElement;
+      if (typeof child === "string") {
+        childElement = document.createTextNode(child);
+      } else {
+        childElement = generateStructure(child);
+      }
+      element.appendChild(childElement);
+    }
+  }
+
+  return element;
+};
+
 function HashRouter(rootElement, routes) {
   function refreshPage() {
     const pathname = window.location.hash.slice(1);
     const generator = routes[pathname] ?? routes["*"];
     if (rootElement.childNodes[0]) {
-      rootElement.replaceChild(generator(), rootElement.childNodes[0]);
+      rootElement.replaceChild(
+        generateStructure(generator()),
+        rootElement.childNodes[0],
+      );
     } else {
-      rootElement.appendChild(generator());
+      rootElement.appendChild(generateStructure(generator()));
     }
   }
   window.addEventListener("hashchange", refreshPage);
@@ -25,9 +69,12 @@ function BrowserRouter(rootElement, routes) {
     const pathname = window.location.pathname;
     const generator = routes[pathname] ?? routes["*"];
     if (rootElement.childNodes[0]) {
-      rootElement.replaceChild(generator(), rootElement.childNodes[0]);
+      rootElement.replaceChild(
+        generateStructure(generator()),
+        rootElement.childNodes[0],
+      );
     } else {
-      rootElement.appendChild(generator());
+      rootElement.appendChild(generateStructure(generator()));
     }
   }
   window.addEventListener("popstate", refreshPage);
@@ -36,29 +83,26 @@ function BrowserRouter(rootElement, routes) {
 }
 
 function BrowserLink(url, title) {
-  const a = document.createElement("a");
-  a.href = url;
-  const aTextNode = document.createTextNode(title);
-  a.appendChild(aTextNode);
-  a.addEventListener("click", (event) => {
-    event.preventDefault();
-    window.history.pushState({}, undefined, url);
-    window.dispatchEvent(new Event("pushstate"));
-  });
-  return a;
+  return {
+    type: "a",
+    attributes: [["href", url]],
+    children: [title],
+    events: [
+      [
+        "click",
+        (event) => {
+          event.preventDefault();
+          window.history.pushState({}, undefined, url);
+          window.dispatchEvent(new Event("pushstate"));
+        },
+      ],
+    ],
+  };
 }
 
 const Link = BrowserLink;
 
-function generateTablePage() {
-  const div = document.createElement("div");
-  const a = Link("/gallery", "Gallery Page");
-  div.appendChild(a);
-
-  const table = document.createElement("table");
-  div.appendChild(table);
-  const tbody = document.createElement("tbody");
-  table.appendChild(tbody);
+function PageTable() {
   const dataStringified = sessionStorage.getItem("zaza");
   const data = JSON.parse(dataStringified) || {};
 
@@ -86,49 +130,67 @@ function generateTablePage() {
     td.removeEventListener("click", onTdClick);
   }
 
-  for (let i = 0; i < 20; i++) {
-    const line = document.createElement("tr");
-    tbody.appendChild(line);
-    for (let j = 0; j < 20; j++) {
-      const td = document.createElement("td");
-      line.appendChild(td);
-      const key = `${i},${j}`;
-      const text = data[key] ?? "Default";
-      const textNode = document.createTextNode(text);
-      td.appendChild(textNode);
-      td.dataset.key = key;
-
-      td.addEventListener("click", onTdClick);
-    }
-  }
-
-  return div;
+  return {
+    type: "div",
+    children: [
+      Link("/gallery", "Gallery Page"),
+      /* {
+        type: Link,
+        attributes: [["url", "/gallery"], ["title", "Gallery Page"]],
+      }, */
+      {
+        type: "table",
+        children: [
+          {
+            type: "tbody",
+            children: Array.from({ length: 20 }, (_, i) => ({
+              type: "tr",
+              children: Array.from({ length: 20 }, (_, j) => ({
+                type: "td",
+                events: [["click", onTdClick]],
+                attributes: [["data-key", `${i},${j}`]],
+                children: [data[`${i},${j}`] ?? "Default"],
+              })),
+            })),
+          },
+        ],
+      },
+    ],
+  };
 }
 
-function generateGalleryPage() {
-  const div = document.createElement("div");
-  const a = Link("/table", "Table Page");
-  div.appendChild(a);
-  for (let i = 0; i < 100; i++) {
-    const img = document.createElement("img");
-    img.src = "https://picsum.photos/200?random=" + i;
-    div.appendChild(img);
-  }
-  return div;
+function PageGallery() {
+  return {
+    type: "div",
+    attributes: [
+      ["class", ["foo", "frezger"]],
+      ["id", "gallery"],
+    ],
+    children: [
+      Link("/table", "Table Page"),
+      {
+        type: "div",
+        attributes: [["id", "gallery-content"]],
+        children: Array.from({ length: 100 }, (_, index) => ({
+          type: "img",
+          attributes: [["src", "https://picsum.photos/200?random=" + index]],
+        })),
+      },
+    ],
+  };
 }
 
-function generatePage404() {
-  const h1 = document.createElement("h1");
-  const textNode = document.createTextNode("Page 404");
-  h1.appendChild(textNode);
-  return h1;
-}
-
+const rootElement = document.getElementById("root");
 const routes = {
-  "/table": generateTablePage,
-  "/gallery": generateGalleryPage,
-  "*": generatePage404,
+  "/table": PageTable,
+  "/gallery": PageGallery,
+  "*": () => ({
+    type: "h1",
+    children: ["Page 404"],
+  }),
 };
-
-const root = document.getElementById("root");
-BrowserRouter(root, routes);
+/* rootElement.appendChild(generateStructure({
+  type: BrowserRouter,
+  attributes: [["routes", routes]],
+})); */
+BrowserRouter(rootElement, routes);
