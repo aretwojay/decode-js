@@ -34,6 +34,8 @@ export default function generateStructure(structure) {
       let childElement;
       if (typeof child === "string") {
         childElement = document.createTextNode(child);
+      } else if (child instanceof Node) {
+        childElement = child;
       } else {
         childElement = generateStructure(child);
       }
