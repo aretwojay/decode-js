@@ -1,9 +1,12 @@
 import Link from "../components/router/link.js";
+import createState from "../lib/create-state.js";
+import reactive from "../lib/reactive.js";
 
-export default function PageTable() {
-  const dataStringified = sessionStorage.getItem("zaza");
-  const data = JSON.parse(dataStringified) || {};
+const dataState = createState(
+  JSON.parse(sessionStorage.getItem("zaza")) || {},
+);
 
+function renderTable(data) {
   function onTdClick(event) {
     const td = event.currentTarget;
     const textNode = td.childNodes[0];
@@ -16,43 +19,37 @@ export default function PageTable() {
 
     input.addEventListener("blur", function (event) {
       const input = event.currentTarget;
-      const text = input.value;
-      const textNode = document.createTextNode(text);
-      const td = input.parentNode;
-      td.replaceChild(textNode, input);
+      const newText = input.value;
       const key = td.dataset.key;
-      data[key] = text;
-      sessionStorage.setItem("zaza", JSON.stringify(data));
+      const newData = { ...data, [key]: newText };
+      sessionStorage.setItem("zaza", JSON.stringify(newData));
+      dataState.set(newData);
     });
 
-    td.removeEventListener("click", onTdClick);
   }
 
   return {
-    type: "div",
+    type: "table",
     children: [
-      Link("/gallery", "Gallery Page"),
-      /* {
-        type: Link,
-        attributes: [["url", "/gallery"], ["title", "Gallery Page"]],
-      }, */
       {
-        type: "table",
-        children: [
-          {
-            type: "tbody",
-            children: Array.from({ length: 20 }, (_, i) => ({
-              type: "tr",
-              children: Array.from({ length: 20 }, (_, j) => ({
-                type: "td",
-                events: [["click", onTdClick]],
-                attributes: [["data-key", `${i},${j}`]],
-                children: [data[`${i},${j}`] ?? "Default"],
-              })),
-            })),
-          },
-        ],
+        type: "tbody",
+        children: Array.from({ length: 20 }, (_, i) => ({
+          type: "tr",
+          children: Array.from({ length: 20 }, (_, j) => ({
+            type: "td",
+            events: [["click", onTdClick]],
+            attributes: [["data-key", `${i},${j}`]],
+            children: [data[`${i},${j}`] ?? "Default"],
+          })),
+        })),
       },
     ],
+  };
+}
+
+export default function PageTable() {
+  return {
+    type: "div",
+    children: [Link("/gallery", "Gallery Page"), reactive(dataState, renderTable)],
   };
 }
