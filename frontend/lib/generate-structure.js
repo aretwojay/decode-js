@@ -1,4 +1,9 @@
+import validateStructure from "./validate-structure.js";
+
 export default function generateStructure(structure) {
+
+  validateStructure(structure);
+
   const element = document.createElement(structure.type);
   if (structure.attributes) {
     for (let attribute of structure.attributes) {
