@@ -1,12 +1,249 @@
 <!doctype html>
-<html lang="en">
+<html lang="fr">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Document</title>
-    <script type="module" src="index.js" defer></script>
+    <title>Imprint — Générateur de portfolio pour développeurs</title>
+    <meta name="description" content="Crée un portfolio professionnel en quelques minutes : choisis un thème, renseigne tes projets, publie." />
+    <link rel="stylesheet" href="styles/output.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.7.2/css/all.min.css" />
+    <style>
+      .theme-showcase {
+        display: grid; grid-template-columns: 1fr 1fr;
+        padding: clamp(28px, 5vw, 56px);
+        gap: clamp(20px, 4vw, 56px);
+        align-items: center;
+      }
+      .theme-showcase__eyebrow {
+        display: inline-block; font-family: 'JetBrains Mono', monospace;
+        font-size: 12px; color: #3A52ED; margin-bottom: 14px;
+      }
+      .theme-showcase h2 {
+        margin: 0 0 18px; font-size: clamp(24px, 3.5vw, 34px);
+        font-weight: 700; line-height: 1.2; color: #E7EAF3;
+      }
+      .theme-showcase h2 em { color: #3A52ED; font-style: normal; }
+      .theme-showcase p { margin: 0 0 24px; font-size: 15px; line-height: 1.6; color: #8991AC; max-width: 380px; }
+      .theme-showcase__cta {
+        display: inline-block; font-family: 'JetBrains Mono', monospace;
+        font-size: 12px; font-weight: 700; letter-spacing: 0.1em;
+        color: #3A52ED; text-decoration: none;
+        border-bottom: 1.5px solid #3A52ED; padding-bottom: 3px;
+        transition: color 0.18s, border-color 0.18s;
+      }
+      .theme-showcase__cta:hover { color: #fff; border-color: #fff; }
+      .theme-showcase__stack {
+        position: relative; height: 100%; min-height: 320px;
+        display: grid; place-items: center;
+        transform-style: preserve-3d; perspective: 1200px;
+      }
+      .theme-showcase__card {
+        position: absolute; width: 160px; height: 220px;
+        background: #141A2E; border: 1px solid rgba(58,82,237,0.4);
+        border-radius: 10px; display: flex; flex-direction: column;
+        align-items: center; justify-content: center; gap: 8px;
+        transition: transform 0.4s cubic-bezier(.22,1,.36,1);
+      }
+      .theme-showcase__card strong { font-size: 20px; font-weight: 700; color: #E7EAF3; }
+      .theme-showcase__card em {
+        font-family: 'JetBrains Mono', monospace; font-size: 10px;
+        font-style: normal; letter-spacing: 0.18em; color: #3A52ED; text-transform: uppercase;
+      }
+      .theme-showcase__c1 { transform: translateX(-80px) rotateY(20deg) translateZ(-40px); }
+      .theme-showcase__c2 { transform: translateZ(0); z-index: 2; background: #1B2340; }
+      .theme-showcase__c3 { transform: translateX(80px) rotateY(-20deg) translateZ(-40px); }
+      .theme-showcase__stack:hover .theme-showcase__c1 { transform: translateX(-120px) rotateY(20deg) translateZ(0); }
+      .theme-showcase__stack:hover .theme-showcase__c2 { transform: translateZ(40px); }
+      .theme-showcase__stack:hover .theme-showcase__c3 { transform: translateX(120px) rotateY(-20deg) translateZ(0); }
+      @media (max-width: 720px) { .theme-showcase { grid-template-columns: 1fr; } }
+      @media (prefers-reduced-motion: reduce) {
+        .theme-showcase__card, .theme-showcase__cta { transition: none; }
+      }
+      a:focus-visible, button:focus-visible {
+        outline: 2px solid #3A52ED;
+        outline-offset: 2px;
+        border-radius: 4px;
+      }
+      .hero-pattern {
+        background-image:
+          radial-gradient(circle at 50% 0%, rgba(58,82,237,0.25), transparent 60%),
+          linear-gradient(rgba(231,234,243,0.06) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(231,234,243,0.06) 1px, transparent 1px);
+        background-size: 100% 100%, 40px 40px, 40px 40px;
+      }
+    </style>
+
   </head>
-  <body>
-    <div id="root"></div>
+  <body class="bg-slate-950 text-white">
+    <a href="#main" class="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:top-2 focus:left-2 focus:bg-[#3A52ED] focus:text-white focus:px-4 focus:py-2 focus:rounded-lg font-mono text-sm">
+      Aller au contenu principal
+    </a>
+    <div class="h-screen overflow-hidden flex flex-col">
+    <header class="overflow-hidden shrink-0 bg-slate-950 backdrop-blur border-b border-white/10">
+      <img src="/public/Rectangle.png" alt="" class="absolute inset-0 w-full h-full object-cover opacity-20 -z-10" />
+      <div class="absolute inset-0 bg-slate-950/80 -z-10"></div>
+        <div class="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-8">
+          <img src="/public/imprint-logo-dark-bg.svg" alt="Imprint" class="h-8" />
+          <nav class="hidden md:flex items-center gap-6 font-mono text-sm text-slate-400">
+            <a href="#themes" class="hover:text-white transition-colors">Thèmes</a>
+            <a href="#features" class="hover:text-white transition-colors">Fonctionnalités</a>
+            <a href="#how" class="hover:text-white transition-colors">Comment ça marche ?</a>
+          </nav>
+        </div>
+        <div class="flex items-center gap-4">
+          <a href="/app.html" class="hidden sm:inline text-slate-300 hover:text-white transition-colors text-sm font-mono">
+            Se connecter
+          </a>
+          <a href="/app.html" class="bg-[#3A52ED] flex items-center justify-center gap-2 hover:bg-[#2f43cf] transition-colors text-white text-sm font-mono px-4 py-2 rounded-lg">
+            Créer mon compte <i class="fa-solid fa-arrow-right"></i>
+          </a>
+        </div>
+      </div>
+    </header>
+
+    <main id="main" class="contents">
+    <section class="relative overflow-hidden text-center px-6 flex-1 flex flex-col items-center justify-center min-h-0">
+      <div class="hero-pattern absolute inset-0 -z-10"></div>
+      <div class="absolute inset-0 bg-linear-to-b from-slate-950/50 via-slate-950/80 to-slate-950 -z-10"></div>
+      <div class="max-w-3xl mx-auto">
+        <h1 class="font-mono font-bold text-3xl md:text-4xl leading-tight mb-3">
+          Un portfolio qui <span class="text-[#3A52ED]">prouve</span> ce qu'il raconte.
+        </h1>
+        <p class="text-slate-400 text-base leading-relaxed mb-6">
+          Imprint génère votre portfolio de développeur à partir de vos vraies données (projets, compétences, expériences) et d'un thème de votre choix.
+        </p>
+
+        <div id="coverflow-wrapper" class="relative max-w-4xl mx-auto">
+          <div id="coverflow" class="relative h-56" style="perspective: 1400px;">
+            <div class="coverflow-slide absolute top-1/2 left-1/2 w-64 h-48 -mt-24 -ml-32 rounded-xl overflow-hidden border border-white/10 bg-[#141A2E]" data-index="0">
+              <img src="https://placehold.co/480x360/141A2E/3A52ED?font=roboto&text=Portfolio 1" alt="Aperçu du portfolio 1 (image d'exemple, à remplacer)" class="w-full h-full object-cover" />
+            </div>
+            <div class="coverflow-slide absolute top-1/2 left-1/2 w-64 h-48 -mt-24 -ml-32 rounded-xl overflow-hidden border border-white/10 bg-[#141A2E]" data-index="1">
+              <img src="https://placehold.co/480x360/141A2E/3A52ED?font=roboto&text=Portfolio 2" alt="Aperçu du portfolio 2 (image d'exemple, à remplacer)" class="w-full h-full object-cover" />
+            </div>
+            <div class="coverflow-slide absolute top-1/2 left-1/2 w-64 h-48 -mt-24 -ml-32 rounded-xl overflow-hidden border border-white/10 bg-[#141A2E]" data-index="2">
+              <img src="https://placehold.co/480x360/141A2E/3A52ED?font=roboto&text=Portfolio 3" alt="Aperçu du portfolio 3 (image d'exemple, à remplacer)" class="w-full h-full object-cover" />
+            </div>
+          </div>
+
+          <div class="flex justify-center gap-4 mt-4">
+            <button id="coverflow-prev" aria-label="Précédent" class="w-9 h-9 rounded-full border border-white/20 text-white hover:border-white/40 transition-colors">‹</button>
+            <button id="coverflow-next" aria-label="Suivant" class="w-9 h-9 rounded-full border border-white/20 text-white hover:border-white/40 transition-colors">›</button>
+          </div>
+        </div>
+
+        <div class="flex gap-3 justify-center flex-wrap mt-6">
+          <a href="/app.html" class="bg-[#3A52ED] hover:bg-[#2f43cf] transition-colors text-white font-mono text-sm font-semibold px-6 py-3.5 rounded-lg">
+            Créer mon portfolio
+          </a>
+        </div>
+      </div>
+    </section>
+    </main>
+    </div>
+
+    <footer class="bg-white text-slate-700">
+      <div class="max-w-5xl mx-auto px-6 py-14 grid grid-cols-2 md:grid-cols-4 gap-10">
+        <div class="col-span-2 md:col-span-1">
+          <img src="/public/imprint-logo-light-bg.svg" alt="Imprint" class="h-8 mb-3" />
+          <p class="text-sm text-slate-600 leading-relaxed max-w-[22ch]">
+            Un portfolio qui prouve ce qu'il raconte.
+          </p>
+        </div>
+        <div>
+          <h4 class="font-mono text-xs uppercase tracking-widest text-slate-600 mb-4">Produit</h4>
+          <ul class="space-y-2.5 text-sm">
+            <li><a href="#themes" class="hover:text-[#3A52ED] transition-colors">Thèmes</a></li>
+            <li><a href="#features" class="hover:text-[#3A52ED] transition-colors">Fonctionnalités</a></li>
+            <li><a href="#how" class="hover:text-[#3A52ED] transition-colors">Comment ça marche ?</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-mono text-xs uppercase tracking-widest text-slate-600 mb-4">Ressources</h4>
+          <ul class="space-y-2.5 text-sm">
+            <li><a href="#" class="hover:text-[#3A52ED] transition-colors">Documentation</a></li>
+            <li><a href="#" class="hover:text-[#3A52ED] transition-colors">Exemples de portfolios</a></li>
+          </ul>
+        </div>
+        <div>
+          <h4 class="font-mono text-xs uppercase tracking-widest text-slate-600 mb-4">Légal</h4>
+          <ul class="space-y-2.5 text-sm">
+            <li><a href="#" class="hover:text-[#3A52ED] transition-colors">Mentions légales</a></li>
+            <li><a href="#" class="hover:text-[#3A52ED] transition-colors">Politique de confidentialité</a></li>
+            <li><a href="#" class="hover:text-[#3A52ED] transition-colors">CGU</a></li>
+          </ul>
+        </div>
+      </div>
+      <div class="border-t border-slate-200">
+        <div class="max-w-5xl mx-auto px-6 py-5 flex flex-wrap items-center justify-between gap-2 font-mono text-xs text-slate-600">
+          <span>© 2026 Imprint</span>
+          <span></span>
+        </div>
+      </div>
+    </footer>
+
+    <script type="module">
+      import createState from "./lib/create-state.js";
+
+      const activeIndex = createState(0);
+      const slides = document.querySelectorAll(".coverflow-slide");
+      const total = slides.length;
+
+      function render(active) {
+        slides.forEach((slide) => {
+          const i = Number(slide.dataset.index);
+          let offset = i - active;
+          if (offset > total / 2) offset -= total;
+          if (offset < -total / 2) offset += total;
+
+          const translateX = offset * 190;
+          const rotateY = offset * -35;
+          const translateZ = -Math.abs(offset) * 140;
+          const scale = offset === 0 ? 1 : 0.82;
+
+          slide.style.transform = `translateX(${translateX}px) translateZ(${translateZ}px) rotateY(${rotateY}deg) scale(${scale})`;
+          slide.style.opacity = Math.abs(offset) > 2 ? "0" : "1";
+          slide.style.zIndex = String(10 - Math.abs(offset));
+          slide.style.transition = "transform 0.5s cubic-bezier(.22,1,.36,1), opacity 0.5s";
+        });
+      }
+
+      activeIndex.subscribe(render);
+      render(activeIndex.get());
+
+      const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      const AUTOPLAY_DELAY = 3000;
+      let autoplayTimer = null;
+
+      function startAutoplay() {
+        if (prefersReducedMotion) return;
+        stopAutoplay();
+        autoplayTimer = setInterval(() => {
+          activeIndex.set((activeIndex.get() + 1) % total);
+        }, AUTOPLAY_DELAY);
+      }
+      function stopAutoplay() {
+        if (autoplayTimer) clearInterval(autoplayTimer);
+      }
+
+      const coverflowWrapper = document.getElementById("coverflow-wrapper");
+      coverflowWrapper.addEventListener("mouseenter", stopAutoplay);
+      coverflowWrapper.addEventListener("mouseleave", startAutoplay);
+      coverflowWrapper.addEventListener("focusin", stopAutoplay);
+      coverflowWrapper.addEventListener("focusout", startAutoplay);
+
+      document.getElementById("coverflow-prev").addEventListener("click", () => {
+        activeIndex.set((activeIndex.get() - 1 + total) % total);
+        startAutoplay();
+      });
+      document.getElementById("coverflow-next").addEventListener("click", () => {
+        activeIndex.set((activeIndex.get() + 1) % total);
+        startAutoplay();
+      });
+
+      startAutoplay();
+    </script>
+
   </body>
 </html>
