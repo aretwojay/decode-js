@@ -34,6 +34,17 @@
         "videos",
         "audios"
       ]
+    },
+    "statut": {
+      "type": "enumeration",
+      "required": true,
+      "default": "brouillon",
+      "enum": [
+        "brouillon",
+        "pret_a_relire",
+        "publie",
+        "archive"
+      ]
     }
   }
 }

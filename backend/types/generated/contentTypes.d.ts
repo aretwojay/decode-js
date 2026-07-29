@@ -504,6 +504,11 @@ export interface ApiCompetenceCompetence extends Struct.CollectionTypeSchema {
     > &
       Schema.Attribute.Required;
     publishedAt: Schema.Attribute.DateTime;
+    statut: Schema.Attribute.Enumeration<
+      ['brouillon', 'pret_a_relire', 'publie', 'archive']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'brouillon'>;
     titre: Schema.Attribute.String & Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -537,6 +542,11 @@ export interface ApiExperienceExperience extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     publishedAt: Schema.Attribute.DateTime;
     slug: Schema.Attribute.UID<'titre'> & Schema.Attribute.Required;
+    statut: Schema.Attribute.Enumeration<
+      ['brouillon', 'pret_a_relire', 'publie', 'archive']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'brouillon'>;
     titre: Schema.Attribute.String & Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
     updatedBy: Schema.Attribute.Relation<'oneToOne', 'admin::user'> &
@@ -574,6 +584,11 @@ export interface ApiProjetProjet extends Struct.CollectionTypeSchema {
       Schema.Attribute.Private;
     publishedAt: Schema.Attribute.DateTime;
     slug: Schema.Attribute.UID<'titre'>;
+    statut: Schema.Attribute.Enumeration<
+      ['brouillon', 'pret_a_relire', 'publie', 'archive']
+    > &
+      Schema.Attribute.Required &
+      Schema.Attribute.DefaultTo<'brouillon'>;
     technologies: Schema.Attribute.JSON;
     titre: Schema.Attribute.String & Schema.Attribute.Required;
     updatedAt: Schema.Attribute.DateTime;
