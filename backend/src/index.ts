@@ -1,20 +1,49 @@
-// import type { Core } from '@strapi/strapi';
+import type { Core } from '@strapi/strapi';
 
 export default {
-  /**
-   * An asynchronous register function that runs before
-   * your application is initialized.
-   *
-   * This gives you an opportunity to extend code.
-   */
   register(/* { strapi }: { strapi: Core.Strapi } */) {},
 
-  /**
-   * An asynchronous bootstrap function that runs before
-   * your application gets started.
-   *
-   * This gives you an opportunity to set up your data model,
-   * run jobs, or perform some special logic.
-   */
-  bootstrap(/* { strapi }: { strapi: Core.Strapi } */) {},
+  async bootstrap({ strapi }: { strapi: Core.Strapi }) {
+    try {
+      const publicRole = await strapi.db.query('plugin::users-permissions.role').findOne({
+        where: { type: 'public' },
+      });
+
+      if (!publicRole) {
+        return;
+      }
+
+      const publicActions = [
+        'api::competence.competence.find',
+        'api::competence.competence.findOne',
+        'api::experience.experience.find',
+        'api::experience.experience.findOne',
+        'api::projet.projet.find',
+        'api::projet.projet.findOne',
+      ];
+
+      for (const action of publicActions) {
+        const existingPermission = await strapi.db
+          .query('plugin::users-permissions.permission')
+          .findOne({
+            where: {
+              action,
+              role: publicRole.id,
+            },
+          });
+
+        if (!existingPermission) {
+          await strapi.db.query('plugin::users-permissions.permission').create({
+            data: {
+              action,
+              role: publicRole.id,
+            },
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Erreur lors du bootstrap des permissions publiques :', error);
+    }
+  },
 };
+
