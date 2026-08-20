@@ -4,7 +4,8 @@
   "info": {
     "singularName": "projet",
     "pluralName": "projets",
-    "displayName": "projet"
+    "displayName": "Projet",
+    "description": "Projets du portfolio"
   },
   "options": {
     "draftAndPublish": true
@@ -17,7 +18,11 @@
     },
     "slug": {
       "type": "uid",
-      "targetField": "titre"
+      "targetField": "titre",
+      "required": true
+    },
+    "resume": {
+      "type": "text"
     },
     "description": {
       "type": "blocks",
@@ -42,8 +47,23 @@
         "audios"
       ]
     },
+    "en_vedette": {
+      "type": "boolean",
+      "default": false
+    },
     "date_realisation": {
       "type": "date"
+    },
+    "statut": {
+      "type": "enumeration",
+      "required": true,
+      "default": "brouillon",
+      "enum": [
+        "brouillon",
+        "pret_a_relire",
+        "publie",
+        "archive"
+      ]
     }
   }
 }

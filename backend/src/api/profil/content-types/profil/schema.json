@@ -1,0 +1,75 @@
+{
+  "kind": "collectionType",
+  "collectionName": "profils",
+  "info": {
+    "singularName": "profil",
+    "pluralName": "profils",
+    "displayName": "Profil",
+    "description": "Informations du profil, biographie et coordonnées"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "nom": {
+      "type": "string",
+      "required": true
+    },
+    "titre": {
+      "type": "string",
+      "required": true
+    },
+    "biographie": {
+      "type": "text"
+    },
+    "email": {
+      "type": "email",
+      "required": true
+    },
+    "telephone": {
+      "type": "string"
+    },
+    "localisation": {
+      "type": "string"
+    },
+    "disponible": {
+      "type": "boolean",
+      "default": true
+    },
+    "github": {
+      "type": "string"
+    },
+    "linkedin": {
+      "type": "string"
+    },
+    "twitter": {
+      "type": "string"
+    },
+    "avatar": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "cv_pdf": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "files"
+      ]
+    },
+    "statut": {
+      "type": "enumeration",
+      "required": true,
+      "default": "brouillon",
+      "enum": [
+        "brouillon",
+        "pret_a_relire",
+        "publie",
+        "archive"
+      ]
+    }
+  }
+}
