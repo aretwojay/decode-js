@@ -1,0 +1,35 @@
+{
+  "kind": "collectionType",
+  "collectionName": "messages",
+  "info": {
+    "singularName": "message",
+    "pluralName": "messages",
+    "displayName": "Message",
+    "description": "Messages reçus via le formulaire de contact"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "nom": {
+      "type": "string",
+      "required": true
+    },
+    "email": {
+      "type": "email",
+      "required": true
+    },
+    "sujet": {
+      "type": "string"
+    },
+    "contenu": {
+      "type": "text",
+      "required": true
+    },
+    "lu": {
+      "type": "boolean",
+      "default": false
+    }
+  }
+}
