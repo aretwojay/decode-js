@@ -1,6 +1,12 @@
 {
   "cleanUrls": false,
   "rewrites": [
+    { "source": "/", "destination": "/index.html" },
+    { "source": "/portfolio", "destination": "/app.html" },
+    { "source": "/portfolio/:slug", "destination": "/app.html" },
+    { "source": "/cv", "destination": "/app.html" },
+    { "source": "/contact", "destination": "/app.html" },
+    { "source": "/admin", "destination": "/app.html" },
     { "source": "/table", "destination": "/app.html" },
     { "source": "/gallery", "destination": "/app.html" }
   ]
