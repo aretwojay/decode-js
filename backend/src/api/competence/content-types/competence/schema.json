@@ -4,7 +4,8 @@
   "info": {
     "singularName": "competence",
     "pluralName": "competences",
-    "displayName": "Competence"
+    "displayName": "Competence",
+    "description": "Compétences techniques et soft skills"
   },
   "options": {
     "draftAndPublish": true
@@ -13,7 +14,9 @@
   "attributes": {
     "titre": {
       "type": "string",
-      "required": true
+      "required": true,
+      "minLength": 2,
+      "maxLength": 100
     },
     "niveau": {
       "type": "enumeration",
@@ -33,6 +36,29 @@
         "files",
         "videos",
         "audios"
+      ]
+    },
+    "projets": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::projet.projet",
+      "mappedBy": "competences"
+    },
+    "experiences": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::experience.experience",
+      "mappedBy": "competences"
+    },
+    "statut": {
+      "type": "enumeration",
+      "required": true,
+      "default": "brouillon",
+      "enum": [
+        "brouillon",
+        "pret_a_relire",
+        "publie",
+        "archive"
       ]
     }
   }

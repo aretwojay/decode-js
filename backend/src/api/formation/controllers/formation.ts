@@ -1,5 +1,5 @@
 /**
- * experience controller
+ * formation controller
  * Extends core controller with domain validation on create and update.
  * Core sanitization and validation are automatically handled by super methods.
  */
@@ -9,27 +9,28 @@ import { factories } from '@strapi/strapi';
 const VALID_STATUTS = ['brouillon', 'pret_a_relire', 'publie', 'archive'];
 const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
 
-export default factories.createCoreController('api::experience.experience', ({ strapi }) => ({
+export default factories.createCoreController('api::formation.formation', ({ strapi }) => ({
   async create(ctx) {
     const rawData = (ctx.request.body?.data || ctx.request.body || {}) as Record<string, any>;
     const errors: Record<string, string> = {};
 
-    const titre = typeof rawData.titre === 'string' ? rawData.titre.trim() : '';
-    const entreprise = typeof rawData.entreprise === 'string' ? rawData.entreprise.trim() : '';
+    const etablissement = typeof rawData.etablissement === 'string' ? rawData.etablissement.trim() : '';
+    const diplome = typeof rawData.diplome === 'string' ? rawData.diplome.trim() : '';
+    const description = typeof rawData.description === 'string' ? rawData.description.trim() : '';
     const dateDebut = typeof rawData.date_debut === 'string' ? rawData.date_debut.trim() : '';
     const dateFin = typeof rawData.date_fin === 'string' ? rawData.date_fin.trim() : '';
     const statut = typeof rawData.statut === 'string' ? rawData.statut.trim() : 'brouillon';
 
-    if (!titre || titre.length < 2 || titre.length > 150) {
-      errors.titre = 'Le titre du poste est requis (entre 2 et 150 caractères).';
+    if (!etablissement || etablissement.length < 2 || etablissement.length > 150) {
+      errors.etablissement = "Le nom de l'établissement est requis (entre 2 et 150 caractères).";
     }
 
-    if (!entreprise || entreprise.length < 2 || entreprise.length > 150) {
-      errors.entreprise = "Le nom de l'entreprise est requis (entre 2 et 150 caractères).";
+    if (!diplome || diplome.length < 2 || diplome.length > 150) {
+      errors.diplome = 'Le diplôme ou intitulé de la formation est requis (entre 2 et 150 caractères).';
     }
 
-    if (!rawData.description || (Array.isArray(rawData.description) && rawData.description.length === 0)) {
-      errors.description = 'La description de votre expérience est requise.';
+    if (description && description.length > 2000) {
+      errors.description = 'La description ne doit pas dépasser 2000 caractères.';
     }
 
     if (!dateDebut || !ISO_DATE_REGEX.test(dateDebut)) {
@@ -55,10 +56,12 @@ export default factories.createCoreController('api::experience.experience', ({ s
     ctx.request.body = {
       data: {
         ...rawData,
-        titre,
-        entreprise,
+        etablissement,
+        diplome,
+        description: description || null,
         date_debut: dateDebut,
         date_fin: dateFin || null,
+        en_cours: Boolean(rawData.en_cours),
         statut: statut || 'brouillon',
       },
     };
@@ -70,17 +73,24 @@ export default factories.createCoreController('api::experience.experience', ({ s
     const rawData = (ctx.request.body?.data || ctx.request.body || {}) as Record<string, any>;
     const errors: Record<string, string> = {};
 
-    if (rawData.titre !== undefined) {
-      const titre = typeof rawData.titre === 'string' ? rawData.titre.trim() : '';
-      if (!titre || titre.length < 2 || titre.length > 150) {
-        errors.titre = 'Le titre doit comporter entre 2 et 150 caractères.';
+    if (rawData.etablissement !== undefined) {
+      const etablissement = typeof rawData.etablissement === 'string' ? rawData.etablissement.trim() : '';
+      if (!etablissement || etablissement.length < 2 || etablissement.length > 150) {
+        errors.etablissement = "L'établissement doit comporter entre 2 et 150 caractères.";
       }
     }
 
-    if (rawData.entreprise !== undefined) {
-      const entreprise = typeof rawData.entreprise === 'string' ? rawData.entreprise.trim() : '';
-      if (!entreprise || entreprise.length < 2 || entreprise.length > 150) {
-        errors.entreprise = "L'entreprise doit comporter entre 2 et 150 caractères.";
+    if (rawData.diplome !== undefined) {
+      const diplome = typeof rawData.diplome === 'string' ? rawData.diplome.trim() : '';
+      if (!diplome || diplome.length < 2 || diplome.length > 150) {
+        errors.diplome = 'Le diplôme doit comporter entre 2 et 150 caractères.';
+      }
+    }
+
+    if (rawData.description !== undefined && rawData.description !== null) {
+      const description = typeof rawData.description === 'string' ? rawData.description.trim() : '';
+      if (description.length > 2000) {
+        errors.description = 'La description ne doit pas dépasser 2000 caractères.';
       }
     }
 

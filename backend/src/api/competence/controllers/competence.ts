@@ -1,7 +1,80 @@
 /**
  * competence controller
+ * Extends core controller with domain validation on create and update.
+ * Core sanitization and validation are automatically handled by super methods.
  */
 
 import { factories } from '@strapi/strapi';
 
-export default factories.createCoreController('api::competence.competence');
+const VALID_NIVEAUX = ['expert', 'avance', 'intermediaire', 'débutant'];
+const VALID_STATUTS = ['brouillon', 'pret_a_relire', 'publie', 'archive'];
+
+export default factories.createCoreController('api::competence.competence', ({ strapi }) => ({
+  async create(ctx) {
+    const rawData = (ctx.request.body?.data || ctx.request.body || {}) as Record<string, any>;
+    const errors: Record<string, string> = {};
+
+    const titre = typeof rawData.titre === 'string' ? rawData.titre.trim() : '';
+    const niveau = typeof rawData.niveau === 'string' ? rawData.niveau.trim() : '';
+    const statut = typeof rawData.statut === 'string' ? rawData.statut.trim() : 'brouillon';
+
+    if (!titre || titre.length < 2 || titre.length > 100) {
+      errors.titre = 'Le titre est requis (entre 2 et 100 caractères).';
+    }
+
+    if (!niveau || !VALID_NIVEAUX.includes(niveau)) {
+      errors.niveau = `Le niveau est requis et doit être l'un des suivants : ${VALID_NIVEAUX.join(', ')}.`;
+    }
+
+    if (statut && !VALID_STATUTS.includes(statut)) {
+      errors.statut = `Le statut doit être l'un des suivants : ${VALID_STATUTS.join(', ')}.`;
+    }
+
+    if (Object.keys(errors).length > 0) {
+      return ctx.badRequest('Validation error', { errors });
+    }
+
+    ctx.request.body = {
+      data: {
+        ...rawData,
+        titre,
+        niveau,
+        statut: statut || 'brouillon',
+      },
+    };
+
+    return await super.create(ctx);
+  },
+
+  async update(ctx) {
+    const rawData = (ctx.request.body?.data || ctx.request.body || {}) as Record<string, any>;
+    const errors: Record<string, string> = {};
+
+    if (rawData.titre !== undefined) {
+      const titre = typeof rawData.titre === 'string' ? rawData.titre.trim() : '';
+      if (!titre || titre.length < 2 || titre.length > 100) {
+        errors.titre = 'Le titre doit comporter entre 2 et 100 caractères.';
+      }
+    }
+
+    if (rawData.niveau !== undefined) {
+      const niveau = typeof rawData.niveau === 'string' ? rawData.niveau.trim() : '';
+      if (!VALID_NIVEAUX.includes(niveau)) {
+        errors.niveau = `Le niveau doit être l'un des suivants : ${VALID_NIVEAUX.join(', ')}.`;
+      }
+    }
+
+    if (rawData.statut !== undefined) {
+      const statut = typeof rawData.statut === 'string' ? rawData.statut.trim() : '';
+      if (!VALID_STATUTS.includes(statut)) {
+        errors.statut = `Le statut doit être l'un des suivants : ${VALID_STATUTS.join(', ')}.`;
+      }
+    }
+
+    if (Object.keys(errors).length > 0) {
+      return ctx.badRequest('Validation error', { errors });
+    }
+
+    return await super.update(ctx);
+  },
+}));

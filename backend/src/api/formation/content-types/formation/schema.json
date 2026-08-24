@@ -1,51 +1,43 @@
 {
   "kind": "collectionType",
-  "collectionName": "experiences",
+  "collectionName": "formations",
   "info": {
-    "singularName": "experience",
-    "pluralName": "experiences",
-    "displayName": "Experience",
-    "description": "Expériences professionnelles"
+    "singularName": "formation",
+    "pluralName": "formations",
+    "displayName": "Formation",
+    "description": "Formations et diplômes pour le CV"
   },
   "options": {
     "draftAndPublish": true
   },
   "pluginOptions": {},
   "attributes": {
-    "titre": {
+    "etablissement": {
       "type": "string",
       "required": true,
       "minLength": 2,
       "maxLength": 150
     },
-    "slug": {
-      "type": "uid",
-      "targetField": "titre",
-      "required": true
+    "diplome": {
+      "type": "string",
+      "required": true,
+      "minLength": 2,
+      "maxLength": 150
     },
     "description": {
-      "type": "blocks",
-      "required": true
-    },
-    "entreprise": {
-      "type": "string",
-      "required": true,
-      "minLength": 2,
-      "maxLength": 150
+      "type": "text",
+      "maxLength": 2000
     },
     "date_debut": {
       "type": "date",
       "required": true
     },
     "date_fin": {
-      "type": "date",
-      "required": false
+      "type": "date"
     },
-    "competences": {
-      "type": "relation",
-      "relation": "manyToMany",
-      "target": "api::competence.competence",
-      "inversedBy": "experiences"
+    "en_cours": {
+      "type": "boolean",
+      "default": false
     },
     "statut": {
       "type": "enumeration",
