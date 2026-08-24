@@ -14,37 +14,47 @@
   "attributes": {
     "nom": {
       "type": "string",
-      "required": true
+      "required": true,
+      "minLength": 2,
+      "maxLength": 100
     },
     "titre": {
       "type": "string",
-      "required": true
+      "required": true,
+      "minLength": 2,
+      "maxLength": 150
     },
     "biographie": {
-      "type": "text"
+      "type": "text",
+      "maxLength": 3000
     },
     "email": {
       "type": "email",
       "required": true
     },
     "telephone": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 30
     },
     "localisation": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 100
     },
     "disponible": {
       "type": "boolean",
       "default": true
     },
     "github": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 200
     },
     "linkedin": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 200
     },
     "twitter": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 200
     },
     "avatar": {
       "type": "media",
