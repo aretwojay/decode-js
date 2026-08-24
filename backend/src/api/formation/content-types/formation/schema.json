@@ -14,14 +14,19 @@
   "attributes": {
     "etablissement": {
       "type": "string",
-      "required": true
+      "required": true,
+      "minLength": 2,
+      "maxLength": 150
     },
     "diplome": {
       "type": "string",
-      "required": true
+      "required": true,
+      "minLength": 2,
+      "maxLength": 150
     },
     "description": {
-      "type": "text"
+      "type": "text",
+      "maxLength": 2000
     },
     "date_debut": {
       "type": "date",

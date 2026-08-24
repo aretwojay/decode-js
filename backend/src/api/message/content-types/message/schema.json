@@ -14,18 +14,23 @@
   "attributes": {
     "nom": {
       "type": "string",
-      "required": true
+      "required": true,
+      "minLength": 2,
+      "maxLength": 100
     },
     "email": {
       "type": "email",
       "required": true
     },
     "sujet": {
-      "type": "string"
+      "type": "string",
+      "maxLength": 200
     },
     "contenu": {
       "type": "text",
-      "required": true
+      "required": true,
+      "minLength": 5,
+      "maxLength": 5000
     },
     "lu": {
       "type": "boolean",

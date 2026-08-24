@@ -14,7 +14,9 @@
   "attributes": {
     "titre": {
       "type": "string",
-      "required": true
+      "required": true,
+      "minLength": 2,
+      "maxLength": 150
     },
     "slug": {
       "type": "uid",
@@ -22,7 +24,8 @@
       "required": true
     },
     "resume": {
-      "type": "text"
+      "type": "text",
+      "maxLength": 500
     },
     "description": {
       "type": "blocks",
@@ -30,6 +33,12 @@
     },
     "technologies": {
       "type": "json"
+    },
+    "competences": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::competence.competence",
+      "inversedBy": "projets"
     },
     "lien_repo": {
       "type": "string"
