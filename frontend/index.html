@@ -79,28 +79,7 @@
       Aller au contenu principal
     </a>
     <div class="h-screen overflow-hidden flex flex-col">
-    <header class="overflow-hidden shrink-0 bg-slate-950 backdrop-blur border-b border-white/10">
-      <img src="/public/Rectangle.png" alt="" class="absolute inset-0 w-full h-full object-cover opacity-20 -z-10" />
-      <div class="absolute inset-0 bg-slate-950/80 -z-10"></div>
-        <div class="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
-        <div class="flex items-center gap-8">
-          <img src="/public/imprint-logo-dark-bg.svg" alt="Imprint" class="h-8" />
-          <nav class="hidden md:flex items-center gap-6 font-mono text-sm text-slate-400">
-            <a href="#themes" class="hover:text-white transition-colors">Thèmes</a>
-            <a href="#features" class="hover:text-white transition-colors">Fonctionnalités</a>
-            <a href="#how" class="hover:text-white transition-colors">Comment ça marche ?</a>
-          </nav>
-        </div>
-        <div class="flex items-center gap-4">
-          <a href="/app.html" class="hidden sm:inline text-slate-300 hover:text-white transition-colors text-sm font-mono">
-            Se connecter
-          </a>
-          <a href="/app.html" class="bg-[#3A52ED] flex items-center justify-center gap-2 hover:bg-[#2f43cf] transition-colors text-white text-sm font-mono px-4 py-2 rounded-lg">
-            Créer mon compte <i class="fa-solid fa-arrow-right"></i>
-          </a>
-        </div>
-      </div>
-    </header>
+    <div data-include="/partials/header.html"></div>
 
     <main id="main" class="contents">
     <section class="relative overflow-hidden text-center px-6 flex-1 flex flex-col items-center justify-center min-h-0">
@@ -143,45 +122,10 @@
     </main>
     </div>
 
-    <footer class="bg-white text-slate-700">
-      <div class="max-w-5xl mx-auto px-6 py-14 grid grid-cols-2 md:grid-cols-4 gap-10">
-        <div class="col-span-2 md:col-span-1">
-          <img src="/public/imprint-logo-light-bg.svg" alt="Imprint" class="h-8 mb-3" />
-          <p class="text-sm text-slate-600 leading-relaxed max-w-[22ch]">
-            Un portfolio qui prouve ce qu'il raconte.
-          </p>
-        </div>
-        <div>
-          <h4 class="font-mono text-xs uppercase tracking-widest text-slate-600 mb-4">Produit</h4>
-          <ul class="space-y-2.5 text-sm">
-            <li><a href="#themes" class="hover:text-[#3A52ED] transition-colors">Thèmes</a></li>
-            <li><a href="#features" class="hover:text-[#3A52ED] transition-colors">Fonctionnalités</a></li>
-            <li><a href="#how" class="hover:text-[#3A52ED] transition-colors">Comment ça marche ?</a></li>
-          </ul>
-        </div>
-        <div>
-          <h4 class="font-mono text-xs uppercase tracking-widest text-slate-600 mb-4">Ressources</h4>
-          <ul class="space-y-2.5 text-sm">
-            <li><a href="#" class="hover:text-[#3A52ED] transition-colors">Documentation</a></li>
-            <li><a href="#" class="hover:text-[#3A52ED] transition-colors">Exemples de portfolios</a></li>
-          </ul>
-        </div>
-        <div>
-          <h4 class="font-mono text-xs uppercase tracking-widest text-slate-600 mb-4">Légal</h4>
-          <ul class="space-y-2.5 text-sm">
-            <li><a href="#" class="hover:text-[#3A52ED] transition-colors">Mentions légales</a></li>
-            <li><a href="#" class="hover:text-[#3A52ED] transition-colors">Politique de confidentialité</a></li>
-            <li><a href="#" class="hover:text-[#3A52ED] transition-colors">CGU</a></li>
-          </ul>
-        </div>
-      </div>
-      <div class="border-t border-slate-200">
-        <div class="max-w-5xl mx-auto px-6 py-5 flex flex-wrap items-center justify-between gap-2 font-mono text-xs text-slate-600">
-          <span>© 2026 Imprint</span>
-          <span></span>
-        </div>
-      </div>
-    </footer>
+    <div data-include="/partials/footer.html"></div>
+
+    <script type="module" src="/lib/include-html.js"></script>
+    <script type="module" src="/lib/cookie-consent.js"></script>
 
     <script type="module">
       import createState from "./lib/create-state.js";

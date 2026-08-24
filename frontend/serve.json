@@ -1,0 +1,7 @@
+{
+  "cleanUrls": false,
+  "rewrites": [
+    { "source": "/table", "destination": "/app.html" },
+    { "source": "/gallery", "destination": "/app.html" }
+  ]
+}
