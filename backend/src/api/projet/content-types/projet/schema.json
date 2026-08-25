@@ -4,7 +4,8 @@
   "info": {
     "singularName": "projet",
     "pluralName": "projets",
-    "displayName": "projet"
+    "displayName": "Projet",
+    "description": "Projets du portfolio"
   },
   "options": {
     "draftAndPublish": true
@@ -13,11 +14,18 @@
   "attributes": {
     "titre": {
       "type": "string",
-      "required": true
+      "required": true,
+      "minLength": 2,
+      "maxLength": 150
     },
     "slug": {
       "type": "uid",
-      "targetField": "titre"
+      "targetField": "titre",
+      "required": true
+    },
+    "resume": {
+      "type": "text",
+      "maxLength": 500
     },
     "description": {
       "type": "blocks",
@@ -25,6 +33,12 @@
     },
     "technologies": {
       "type": "json"
+    },
+    "competences": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::competence.competence",
+      "inversedBy": "projets"
     },
     "lien_repo": {
       "type": "string"
@@ -41,6 +55,10 @@
         "videos",
         "audios"
       ]
+    },
+    "en_vedette": {
+      "type": "boolean",
+      "default": false
     },
     "date_realisation": {
       "type": "date"

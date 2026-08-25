@@ -1,0 +1,85 @@
+{
+  "kind": "collectionType",
+  "collectionName": "profils",
+  "info": {
+    "singularName": "profil",
+    "pluralName": "profils",
+    "displayName": "Profil",
+    "description": "Informations du profil, biographie et coordonnées"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "nom": {
+      "type": "string",
+      "required": true,
+      "minLength": 2,
+      "maxLength": 100
+    },
+    "titre": {
+      "type": "string",
+      "required": true,
+      "minLength": 2,
+      "maxLength": 150
+    },
+    "biographie": {
+      "type": "text",
+      "maxLength": 3000
+    },
+    "email": {
+      "type": "email",
+      "required": true
+    },
+    "telephone": {
+      "type": "string",
+      "maxLength": 30
+    },
+    "localisation": {
+      "type": "string",
+      "maxLength": 100
+    },
+    "disponible": {
+      "type": "boolean",
+      "default": true
+    },
+    "github": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "linkedin": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "twitter": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "avatar": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "cv_pdf": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "files"
+      ]
+    },
+    "statut": {
+      "type": "enumeration",
+      "required": true,
+      "default": "brouillon",
+      "enum": [
+        "brouillon",
+        "pret_a_relire",
+        "publie",
+        "archive"
+      ]
+    }
+  }
+}

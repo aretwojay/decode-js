@@ -1,0 +1,40 @@
+{
+  "kind": "collectionType",
+  "collectionName": "messages",
+  "info": {
+    "singularName": "message",
+    "pluralName": "messages",
+    "displayName": "Message",
+    "description": "Messages reçus via le formulaire de contact"
+  },
+  "options": {
+    "draftAndPublish": false
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "nom": {
+      "type": "string",
+      "required": true,
+      "minLength": 2,
+      "maxLength": 100
+    },
+    "email": {
+      "type": "email",
+      "required": true
+    },
+    "sujet": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "contenu": {
+      "type": "text",
+      "required": true,
+      "minLength": 5,
+      "maxLength": 5000
+    },
+    "lu": {
+      "type": "boolean",
+      "default": false
+    }
+  }
+}

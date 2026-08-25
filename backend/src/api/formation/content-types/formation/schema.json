@@ -1,0 +1,54 @@
+{
+  "kind": "collectionType",
+  "collectionName": "formations",
+  "info": {
+    "singularName": "formation",
+    "pluralName": "formations",
+    "displayName": "Formation",
+    "description": "Formations et diplômes pour le CV"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "etablissement": {
+      "type": "string",
+      "required": true,
+      "minLength": 2,
+      "maxLength": 150
+    },
+    "diplome": {
+      "type": "string",
+      "required": true,
+      "minLength": 2,
+      "maxLength": 150
+    },
+    "description": {
+      "type": "text",
+      "maxLength": 2000
+    },
+    "date_debut": {
+      "type": "date",
+      "required": true
+    },
+    "date_fin": {
+      "type": "date"
+    },
+    "en_cours": {
+      "type": "boolean",
+      "default": false
+    },
+    "statut": {
+      "type": "enumeration",
+      "required": true,
+      "default": "brouillon",
+      "enum": [
+        "brouillon",
+        "pret_a_relire",
+        "publie",
+        "archive"
+      ]
+    }
+  }
+}

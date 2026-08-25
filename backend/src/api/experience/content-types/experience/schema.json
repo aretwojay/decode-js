@@ -4,7 +4,8 @@
   "info": {
     "singularName": "experience",
     "pluralName": "experiences",
-    "displayName": "Experience"
+    "displayName": "Experience",
+    "description": "Expériences professionnelles"
   },
   "options": {
     "draftAndPublish": true
@@ -13,7 +14,9 @@
   "attributes": {
     "titre": {
       "type": "string",
-      "required": true
+      "required": true,
+      "minLength": 2,
+      "maxLength": 150
     },
     "slug": {
       "type": "uid",
@@ -26,7 +29,9 @@
     },
     "entreprise": {
       "type": "string",
-      "required": true
+      "required": true,
+      "minLength": 2,
+      "maxLength": 150
     },
     "date_debut": {
       "type": "date",
@@ -36,16 +41,17 @@
       "type": "date",
       "required": false
     },
+    "competences": {
+      "type": "relation",
+      "relation": "manyToMany",
+      "target": "api::competence.competence",
+      "inversedBy": "experiences"
+    },
     "statut": {
       "type": "enumeration",
-      "required": true,
+      "enum": ["brouillon", "pret_a_relire", "publie", "archive"],
       "default": "brouillon",
-      "enum": [
-        "brouillon",
-        "pret_a_relire",
-        "publie",
-        "archive"
-      ]
-    }
+      "required": true
+    },
   }
 }
