@@ -1,3 +1,5 @@
 # To prevent search engines from seeing the site altogether, uncomment the next two lines:
-# User-Agent: *
-# Disallow: /
+User-agent: *
+Allow: /
+
+Sitemap: http://localhost:8080/api/strapi-5-sitemap-plugin/sitemap.xml
