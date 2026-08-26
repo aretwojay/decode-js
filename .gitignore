@@ -6,3 +6,4 @@ backend/dist
 backend/build
 /docs
 *.md
+backend/types/generated
