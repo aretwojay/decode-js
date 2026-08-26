@@ -52,14 +52,9 @@
     },
     "statut": {
       "type": "enumeration",
-      "required": true,
+      "enum": ["brouillon", "pret_a_relire", "publie", "archive"],
       "default": "brouillon",
-      "enum": [
-        "brouillon",
-        "pret_a_relire",
-        "publie",
-        "archive"
-      ]
-    }
+      "required": true
+    },
   }
 }

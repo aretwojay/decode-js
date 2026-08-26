@@ -8,6 +8,7 @@
     { "source": "/contact", "destination": "/app.html" },
     { "source": "/admin", "destination": "/app.html" },
     { "source": "/table", "destination": "/app.html" },
-    { "source": "/gallery", "destination": "/app.html" }
+    { "source": "/gallery", "destination": "/app.html" },
+    { "source": "/experiences", "destination": "/app.html" }
   ]
 }

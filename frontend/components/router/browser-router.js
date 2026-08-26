@@ -12,7 +12,6 @@ export function matchRoute(routes, pathname) {
   for (const [pattern, generator] of Object.entries(routes)) {
     if (pattern === "*") continue;
     const patternSegments = pattern.replace(/^\/+|\/+$/g, "").split("/");
-
     if (patternSegments.length !== pathSegments.length) continue;
 
     const params = {};
@@ -21,44 +20,32 @@ export function matchRoute(routes, pathname) {
     for (let i = 0; i < patternSegments.length; i++) {
       const pSeg = patternSegments[i];
       const uSeg = pathSegments[i];
-
       if (pSeg.startsWith(":")) {
-        const paramName = pSeg.slice(1);
-        params[paramName] = decodeURIComponent(uSeg);
+        params[pSeg.slice(1)] = decodeURIComponent(uSeg);
       } else if (pSeg !== uSeg) {
         isMatch = false;
         break;
       }
     }
-
-    if (isMatch) {
-      return { generator, params };
-    }
+    if (isMatch) return { generator, params };
   }
 
-  if (routes["*"]) {
-    return { generator: routes["*"], params: {} };
-  }
-
+  if (routes["*"]) return { generator: routes["*"], params: {} };
   return null;
 }
 
 export default function BrowserRouter(rootElement, routes) {
   async function refreshPage() {
     const pathname = window.location.pathname;
-    const match = matchRoute(routes, pathname);
-    if (!match || !match.generator) return;
-
-    const structure = await match.generator(match.params);
-    const domNode = generateStructure(structure);
+    const match = matchRoute(routes, pathname) ?? { generator: routes["*"], params: {} };
+    const structure = await match.generator(match.params); // await, que ce soit sync ou async
 
     if (rootElement.childNodes[0]) {
-      rootElement.replaceChild(domNode, rootElement.childNodes[0]);
+      rootElement.replaceChild(generateStructure(structure), rootElement.childNodes[0]);
     } else {
-      rootElement.appendChild(domNode);
+      rootElement.appendChild(generateStructure(structure));
     }
   }
-
   window.addEventListener("popstate", refreshPage);
   window.addEventListener("pushstate", refreshPage);
   refreshPage();
@@ -69,16 +56,10 @@ export function BrowserLink(url, title) {
     type: "a",
     attributes: [["href", url]],
     children: [title],
-    events: [
-      [
-        "click",
-        (event) => {
-          event.preventDefault();
-          window.history.pushState({}, undefined, url);
-          window.dispatchEvent(new Event("pushstate"));
-        },
-      ],
-    ],
+    events: [["click", (event) => {
+      event.preventDefault();
+      window.history.pushState({}, undefined, url);
+      window.dispatchEvent(new Event("pushstate"));
+    }]],
   };
 }
-
