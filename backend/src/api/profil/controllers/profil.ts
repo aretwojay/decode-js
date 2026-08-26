@@ -5,12 +5,47 @@
  */
 
 import { factories } from '@strapi/strapi';
+import { slugify } from '../../../utils/slugify';
+import { dedupeByDocumentId } from '../../../utils/ownership';
 
 const VALID_STATUTS = ['brouillon', 'pret_a_relire', 'publie', 'archive'];
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default factories.createCoreController('api::profil.profil', ({ strapi }) => ({
+  // Un utilisateur connecté ne voit que son propre profil (tous statuts confondus).
+  // Les visiteurs non connectés gardent le comportement public par défaut (publié uniquement).
+  // "owner" cible le modèle User : bloqué par le sanitizer REST en filtre de
+  // query comme en écriture, y compris via le Document Service. On passe par
+  // le query builder bas niveau, qui n'applique pas ce filtrage de champs.
+  async find(ctx) {
+    if (ctx.state.user) {
+      const entries = await strapi.db
+        .query('api::profil.profil')
+        .findMany({ where: { owner: ctx.state.user.id } });
+      return { data: dedupeByDocumentId(entries), meta: {} };
+    }
+    return await super.find(ctx);
+  },
+
+  async findOne(ctx) {
+    const { id } = ctx.params;
+    const entry = await strapi.db.query('api::profil.profil').findOne({ where: { id }, populate: ['owner'] });
+    if (!entry) return ctx.notFound();
+
+    const isOwner = Boolean(ctx.state.user && entry.owner?.id === ctx.state.user.id);
+    if (!entry.publishedAt && !isOwner) return ctx.forbidden();
+
+    return await super.findOne(ctx);
+  },
+
   async create(ctx) {
+    if (!ctx.state.user) return ctx.unauthorized('Vous devez être connecté pour créer un profil.');
+
+    const already = await strapi.db
+      .query('api::profil.profil')
+      .findOne({ where: { owner: ctx.state.user.id } });
+    if (already) return ctx.badRequest('Vous avez déjà un profil.');
+
     const rawData = (ctx.request.body?.data || ctx.request.body || {}) as Record<string, any>;
     const errors: Record<string, string> = {};
 
@@ -83,13 +118,29 @@ export default factories.createCoreController('api::profil.profil', ({ strapi })
         twitter: twitter || null,
         disponible: rawData.disponible !== undefined ? Boolean(rawData.disponible) : true,
         statut: statut || 'brouillon',
+        slug: rawData.slug || `${slugify(nom)}-${Date.now().toString(36)}`,
       },
     };
 
-    return await super.create(ctx);
+    // Le champ "owner" cible le modèle User et est traité comme sensible par
+    // users-permissions : impossible à passer dans le body de la requête REST.
+    // On crée l'entrée normalement, puis on attache le propriétaire en interne.
+    const result = await super.create(ctx);
+    const createdId = (result as any)?.data?.id;
+    if (createdId) {
+      await strapi.db
+        .query('api::profil.profil')
+        .update({ where: { id: createdId }, data: { owner: ctx.state.user.id } });
+    }
+    return result;
   },
 
   async update(ctx) {
+    const { id } = ctx.params;
+    const target = await strapi.db.query('api::profil.profil').findOne({ where: { id }, populate: ['owner'] });
+    if (!target) return ctx.notFound();
+    if (!ctx.state.user || target.owner?.id !== ctx.state.user.id) return ctx.forbidden();
+
     const rawData = (ctx.request.body?.data || ctx.request.body || {}) as Record<string, any>;
     const errors: Record<string, string> = {};
 
@@ -147,5 +198,14 @@ export default factories.createCoreController('api::profil.profil', ({ strapi })
     }
 
     return await super.update(ctx);
+  },
+
+  async delete(ctx) {
+    const { id } = ctx.params;
+    const target = await strapi.db.query('api::profil.profil').findOne({ where: { id }, populate: ['owner'] });
+    if (!target) return ctx.notFound();
+    if (!ctx.state.user || target.owner?.id !== ctx.state.user.id) return ctx.forbidden();
+
+    return await super.delete(ctx);
   },
 }));

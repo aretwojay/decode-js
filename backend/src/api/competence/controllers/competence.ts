@@ -5,12 +5,41 @@
  */
 
 import { factories } from '@strapi/strapi';
+import { getOwnProfilId, isOwnChildEntry, dedupeByDocumentId } from '../../../utils/ownership';
 
 const VALID_NIVEAUX = ['expert', 'avance', 'intermediaire', 'débutant'];
 const VALID_STATUTS = ['brouillon', 'pret_a_relire', 'publie', 'archive'];
 
 export default factories.createCoreController('api::competence.competence', ({ strapi }) => ({
+  async find(ctx) {
+    if (ctx.state.user) {
+      const ownProfilId = await getOwnProfilId(strapi, ctx.state.user.id);
+      const entries = await strapi.db
+        .query('api::competence.competence')
+        .findMany({ where: { profil: ownProfilId } });
+      return { data: dedupeByDocumentId(entries), meta: {} };
+    }
+    return await super.find(ctx);
+  },
+
+  async findOne(ctx) {
+    const { id } = ctx.params;
+    const entry = await strapi.db
+      .query('api::competence.competence')
+      .findOne({ where: { id }, populate: { profil: { populate: ['owner'] } } });
+    if (!entry) return ctx.notFound();
+
+    const isOwner = Boolean(ctx.state.user && entry.profil?.owner?.id === ctx.state.user.id);
+    if (!entry.publishedAt && !isOwner) return ctx.forbidden();
+
+    return await super.findOne(ctx);
+  },
+
   async create(ctx) {
+    if (!ctx.state.user) return ctx.unauthorized('Vous devez être connecté pour créer une compétence.');
+    const ownProfilId = await getOwnProfilId(strapi, ctx.state.user.id);
+    if (!ownProfilId) return ctx.badRequest('Créez d\'abord votre profil.');
+
     const rawData = (ctx.request.body?.data || ctx.request.body || {}) as Record<string, any>;
     const errors: Record<string, string> = {};
 
@@ -40,6 +69,7 @@ export default factories.createCoreController('api::competence.competence', ({ s
         titre,
         niveau,
         statut: statut || 'brouillon',
+        profil: ownProfilId,
       },
     };
 
@@ -47,6 +77,11 @@ export default factories.createCoreController('api::competence.competence', ({ s
   },
 
   async update(ctx) {
+    const { id } = ctx.params;
+    if (!ctx.state.user || !(await isOwnChildEntry(strapi, 'api::competence.competence', id, ctx.state.user.id))) {
+      return ctx.forbidden();
+    }
+
     const rawData = (ctx.request.body?.data || ctx.request.body || {}) as Record<string, any>;
     const errors: Record<string, string> = {};
 
@@ -76,5 +111,13 @@ export default factories.createCoreController('api::competence.competence', ({ s
     }
 
     return await super.update(ctx);
+  },
+
+  async delete(ctx) {
+    const { id } = ctx.params;
+    if (!ctx.state.user || !(await isOwnChildEntry(strapi, 'api::competence.competence', id, ctx.state.user.id))) {
+      return ctx.forbidden();
+    }
+    return await super.delete(ctx);
   },
 }));

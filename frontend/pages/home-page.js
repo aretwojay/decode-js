@@ -1,6 +1,10 @@
 import Link from "../components/router/link.js";
+import { isAuthenticated, getCurrentUser, logout } from "../lib/auth.js";
 
 export default function PageHome() {
+  const authenticated = isAuthenticated();
+  const user = getCurrentUser();
+
   return {
     type: "div",
     attributes: [["class", ["page", "page-home"]]],
@@ -31,6 +35,29 @@ export default function PageHome() {
               Link("/table", "Démo Table"),
               { type: "span", children: [" | "] },
               Link("/gallery", "Démo Galerie"),
+              { type: "span", children: [" | "] },
+              ...(authenticated
+                ? [
+                    { type: "span", children: [`Connecté : ${user?.username ?? ""}`] },
+                    { type: "span", children: [" — "] },
+                    {
+                      type: "a",
+                      attributes: [["href", "#"]],
+                      children: ["Se déconnecter"],
+                      events: [
+                        [
+                          "click",
+                          (event) => {
+                            event.preventDefault();
+                            logout();
+                            window.history.pushState({}, undefined, "/");
+                            window.dispatchEvent(new Event("pushstate"));
+                          },
+                        ],
+                      ],
+                    },
+                  ]
+                : [Link("/login", "Se connecter"), { type: "span", children: [" | "] }, Link("/signup", "Créer un compte")]),
             ],
           },
         ],
