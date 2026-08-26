@@ -10,6 +10,7 @@ import { dedupeByDocumentId } from '../../../utils/ownership';
 
 const VALID_STATUTS = ['brouillon', 'pret_a_relire', 'publie', 'archive'];
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const URL_REGEX = /^(https?:\/\/|www\.)[^\s/$.?#].[^\s]*$/i;
 
 export default factories.createCoreController('api::profil.profil', ({ strapi }) => ({
   // Un utilisateur connecté ne voit que son propre profil (tous statuts confondus).
@@ -84,16 +85,28 @@ export default factories.createCoreController('api::profil.profil', ({ strapi })
       errors.localisation = 'La localisation ne doit pas dépasser 100 caractères.';
     }
 
-    if (github && github.length > 200) {
-      errors.github = 'Le lien GitHub ne doit pas dépasser 200 caractères.';
+    if (github) {
+      if (github.length > 200) {
+        errors.github = 'Le lien GitHub ne doit pas dépasser 200 caractères.';
+      } else if (!URL_REGEX.test(github)) {
+        errors.github = 'Le lien GitHub doit être une URL valide (ex: https://github.com/...).';
+      }
     }
 
-    if (linkedin && linkedin.length > 200) {
-      errors.linkedin = 'Le lien LinkedIn ne doit pas dépasser 200 caractères.';
+    if (linkedin) {
+      if (linkedin.length > 200) {
+        errors.linkedin = 'Le lien LinkedIn ne doit pas dépasser 200 caractères.';
+      } else if (!URL_REGEX.test(linkedin)) {
+        errors.linkedin = 'Le lien LinkedIn doit être une URL valide.';
+      }
     }
 
-    if (twitter && twitter.length > 200) {
-      errors.twitter = 'Le lien Twitter / X ne doit pas dépasser 200 caractères.';
+    if (twitter) {
+      if (twitter.length > 200) {
+        errors.twitter = 'Le lien Twitter / X ne doit pas dépasser 200 caractères.';
+      } else if (!URL_REGEX.test(twitter)) {
+        errors.twitter = 'Le lien Twitter / X doit être une URL valide.';
+      }
     }
 
     if (statut && !VALID_STATUTS.includes(statut)) {
@@ -183,6 +196,19 @@ export default factories.createCoreController('api::profil.profil', ({ strapi })
       const localisation = typeof rawData.localisation === 'string' ? rawData.localisation.trim() : '';
       if (localisation.length > 100) {
         errors.localisation = 'La localisation ne doit pas dépasser 100 caractères.';
+      }
+    }
+
+    for (const field of ['github', 'linkedin', 'twitter'] as const) {
+      if (rawData[field] !== undefined && rawData[field] !== null) {
+        const value = typeof rawData[field] === 'string' ? rawData[field].trim() : '';
+        if (value) {
+          if (value.length > 200) {
+            errors[field] = `Le lien ${field} ne doit pas dépasser 200 caractères.`;
+          } else if (!URL_REGEX.test(value)) {
+            errors[field] = `Le lien ${field} doit être une URL valide.`;
+          }
+        }
       }
     }
 
