@@ -3,19 +3,6 @@ import type { Core } from '@strapi/strapi';
 const config: Core.Config.Middlewares = [
   'strapi::logger',
   'strapi::errors',
-  'strapi::security',
-  'strapi::cors',
-  'strapi::poweredBy',
-  'strapi::query',
-  'strapi::body',
-  'strapi::session',
-  'strapi::favicon',
-  'strapi::public',
-];
-
-module.exports = [
-  'strapi::logger',
-  'strapi::errors',
   {
     name: 'strapi::security',
     config: {
@@ -33,7 +20,14 @@ module.exports = [
   {
     name: 'strapi::cors',
     config: {
-      origin: ['http://localhost:5500', 'http://127.0.0.1:5500'],
+      origin: [
+        'http://localhost:5500',
+        'http://127.0.0.1:5500',
+        'http://localhost:8080',
+        'http://127.0.0.1:8080',
+        'http://localhost:8090',
+        'http://127.0.0.1:8090',
+      ],
     },
   },
   'strapi::poweredBy',
@@ -43,3 +37,5 @@ module.exports = [
   'strapi::favicon',
   'strapi::public',
 ];
+
+export default config;
