@@ -46,8 +46,42 @@ export default {
           });
         }
       }
+
+      // Utilisateurs connectés : CRUD complet, restreint à leurs propres données
+      // par les controllers (voir src/utils/ownership.ts).
+      const authenticatedRole = await strapi.db.query('plugin::users-permissions.role').findOne({
+        where: { type: 'authenticated' },
+      });
+
+      if (authenticatedRole) {
+        const contentTypes = ['profil', 'projet', 'competence', 'experience', 'formation'];
+        const crud = ['find', 'findOne', 'create', 'update', 'delete'];
+        const authenticatedActions = contentTypes.flatMap((ct) =>
+          crud.map((action) => `api::${ct}.${ct}.${action}`)
+        );
+
+        for (const action of authenticatedActions) {
+          const existingPermission = await strapi.db
+            .query('plugin::users-permissions.permission')
+            .findOne({
+              where: {
+                action,
+                role: authenticatedRole.id,
+              },
+            });
+
+          if (!existingPermission) {
+            await strapi.db.query('plugin::users-permissions.permission').create({
+              data: {
+                action,
+                role: authenticatedRole.id,
+              },
+            });
+          }
+        }
+      }
     } catch (error) {
-      console.error('Erreur lors du bootstrap des permissions publiques :', error);
+      console.error('Erreur lors du bootstrap des permissions :', error);
     }
   },
 };

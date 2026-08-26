@@ -12,6 +12,11 @@
   },
   "pluginOptions": {},
   "attributes": {
+    "profil": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::profil.profil"
+    },
     "titre": {
       "type": "string",
       "required": true,
