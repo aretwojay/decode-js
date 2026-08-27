@@ -1,29 +1,16 @@
-/**
- * API Client & Integration Layer (T0013)
- * Pure Vanilla JS fetch helpers and data adapters for Strapi 5 REST API
- */
-
 import { appStore } from "./store.js";
+import { authHeaders } from "./auth.js";
 
-/**
- * Base URL for the Strapi Content API
- */
+
 export const API_BASE_URL =
   (typeof window !== "undefined" && window.__API_URL__) ||
   "http://localhost:1337";
 
-/**
- * Checks if a value represents a Strapi media file or array of media files
- * @param {*} val
- * @returns {boolean}
- */
 function isMediaObject(val) {
   if (!val || typeof val !== "object") return false;
-
   if (Array.isArray(val)) {
     return val.length > 0 && val.every((item) => isMediaObject(item));
   }
-
   return (
     typeof val.url === "string" &&
     (val.mime !== undefined ||
@@ -36,11 +23,6 @@ function isMediaObject(val) {
   );
 }
 
-/**
- * Extracts plain text from Strapi 5 rich text blocks
- * @param {Array|string} blocks
- * @returns {string}
- */
 export function extractBlocksText(blocks) {
   if (!blocks) return "";
   if (typeof blocks === "string") return blocks;
@@ -58,19 +40,11 @@ export function extractBlocksText(blocks) {
   return "";
 }
 
-/**
- * Normalizes a media object or array of media objects from Strapi
- * Ensures absolute URLs for images and attachments
- * @param {Object|Array} media
- * @returns {Object|Array|null}
- */
 export function normalizeMedia(media) {
   if (!media) return null;
-
   if (Array.isArray(media)) {
     return media.map(normalizeMedia).filter(Boolean);
   }
-
   const rawUrl = typeof media.url === "string" ? media.url : "";
   const fullUrl = rawUrl.startsWith("http")
     ? rawUrl
@@ -78,7 +52,6 @@ export function normalizeMedia(media) {
     ? `${API_BASE_URL}${rawUrl}`
     : "";
 
-  // Normalize responsive formats if present
   const normalizedFormats = {};
   if (media.formats && typeof media.formats === "object") {
     for (const [formatKey, formatVal] of Object.entries(media.formats)) {
@@ -107,11 +80,6 @@ export function normalizeMedia(media) {
   };
 }
 
-/**
- * Normalizes a single Strapi 5 entity into a clean Vanilla JS domain object
- * @param {Object} item
- * @returns {Object|null}
- */
 export function normalizeEntity(item) {
   if (!item || typeof item !== "object") return null;
 
@@ -127,9 +95,7 @@ export function normalizeEntity(item) {
     if (["id", "documentId", "createdAt", "updatedAt", "publishedAt"].includes(key)) {
       continue;
     }
-
     if (value && typeof value === "object") {
-      // Check if it is a rich text blocks structure
       if (Array.isArray(value) && value[0]?.type && value[0]?.children) {
         normalized[key] = extractBlocksText(value);
         normalized[`${key}Blocks`] = value;
@@ -150,11 +116,6 @@ export function normalizeEntity(item) {
   return normalized;
 }
 
-/**
- * Normalizes a Strapi collection response ({ data: [...] })
- * @param {Object} response
- * @returns {Array}
- */
 export function normalizeCollection(response) {
   if (!response || !Array.isArray(response.data)) {
     return [];
@@ -162,12 +123,6 @@ export function normalizeCollection(response) {
   return response.data.map(normalizeEntity).filter(Boolean);
 }
 
-/**
- * Base HTTP request helper with error resilience
- * @param {string} endpoint
- * @param {Object} options
- * @returns {Promise<Object>}
- */
 async function apiFetch(endpoint, options = {}) {
   const url = `${API_BASE_URL}/api/${endpoint.replace(/^\//, "")}`;
   const fetchOptions = {
@@ -198,22 +153,22 @@ async function apiFetch(endpoint, options = {}) {
   }
 }
 
-/**
- * Fetches published projects
- * @param {Object} [options]
- * @param {boolean} [options.featured] - Filter for featured projects
- * @param {string} [options.statut] - Optional workflow status filter
- * @returns {Promise<Array>}
- */
+async function apiMutate(endpoint, method, data) {
+  return apiFetch(endpoint, {
+    method,
+    headers: {
+      "Content-Type": "application/json",
+      ...authHeaders(),
+    },
+    body: data !== undefined ? JSON.stringify({ data }) : undefined,
+  });
+}
+
 export async function fetchProjects({ featured = false, statut } = {}) {
   try {
     let query = `projets?populate=*`;
-    if (statut) {
-      query += `&filters[statut][$eq]=${encodeURIComponent(statut)}`;
-    }
-    if (featured) {
-      query += `&filters[en_vedette][$eq]=true`;
-    }
+    if (statut) query += `&filters[statut][$eq]=${encodeURIComponent(statut)}`;
+    if (featured) query += `&filters[en_vedette][$eq]=true`;
     const res = await apiFetch(query);
     return normalizeCollection(res);
   } catch (err) {
@@ -221,11 +176,6 @@ export async function fetchProjects({ featured = false, statut } = {}) {
   }
 }
 
-/**
- * Fetches a single published project by its slug
- * @param {string} slug
- * @returns {Promise<Object|null>}
- */
 export async function fetchProjectBySlug(slug) {
   if (!slug) return null;
   try {
@@ -238,18 +188,10 @@ export async function fetchProjectBySlug(slug) {
   }
 }
 
-/**
- * Fetches published professional experiences ordered by date_debut descending
- * @param {Object} [options]
- * @param {string} [options.statut] - Optional workflow status filter
- * @returns {Promise<Array>}
- */
 export async function fetchExperiences({ statut } = {}) {
   try {
     let query = `experiences?populate=*&sort[0]=date_debut:desc`;
-    if (statut) {
-      query += `&filters[statut][$eq]=${encodeURIComponent(statut)}`;
-    }
+    if (statut) query += `&filters[statut][$eq]=${encodeURIComponent(statut)}`;
     const res = await apiFetch(query);
     return normalizeCollection(res);
   } catch (err) {
@@ -257,22 +199,11 @@ export async function fetchExperiences({ statut } = {}) {
   }
 }
 
-/**
- * Fetches published skills / competences
- * @param {Object} [options]
- * @param {string} [options.statut] - Optional workflow status filter
- * @param {string} [options.niveau] - Optional level filter
- * @returns {Promise<Array>}
- */
 export async function fetchSkills({ statut, niveau } = {}) {
   try {
     let query = `competences?populate=*`;
-    if (statut) {
-      query += `&filters[statut][$eq]=${encodeURIComponent(statut)}`;
-    }
-    if (niveau) {
-      query += `&filters[niveau][$eq]=${encodeURIComponent(niveau)}`;
-    }
+    if (statut) query += `&filters[statut][$eq]=${encodeURIComponent(statut)}`;
+    if (niveau) query += `&filters[niveau][$eq]=${encodeURIComponent(niveau)}`;
     const res = await apiFetch(query);
     return normalizeCollection(res);
   } catch (err) {
@@ -282,18 +213,10 @@ export async function fetchSkills({ statut, niveau } = {}) {
 
 export const fetchCompetences = fetchSkills;
 
-/**
- * Fetches published formations / diplomas ordered by date_debut descending
- * @param {Object} [options]
- * @param {string} [options.statut] - Optional workflow status filter
- * @returns {Promise<Array>}
- */
 export async function fetchFormations({ statut } = {}) {
   try {
     let query = `formations?populate=*&sort[0]=date_debut:desc`;
-    if (statut) {
-      query += `&filters[statut][$eq]=${encodeURIComponent(statut)}`;
-    }
+    if (statut) query += `&filters[statut][$eq]=${encodeURIComponent(statut)}`;
     const res = await apiFetch(query);
     return normalizeCollection(res);
   } catch (err) {
@@ -301,18 +224,10 @@ export async function fetchFormations({ statut } = {}) {
   }
 }
 
-/**
- * Fetches primary published candidate profile
- * @param {Object} [options]
- * @param {string} [options.statut] - Optional workflow status filter
- * @returns {Promise<Object|null>}
- */
 export async function fetchProfile({ statut } = {}) {
   try {
     let query = `profils?populate=*`;
-    if (statut) {
-      query += `&filters[statut][$eq]=${encodeURIComponent(statut)}`;
-    }
+    if (statut) query += `&filters[statut][$eq]=${encodeURIComponent(statut)}`;
     const res = await apiFetch(query);
     const profils = normalizeCollection(res);
     return profils[0] || null;
@@ -321,97 +236,76 @@ export async function fetchProfile({ statut } = {}) {
   }
 }
 
-/**
- * Sends a contact message to the controlled public ingestion endpoint
- * @param {Object} messageData
- * @param {string} messageData.nom
- * @param {string} messageData.email
- * @param {string} [messageData.sujet]
- * @param {string} messageData.contenu
- * @returns {Promise<{success: boolean, data?: Object, error?: string, details?: Object}>}
- */
 export async function sendMessage(messageData) {
   try {
     const res = await apiFetch("messages", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ data: messageData }),
     });
-
-    return {
-      success: true,
-      data: normalizeEntity(res.data),
-    };
+    return { success: true, data: normalizeEntity(res.data) };
   } catch (err) {
-    return {
-      success: false,
-      error: err.message,
-      details: err.details || null,
-    };
+    return { success: false, error: err.message, details: err.details || null };
   }
 }
 
-/**
- * Synchronizes the reactive store with published CMS entities
- * Seamlessly updates appStore using its existing setState method
- * @param {Object} [storeInstance=appStore]
- * @returns {Promise<Object>}
- */
 export async function syncStoreFromApi(storeInstance = appStore) {
   const current = storeInstance.getState ? storeInstance.getState() : storeInstance.get();
-  
+
   if (storeInstance.setState) {
     storeInstance.setState((state) => ({ ...state, loading: true, error: null }));
   }
 
   try {
-    const [profile, projects, experiences, skills, formations] =
-      await Promise.all([
-        fetchProfile(),
-        fetchProjects(),
-        fetchExperiences(),
-        fetchSkills(),
-        fetchFormations(),
-      ]);
+    const [profile, projects, experiences, skills, formations] = await Promise.all([
+      fetchProfile(),
+      fetchProjects(),
+      fetchExperiences(),
+      fetchSkills(),
+      fetchFormations(),
+    ]);
 
-    const patch = {
-      loading: false,
-      error: null,
-    };
-
+    const patch = { loading: false, error: null };
     if (profile) patch.profile = profile;
-    if (projects && projects.length > 0) patch.projects = projects;
-    if (experiences && experiences.length > 0) patch.experiences = experiences;
-    if (skills && skills.length > 0) patch.skills = skills;
-    if (formations && formations.length > 0) patch.formations = formations;
+    if (projects?.length) patch.projects = projects;
+    if (experiences?.length) patch.experiences = experiences;
+    if (skills?.length) patch.skills = skills;
+    if (formations?.length) patch.formations = formations;
 
     if (storeInstance.setState) {
-      storeInstance.setState((state) => ({
-        ...state,
-        ...patch,
-      }));
+      storeInstance.setState((state) => ({ ...state, ...patch }));
     } else if (storeInstance.set) {
-      storeInstance.set({
-        ...current,
-        ...patch,
-      });
+      storeInstance.set({ ...current, ...patch });
     }
 
     return storeInstance.getState ? storeInstance.getState() : storeInstance.get();
   } catch (err) {
     console.error("[API Client] Failed to synchronize store with API:", err);
-    const errorPatch = {
-      loading: false,
-      error: err.message,
-    };
+    const errorPatch = { loading: false, error: err.message };
     if (storeInstance.setState) {
       storeInstance.setState((state) => ({ ...state, ...errorPatch }));
     }
     return storeInstance.getState ? storeInstance.getState() : storeInstance.get();
   }
 }
+
+
+export const createExperience = (data) => apiMutate("experiences", "POST", data);
+export const updateExperience = (id, data) => apiMutate(`experiences/${id}`, "PUT", data);
+export const deleteExperience = (id) => apiMutate(`experiences/${id}`, "DELETE");
+
+export const createProjet = (data) => apiMutate("projets", "POST", data);
+export const updateProjet = (id, data) => apiMutate(`projets/${id}`, "PUT", data);
+export const deleteProjet = (id) => apiMutate(`projets/${id}`, "DELETE");
+
+export const createCompetence = (data) => apiMutate("competences", "POST", data);
+export const updateCompetence = (id, data) => apiMutate(`competences/${id}`, "PUT", data);
+export const deleteCompetence = (id) => apiMutate(`competences/${id}`, "DELETE");
+
+
+export const getExperiences = fetchExperiences;
+export const getProjets = fetchProjects;
+export const getCompetences = fetchSkills;
 
 export default {
   API_BASE_URL,
@@ -428,4 +322,13 @@ export default {
   fetchProfile,
   sendMessage,
   syncStoreFromApi,
+  createExperience,
+  updateExperience,
+  deleteExperience,
+  createProjet,
+  updateProjet,
+  deleteProjet,
+  createCompetence,
+  updateCompetence,
+  deleteCompetence,
 };

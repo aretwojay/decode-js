@@ -47,14 +47,8 @@ export default function PageLogin() {
     type: "div",
     attributes: [["class", ["page", "page-login"]]],
     children: [
-      {
-        type: "h1",
-        children: ["Se connecter"],
-      },
-      {
-        type: "nav",
-        children: [Link("/", "← Retour à l'accueil")],
-      },
+      { type: "h1", children: ["Se connecter"] },
+      { type: "nav", children: [Link("/", "← Retour à l'accueil")] },
       {
         type: "form",
         attributes: [["style", [["display", "flex"], ["flexDirection", "column"], ["gap", "10px"], ["maxWidth", "400px"]]]],
