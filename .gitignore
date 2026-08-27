@@ -5,4 +5,5 @@ backend/.tmp
 backend/dist
 backend/build
 /docs
-*.mdbackend/types/generated
+*.md
+backend/types/generated

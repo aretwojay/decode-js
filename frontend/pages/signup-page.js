@@ -1,18 +1,18 @@
 import Link from "../components/router/link.js";
 import createState from "../lib/create-state.js";
 import reactive from "../lib/reactive.js";
-import { login } from "../lib/auth.js";
+import { register } from "../lib/auth.js";
 
 function navigate(url) {
   window.history.pushState({}, undefined, url);
   window.dispatchEvent(new Event("pushstate"));
 }
 
-const formState = createState({ identifier: "", password: "", error: "", loading: false });
+const formState = createState({ username: "", email: "", password: "", error: "", loading: false });
 
 function renderFeedback(state) {
   if (state.loading) {
-    return { type: "p", children: ["Connexion…"] };
+    return { type: "p", children: ["Création du compte…"] };
   }
   if (state.error) {
     return {
@@ -24,19 +24,27 @@ function renderFeedback(state) {
   return { type: "p", children: [""] };
 }
 
-export default function PageLogin() {
+export default function PageSignup() {
   async function handleSubmit(event) {
     event.preventDefault();
-    const { identifier, password } = formState.get();
+    const { username, email, password } = formState.get();
 
-    if (!identifier || !password) {
-      formState.set((s) => ({ ...s, error: "Email et mot de passe requis." }));
+    if (!username || username.length < 3) {
+      formState.set((s) => ({ ...s, error: "Le nom d'utilisateur doit faire au moins 3 caractères." }));
+      return;
+    }
+    if (!email || !email.includes("@")) {
+      formState.set((s) => ({ ...s, error: "Adresse email invalide." }));
+      return;
+    }
+    if (!password || password.length < 6) {
+      formState.set((s) => ({ ...s, error: "Le mot de passe doit faire au moins 6 caractères." }));
       return;
     }
 
     formState.set((s) => ({ ...s, error: "", loading: true }));
     try {
-      await login({ identifier, password });
+      await register({ username, email, password });
       navigate("/");
     } catch (err) {
       formState.set((s) => ({ ...s, error: err.message, loading: false }));
@@ -45,10 +53,16 @@ export default function PageLogin() {
 
   return {
     type: "div",
-    attributes: [["class", ["page", "page-login"]]],
+    attributes: [["class", ["page", "page-signup"]]],
     children: [
-      { type: "h1", children: ["Se connecter"] },
-      { type: "nav", children: [Link("/", "← Retour à l'accueil")] },
+      {
+        type: "h1",
+        children: ["Créer mon compte"],
+      },
+      {
+        type: "nav",
+        children: [Link("/", "← Retour à l'accueil")],
+      },
       {
         type: "form",
         attributes: [["style", [["display", "flex"], ["flexDirection", "column"], ["gap", "10px"], ["maxWidth", "400px"]]]],
@@ -57,11 +71,22 @@ export default function PageLogin() {
           {
             type: "label",
             children: [
+              "Nom d'utilisateur",
+              {
+                type: "input",
+                attributes: [["type", "text"], ["required", true]],
+                events: [["input", (e) => formState.set((s) => ({ ...s, username: e.target.value }))]],
+              },
+            ],
+          },
+          {
+            type: "label",
+            children: [
               "Email",
               {
                 type: "input",
                 attributes: [["type", "email"], ["required", true]],
-                events: [["input", (e) => formState.set((s) => ({ ...s, identifier: e.target.value }))]],
+                events: [["input", (e) => formState.set((s) => ({ ...s, email: e.target.value }))]],
               },
             ],
           },
@@ -79,14 +104,14 @@ export default function PageLogin() {
           {
             type: "button",
             attributes: [["type", "submit"]],
-            children: ["Se connecter"],
+            children: ["Créer mon compte"],
           },
           reactive(formState, renderFeedback),
         ],
       },
       {
         type: "p",
-        children: ["Pas encore de compte ? ", Link("/signup", "Créer un compte")],
+        children: ["Déjà un compte ? ", Link("/login", "Se connecter")],
       },
     ],
   };
