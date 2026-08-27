@@ -40,6 +40,19 @@ export async function login(identifier, password) {
   return res.json();
 }
 
+export async function register(username, email, password) {
+  const res = await fetch(`${API_URL}/auth/local/register`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ username, email, password }),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error?.message || "Erreur lors de l'inscription");
+  }
+  return res.json();
+}
+
 async function crudRequest(path, method, data) {
   const res = await fetch(`${API_URL}/${path}`, {
     method,

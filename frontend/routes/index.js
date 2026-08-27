@@ -1,4 +1,6 @@
 import PageHome from "../pages/home-page.js";
+import PageRegister from "../pages/register-page.js";
+import PageLogin from "../pages/login-page.js";
 import PagePortfolio from "../pages/portfolio-page.js";
 import PageProjectDetail from "../pages/project-detail-page.js";
 import PageCV from "../pages/cv-page.js";
@@ -11,11 +13,13 @@ import Page404 from "../pages/not-found-page.js";
 
 export default {
   "/": PageHome,
+  "/inscription": PageRegister,
+  "/connexion": PageLogin,
   "/portfolio": PagePortfolio,
   "/portfolio/:slug": PageProjectDetail,
   "/cv": PageCV,
   "/contact": PageContact,
-  "/admin": PageAdmin,
+  "/dashboard": PageAdmin,
   "/table": PageTable,
   "/gallery": PageGallery,
   "/experiences": PageExperience,

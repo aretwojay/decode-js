@@ -23,7 +23,7 @@ export default function PageHome() {
               { type: "span", children: [" | "] },
               Link("/contact", "Contact"),
               { type: "span", children: [" | "] },
-              Link("/admin", "Administration"),
+              Link("/dashboard", "Administration"),
               { type: "span", children: [" | "] },
               Link("/table", "Démo Table"),
               { type: "span", children: [" | "] },
