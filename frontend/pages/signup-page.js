@@ -1,3 +1,4 @@
+import Header from "../components/header.js";
 import Link from "../components/router/link.js";
 import createState from "../lib/create-state.js";
 import reactive from "../lib/reactive.js";
@@ -55,63 +56,95 @@ export default function PageSignup() {
     type: "div",
     attributes: [["class", ["page", "page-signup"]]],
     children: [
+      Header("/signup"),
       {
-        type: "h1",
-        children: ["Créer mon compte"],
-      },
-      {
-        type: "nav",
-        children: [Link("/", "← Retour à l'accueil")],
-      },
-      {
-        type: "form",
-        attributes: [["style", [["display", "flex"], ["flexDirection", "column"], ["gap", "10px"], ["maxWidth", "400px"]]]],
-        events: [["submit", handleSubmit]],
+        type: "main",
         children: [
           {
-            type: "label",
-            children: [
-              "Nom d'utilisateur",
-              {
-                type: "input",
-                attributes: [["type", "text"], ["required", true]],
-                events: [["input", (e) => formState.set((s) => ({ ...s, username: e.target.value }))]],
-              },
-            ],
-          },
-          {
-            type: "label",
-            children: [
-              "Email",
-              {
-                type: "input",
-                attributes: [["type", "email"], ["required", true]],
-                events: [["input", (e) => formState.set((s) => ({ ...s, email: e.target.value }))]],
-              },
-            ],
-          },
-          {
-            type: "label",
-            children: [
-              "Mot de passe",
-              {
-                type: "input",
-                attributes: [["type", "password"], ["required", true]],
-                events: [["input", (e) => formState.set((s) => ({ ...s, password: e.target.value }))]],
-              },
-            ],
-          },
-          {
-            type: "button",
-            attributes: [["type", "submit"]],
+            type: "h1",
             children: ["Créer mon compte"],
           },
-          reactive(formState, renderFeedback),
+          {
+            type: "form",
+            attributes: [
+              [
+                "style",
+                [
+                  ["display", "flex"],
+                  ["flexDirection", "column"],
+                  ["gap", "12px"],
+                  ["maxWidth", "400px"],
+                  ["marginTop", "20px"],
+                ],
+              ],
+            ],
+            events: [["submit", handleSubmit]],
+            children: [
+              {
+                type: "label",
+                children: [
+                  "Nom d'utilisateur",
+                  {
+                    type: "input",
+                    attributes: [
+                      ["type", "text"],
+                      ["required", true],
+                      ["style", [["width", "100%"], ["padding", "8px"], ["marginTop", "4px"]]],
+                    ],
+                    events: [
+                      ["input", (e) => formState.set((s) => ({ ...s, username: e.target.value }))],
+                    ],
+                  },
+                ],
+              },
+              {
+                type: "label",
+                children: [
+                  "Email",
+                  {
+                    type: "input",
+                    attributes: [
+                      ["type", "email"],
+                      ["required", true],
+                      ["style", [["width", "100%"], ["padding", "8px"], ["marginTop", "4px"]]],
+                    ],
+                    events: [
+                      ["input", (e) => formState.set((s) => ({ ...s, email: e.target.value }))],
+                    ],
+                  },
+                ],
+              },
+              {
+                type: "label",
+                children: [
+                  "Mot de passe",
+                  {
+                    type: "input",
+                    attributes: [
+                      ["type", "password"],
+                      ["required", true],
+                      ["style", [["width", "100%"], ["padding", "8px"], ["marginTop", "4px"]]],
+                    ],
+                    events: [
+                      ["input", (e) => formState.set((s) => ({ ...s, password: e.target.value }))],
+                    ],
+                  },
+                ],
+              },
+              {
+                type: "button",
+                attributes: [["type", "submit"], ["class", ["btn", "btn-primary"]]],
+                children: ["Créer mon compte"],
+              },
+              reactive(formState, renderFeedback),
+            ],
+          },
+          {
+            type: "p",
+            attributes: [["style", [["marginTop", "16px"]]]],
+            children: ["Déjà un compte ? ", Link("/login", "Se connecter")],
+          },
         ],
-      },
-      {
-        type: "p",
-        children: ["Déjà un compte ? ", Link("/login", "Se connecter")],
       },
     ],
   };

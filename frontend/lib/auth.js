@@ -4,10 +4,12 @@ const TOKEN_KEY = "imprint_jwt";
 const USER_KEY = "imprint_user";
 
 export function getToken() {
+  if (typeof localStorage === "undefined") return null;
   return localStorage.getItem(TOKEN_KEY);
 }
 
 export function getCurrentUser() {
+  if (typeof localStorage === "undefined") return null;
   const raw = localStorage.getItem(USER_KEY);
   return raw ? JSON.parse(raw) : null;
 }
@@ -22,11 +24,13 @@ export function authHeaders() {
 }
 
 function saveSession(jwt, user) {
+  if (typeof localStorage === "undefined") return;
   localStorage.setItem(TOKEN_KEY, jwt);
   localStorage.setItem(USER_KEY, JSON.stringify(user));
 }
 
 export function logout() {
+  if (typeof localStorage === "undefined") return;
   localStorage.removeItem(TOKEN_KEY);
   localStorage.removeItem(USER_KEY);
 }

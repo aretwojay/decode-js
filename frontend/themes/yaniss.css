@@ -1,5 +1,45 @@
+/* ==========================================================================
+   Theme Yaniss — Modern Purple Dark Theme (WCAG AA Compliant)
+   ========================================================================== */
+
+:root,
 body {
-  background: #1b1033;
-  color: #f0e6ff;
-  font-family: sans-serif;
+  --bg-primary: #120B24;
+  --bg-secondary: #1E1338;
+  --bg-card: rgba(30, 19, 56, 0.85);
+  --bg-card-hover: rgba(42, 27, 78, 0.95);
+  --bg-tag: rgba(168, 85, 247, 0.18);
+  --border-color: rgba(243, 232, 255, 0.12);
+  --border-color-hover: rgba(168, 85, 247, 0.5);
+
+  --text-primary: #F5EEFD;
+  --text-secondary: #D8B4FE;
+  --text-muted: #A855F7;
+
+  --accent-primary: #9333EA;
+  --accent-gradient: linear-gradient(135deg, #A855F7 0%, #EC4899 100%);
+  --accent-hover: #A855F7;
+  --success-color: #34D399;
+  --success-bg: rgba(52, 211, 153, 0.15);
+
+  --font-sans: 'Outfit', 'Inter', system-ui, sans-serif;
+  --shadow-glow: 0 0 20px rgba(168, 85, 247, 0.25);
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-primary) !important;
+  outline-offset: 3px !important;
+}
+
+.nav-link.active {
+  color: #F5EEFD !important;
+  background: rgba(168, 85, 247, 0.25) !important;
+  border: 1px solid rgba(168, 85, 247, 0.5) !important;
+  font-weight: 700 !important;
 }

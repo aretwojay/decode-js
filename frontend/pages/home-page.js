@@ -1,175 +1,405 @@
-import Link from "../components/router/link.js";
-import { isAuthenticated, getCurrentUser, logout } from "../lib/auth.js";
+import Header, { NavLink } from "../components/header.js";
+import { fetchProfile, fetchProjects } from "../lib/api.js";
+import { appStore } from "../lib/store.js";
 
-export default function PageHome() {
-  const authenticated = isAuthenticated();
-  const user = getCurrentUser();
+/**
+ * Single-Page Landing View (T0014)
+ * Complete root route featuring Hero, Featured Projects, Quick Actions, Theme Switcher, and Auth Status
+ * @returns {Promise<Object>} Vanilla-engine structure object
+ */
+export default async function PageHome() {
+  // 1. Fetch live data with graceful offline/store fallback
+  let profile = null;
+  let featuredProjects = [];
+
+  try {
+    const [fetchedProfile, fetchedProjects] = await Promise.all([
+      fetchProfile(),
+      fetchProjects({ featured: true }),
+    ]);
+
+    profile = fetchedProfile;
+    featuredProjects = fetchedProjects || [];
+  } catch (err) {
+    console.warn("[PageHome] API offline, falling back to appStore:", err);
+  }
+
+  const storeState = appStore.getState ? appStore.getState() : appStore.get();
+  
+  // Resolve Candidate Profile
+  const candidateName =
+    profile?.nom || storeState?.profile?.nom || "Ruben Kabangamuya";
+  const candidateTitle =
+    profile?.titre || storeState?.profile?.titre || "Ingénieur Fullstack & Développeur Web";
+  const candidateBio =
+    profile?.bio ||
+    storeState?.profile?.bio ||
+    "Concepteur d'applications web performantes, spécialisé en architectures Vanilla JavaScript modernes, Strapi CMS et écosystèmes réactifs haute disponibilité.";
+  const isAvailable =
+    profile?.disponible !== undefined ? profile.disponible : true;
+  const githubUrl = profile?.github || "https://github.com";
+  const linkedinUrl = profile?.linkedin || "https://linkedin.com";
+
+  // Resolve Featured Projects (with fallback showcase if empty)
+  const projectsToDisplay =
+    featuredProjects.length > 0
+      ? featuredProjects
+      : (storeState?.projects && storeState.projects.length > 0
+          ? storeState.projects.slice(0, 3)
+          : [
+              {
+                id: 101,
+                slug: "vanilla-spa-engine",
+                titre: "Vanilla SPA Engine & Architecture MVC",
+                resume:
+                  "Moteur de rendu frontend réactif complet en JavaScript pur (ES Modules), sans aucun framework ni dépendance externe.",
+                en_vedette: true,
+                competences: [
+                  { id: 1, titre: "JavaScript ES6+" },
+                  { id: 2, titre: "Reactive State" },
+                  { id: 3, titre: "SPA Router" },
+                ],
+              },
+              {
+                id: 102,
+                slug: "strapi-headless-cms",
+                titre: "CMS Headless Strapi 5 & API Sécurisée",
+                resume:
+                  "Modélisation de données d'entreprise, contrôleurs personnalisés avec assainissement, validation stricte et ingestion contrôlée.",
+                en_vedette: true,
+                competences: [
+                  { id: 4, titre: "Strapi 5" },
+                  { id: 5, titre: "TypeScript" },
+                  { id: 6, titre: "REST API" },
+                ],
+              },
+            ]);
 
   return {
     type: "div",
     attributes: [["class", ["page", "page-home"]]],
     children: [
+      // ==========================================
+      // Header & Navigation Bar
+      // ==========================================
+      Header("/"),
+
+      // ==========================================
+      // Main Content
+      // ==========================================
       {
-        type: "header",
+        type: "main",
         children: [
+          // ------------------------------------------
+          // Hero Section
+          // ------------------------------------------
           {
-            type: "h1",
-            children: ["Générateur de Portfolio / CV"],
-          },
-          {
-            type: "nav",
-            attributes: [["class", ["main-nav"]]],
+            type: "section",
+            attributes: [
+              ["class", ["hero-section"]],
+              ["aria-labelledby", "hero-heading"],
+            ],
             children: [
-              Link("/", "Accueil"),
-              { type: "span", children: [" | "] },
-              Link("/portfolio", "Portfolio"),
-              { type: "span", children: [" | "] },
-              Link("/experiences", "Expériences"),
-              { type: "span", children: [" | "] },
-              Link("/cv", "CV"),
-              { type: "span", children: [" | "] },
-              Link("/contact", "Contact"),
-              { type: "span", children: [" | "] },
-              Link("/admin", "Administration"),
-              { type: "span", children: [" | "] },
-              Link("/table", "Démo Table"),
-              { type: "span", children: [" | "] },
-              Link("/gallery", "Démo Galerie"),
-              { type: "span", children: [" | "] },
-              ...(authenticated
-                ? [
-                    { type: "span", children: [`Connecté : ${user?.username ?? ""}`] },
-                    { type: "span", children: [" — "] },
-                    {
-                      type: "a",
-                      attributes: [["href", "#"]],
-                      children: ["Se déconnecter"],
-                      events: [
-                        [
-                          "click",
-                          (event) => {
-                            event.preventDefault();
-                            logout();
-                            window.history.pushState({}, undefined, "/");
-                            window.dispatchEvent(new Event("pushstate"));
-                          },
+              {
+                type: "div",
+                attributes: [["class", ["hero-badge-container"]]],
+                children: [
+                  {
+                    type: "span",
+                    attributes: [["class", ["availability-badge"]]],
+                    children: [
+                      {
+                        type: "span",
+                        attributes: [["class", ["badge-dot"]]],
+                        children: [],
+                      },
+                      isAvailable
+                        ? "Disponible pour de nouvelles opportunités"
+                        : "En mission actuellement",
+                    ],
+                  },
+                ],
+              },
+              {
+                type: "h1",
+                attributes: [
+                  ["id", "hero-heading"],
+                  ["class", ["hero-title"]],
+                ],
+                children: [
+                  "Bonjour, je suis ",
+                  {
+                    type: "span",
+                    attributes: [["class", ["highlight"]]],
+                    children: [candidateName],
+                  },
+                  ".",
+                ],
+              },
+              {
+                type: "p",
+                attributes: [["class", ["hero-subtitle"]]],
+                children: [candidateTitle],
+              },
+              {
+                type: "p",
+                attributes: [["class", ["hero-bio"]]],
+                children: [candidateBio],
+              },
+              {
+                type: "div",
+                attributes: [["class", ["hero-actions"]]],
+                children: [
+                  NavLink("/portfolio", "Explorer les Projets →", ["btn", "btn-primary"]),
+                  NavLink("/cv", "Consulter mon CV", ["btn", "btn-secondary"]),
+                  NavLink("/contact", "Me Contacter", ["btn", "btn-secondary"]),
+                ],
+              },
+            ],
+          },
+
+          // ------------------------------------------
+          // Featured Projects Section
+          // ------------------------------------------
+          {
+            type: "section",
+            attributes: [
+              ["class", ["section", "featured-section"]],
+              ["aria-labelledby", "featured-heading"],
+            ],
+            children: [
+              {
+                type: "div",
+                attributes: [["class", ["section-header"]]],
+                children: [
+                  {
+                    type: "div",
+                    children: [
+                      {
+                        type: "h2",
+                        attributes: [
+                          ["id", "featured-heading"],
+                          ["class", ["section-title"]],
                         ],
-                      ],
-                    },
-                  ]
-                : [Link("/login", "Se connecter"), { type: "span", children: [" | "] }, Link("/signup", "Créer un compte")]),
+                        children: ["Projets en Vedette"],
+                      },
+                      {
+                        type: "p",
+                        attributes: [["class", ["section-subtitle"]]],
+                        children: [
+                          "Sélection de réalisations techniques et architectures logicielles",
+                        ],
+                      },
+                    ],
+                  },
+                  NavLink("/portfolio", "Voir tout le catalogue →", ["section-link"]),
+                ],
+              },
+              {
+                type: "div",
+                attributes: [["class", ["grid", "projects-grid"]]],
+                children: projectsToDisplay.map((project) => {
+                  const projectTags =
+                    project.competences && project.competences.length > 0
+                      ? project.competences.map((c) => c.titre || c.name || c)
+                      : Array.isArray(project.technologies)
+                      ? project.technologies
+                      : [];
+
+                  return {
+                    type: "article",
+                    attributes: [["class", ["card", "project-card"]]],
+                    children: [
+                      {
+                        type: "span",
+                        attributes: [["class", ["card-tag-featured"]]],
+                        children: ["En Vedette"],
+                      },
+                      {
+                        type: "h3",
+                        attributes: [["class", ["card-title"]]],
+                        children: [project.titre || "Projet"],
+                      },
+                      {
+                        type: "p",
+                        attributes: [["class", ["card-summary"]]],
+                        children: [
+                          project.resume ||
+                            (typeof project.description === "string"
+                              ? project.description
+                              : "Architecture et réalisation technique."),
+                        ],
+                      },
+                      projectTags.length > 0
+                        ? {
+                            type: "div",
+                            attributes: [["class", ["tags-list"]]],
+                            children: projectTags.map((tag) => ({
+                              type: "span",
+                              attributes: [["class", ["tag"]]],
+                              children: [typeof tag === "string" ? tag : tag.titre || tag.name || String(tag)],
+                            })),
+                          }
+                        : { type: "div", children: [] },
+                      NavLink(
+                        `/portfolio/${project.slug || project.id}`,
+                        ["Découvrir le projet →"],
+                        ["card-footer-link"]
+                      ),
+                    ],
+                  };
+                }),
+              },
+            ],
+          },
+
+          // ------------------------------------------
+          // Quick Navigation & Explorer Section
+          // ------------------------------------------
+          {
+            type: "section",
+            attributes: [
+              ["class", ["section", "overview-section"]],
+              ["aria-labelledby", "explore-heading"],
+            ],
+            children: [
+              {
+                type: "div",
+                attributes: [["class", ["section-header"]]],
+                children: [
+                  {
+                    type: "h2",
+                    attributes: [
+                      ["id", "explore-heading"],
+                      ["class", ["section-title"]],
+                    ],
+                    children: ["Parcours & Sections"],
+                  },
+                ],
+              },
+              {
+                type: "div",
+                attributes: [["class", ["overview-grid"]]],
+                children: [
+                  NavLink(
+                    "/experiences",
+                    [
+                      {
+                        type: "div",
+                        attributes: [["class", ["overview-card-title"]]],
+                        children: ["💼 Expériences"],
+                      },
+                      {
+                        type: "p",
+                        attributes: [["class", ["overview-card-desc"]]],
+                        children: [
+                          "Historique des postes, missions et réalisations professionnelles.",
+                        ],
+                      },
+                    ],
+                    ["overview-card"]
+                  ),
+                  NavLink(
+                    "/cv",
+                    [
+                      {
+                        type: "div",
+                        attributes: [["class", ["overview-card-title"]]],
+                        children: ["📄 Curriculum Vitae"],
+                      },
+                      {
+                        type: "p",
+                        attributes: [["class", ["overview-card-desc"]]],
+                        children: [
+                          "Vue interactive complète, compétences, diplômes et sélecteur de styles.",
+                        ],
+                      },
+                    ],
+                    ["overview-card"]
+                  ),
+                  NavLink(
+                    "/contact",
+                    [
+                      {
+                        type: "div",
+                        attributes: [["class", ["overview-card-title"]]],
+                        children: ["✉️ Contact"],
+                      },
+                      {
+                        type: "p",
+                        attributes: [["class", ["overview-card-desc"]]],
+                        children: [
+                          "Formulaire direct relié à l'API d'ingestion sécurisée.",
+                        ],
+                      },
+                    ],
+                    ["overview-card"]
+                  ),
+                ],
+              },
+            ],
+          },
+
+          // ------------------------------------------
+          // Démos & Espace Technique
+          // ------------------------------------------
+          {
+            type: "section",
+            attributes: [["class", ["section", "demos-section"]]],
+            children: [
+              {
+                type: "p",
+                attributes: [["style", [["color", "var(--text-muted)"], ["fontSize", "0.85rem"]]]],
+                children: [
+                  "Démos techniques du moteur Vanilla : ",
+                  NavLink("/table", "Table Réactive", ["footer-link"]),
+                  { type: "span", children: [" • "] },
+                  NavLink("/gallery", "Galerie d'Images", ["footer-link"]),
+                  { type: "span", children: [" • "] },
+                  NavLink("/admin", "Espace Admin Strapi", ["footer-link"]),
+                ],
+              },
             ],
           },
         ],
       },
+
+      // ==========================================
+      // Footer
+      // ==========================================
       {
-        type: "main",
+        type: "footer",
+        attributes: [["class", ["site-footer"]]],
         children: [
           {
-            type: "section",
-            attributes: [["class", ["intro-section"]]],
+            type: "div",
             children: [
-              {
-                type: "p",
-                children: [
-                  "Bienvenue sur l'application SPA Vanilla JavaScript. Choisissez une section pour naviguer :",
-                ],
-              },
+              `© ${new Date().getFullYear()} ${candidateName}. Propulsé par Vanilla-Engine & Strapi 5.`,
             ],
           },
           {
-            type: "section",
-            attributes: [["class", ["routes-directory"]]],
+            type: "div",
+            attributes: [["class", ["footer-socials"]]],
             children: [
               {
-                type: "h2",
-                children: ["Pages & Vues Applicatives"],
-              },
-              {
-                type: "ul",
-                attributes: [["class", ["routes-list"]]],
-                children: [
-                  {
-                    type: "li",
-                    children: [
-                      Link("/", "Accueil (/)"),
-                      { type: "span", children: [" — Page d'accueil et présentation générale"] },
-                    ],
-                  },
-                  {
-                    type: "li",
-                    children: [
-                      Link("/portfolio", "Portfolio & Projets (/portfolio)"),
-                      { type: "span", children: [" — Catalogue des projets réalisés"] },
-                    ],
-                  },
-                  {
-                    type: "li",
-                    children: [
-                      Link("/portfolio/projet-ecommerce", "Détail Projet (/portfolio/projet-ecommerce)"),
-                      { type: "span", children: [" — Route dynamique avec paramètre :slug"] },
-                    ],
-                  },
-                  {
-                    type: "li",
-                    children: [
-                      Link("/experiences", "Expériences (/experiences)"),
-                      { type: "span", children: [" — Liste des expériences professionnelles depuis le CMS"] },
-                    ],
-                  },
-                  {
-                    type: "li",
-                    children: [
-                      Link("/cv", "Curriculum Vitae (/cv)"),
-                      { type: "span", children: [" — Vue CV interactive avec thèmes et état réactif"] },
-                    ],
-                  },
-                  {
-                    type: "li",
-                    children: [
-                      Link("/contact", "Contact (/contact)"),
-                      { type: "span", children: [" — Formulaire de contact connecté à l'API Strapi"] },
-                    ],
-                  },
+                type: "a",
+                attributes: [
+                  ["href", githubUrl],
+                  ["target", "_blank"],
+                  ["rel", "noopener noreferrer"],
+                  ["class", ["footer-link"]],
                 ],
+                children: ["GitHub"],
               },
               {
-                type: "h2",
-                children: ["Espace Administration & Démos Techniques"],
-              },
-              {
-                type: "ul",
-                attributes: [["class", ["routes-list"]]],
-                children: [
-                  {
-                    type: "li",
-                    children: [
-                      Link("/admin", "Administration (/admin)"),
-                      { type: "span", children: [" — Panneau d'administration CMS Strapi"] },
-                    ],
-                  },
-                  {
-                    type: "li",
-                    children: [
-                      Link("/table", "Démo Table Réactive (/table)"),
-                      { type: "span", children: [" — Composant tableau avec modification réactive de cellules"] },
-                    ],
-                  },
-                  {
-                    type: "li",
-                    children: [
-                      Link("/gallery", "Démo Galerie (/gallery)"),
-                      { type: "span", children: [" — Galerie d'images et sélecteur de médias"] },
-                    ],
-                  },
-                  {
-                    type: "li",
-                    children: [
-                      Link("/page-inexistante-404", "Route 404 (/page-inexistante-404)"),
-                      { type: "span", children: [" — Page de fallback introuvable"] },
-                    ],
-                  },
+                type: "a",
+                attributes: [
+                  ["href", linkedinUrl],
+                  ["target", "_blank"],
+                  ["rel", "noopener noreferrer"],
+                  ["class", ["footer-link"]],
                 ],
+                children: ["LinkedIn"],
               },
             ],
           },
