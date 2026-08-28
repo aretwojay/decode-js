@@ -12,6 +12,16 @@
   },
   "pluginOptions": {},
   "attributes": {
+    "owner": {
+      "type": "relation",
+      "relation": "oneToOne",
+      "target": "plugin::users-permissions.user"
+    },
+    "slug": {
+      "type": "uid",
+      "targetField": "nom",
+      "required": true
+    },
     "nom": {
       "type": "string",
       "required": true,

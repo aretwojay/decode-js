@@ -2,6 +2,7 @@ import Link from "../components/router/link.js";
 import ThemeSwitcher from "../components/theme-switcher.js";
 import { fetchProfile, fetchProjects } from "../lib/api.js";
 import { appStore } from "../lib/store.js";
+import { isAuthenticated, getCurrentUser, logout } from "../lib/auth.js";
 
 /**
  * Creates an accessible client-side link element with custom classes and children
@@ -35,10 +36,13 @@ function NavLink(url, children, classNames = [], extraAttrs = []) {
 
 /**
  * Single-Page Landing View (T0014)
- * Complete root route featuring Hero, Featured Projects, Quick Actions, and Theme Switcher
+ * Complete root route featuring Hero, Featured Projects, Quick Actions, Theme Switcher, and Auth Status
  * @returns {Promise<Object>} Vanilla-engine structure object
  */
 export default async function PageHome() {
+  const authenticated = isAuthenticated();
+  const currentUser = getCurrentUser();
+
   // 1. Fetch live data with graceful offline/store fallback
   let profile = null;
   let featuredProjects = [];
@@ -59,9 +63,9 @@ export default async function PageHome() {
   
   // Resolve Candidate Profile
   const candidateName =
-    profile?.nom || storeState?.profile?.name || "Ruben Kabangamuya";
+    profile?.nom || storeState?.profile?.nom || "Ruben Kabangamuya";
   const candidateTitle =
-    profile?.titre || storeState?.profile?.title || "Ingénieur Fullstack & Développeur Web";
+    profile?.titre || storeState?.profile?.titre || "Ingénieur Fullstack & Développeur Web";
   const candidateBio =
     profile?.bio ||
     storeState?.profile?.bio ||
@@ -137,6 +141,34 @@ export default async function PageHome() {
               NavLink("/experiences", "Expériences", ["nav-link"]),
               NavLink("/cv", "CV", ["nav-link"]),
               NavLink("/contact", "Contact", ["nav-link"]),
+              ...(authenticated
+                ? [
+                    {
+                      type: "span",
+                      attributes: [["class", ["nav-link", "user-status"]]],
+                      children: [`👤 ${currentUser?.username ?? ""}`],
+                    },
+                    {
+                      type: "a",
+                      attributes: [["href", "#"], ["class", ["nav-link", "logout-btn"]]],
+                      children: ["Déconnexion"],
+                      events: [
+                        [
+                          "click",
+                          (event) => {
+                            event.preventDefault();
+                            logout();
+                            window.history.pushState({}, undefined, "/");
+                            window.dispatchEvent(new Event("pushstate"));
+                          },
+                        ],
+                      ],
+                    },
+                  ]
+                : [
+                    NavLink("/login", "Connexion", ["nav-link"]),
+                    NavLink("/signup", "Créer un compte", ["nav-link"]),
+                  ]),
             ],
           },
           ThemeSwitcher(),
