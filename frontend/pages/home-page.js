@@ -1,38 +1,6 @@
-import Link from "../components/router/link.js";
-import ThemeSwitcher from "../components/theme-switcher.js";
+import Header, { NavLink } from "../components/header.js";
 import { fetchProfile, fetchProjects } from "../lib/api.js";
 import { appStore } from "../lib/store.js";
-import { isAuthenticated, getCurrentUser, logout } from "../lib/auth.js";
-
-/**
- * Creates an accessible client-side link element with custom classes and children
- * @param {string} url
- * @param {Array|string} children
- * @param {Array<string>} [classNames=[]]
- * @param {Array} [extraAttrs=[]]
- * @returns {Object} Vanilla-engine structure object
- */
-function NavLink(url, children, classNames = [], extraAttrs = []) {
-  return {
-    type: "a",
-    attributes: [
-      ["href", url],
-      ["class", Array.isArray(classNames) ? classNames : [classNames]],
-      ...extraAttrs,
-    ],
-    events: [
-      [
-        "click",
-        (event) => {
-          event.preventDefault();
-          window.history.pushState({}, undefined, url);
-          window.dispatchEvent(new Event("pushstate"));
-        },
-      ],
-    ],
-    children: Array.isArray(children) ? children : [children],
-  };
-}
 
 /**
  * Single-Page Landing View (T0014)
@@ -40,9 +8,6 @@ function NavLink(url, children, classNames = [], extraAttrs = []) {
  * @returns {Promise<Object>} Vanilla-engine structure object
  */
 export default async function PageHome() {
-  const authenticated = isAuthenticated();
-  const currentUser = getCurrentUser();
-
   // 1. Fetch live data with graceful offline/store fallback
   let profile = null;
   let featuredProjects = [];
@@ -117,63 +82,7 @@ export default async function PageHome() {
       // ==========================================
       // Header & Navigation Bar
       // ==========================================
-      {
-        type: "header",
-        attributes: [["class", ["site-header"]]],
-        children: [
-          NavLink(
-            "/",
-            [
-              {
-                type: "span",
-                attributes: [["class", ["site-logo"]]],
-                children: ["⚡ Portfolio.js"],
-              },
-            ],
-            ["logo-link"]
-          ),
-          {
-            type: "nav",
-            attributes: [["class", ["main-nav"]], ["aria-label", "Navigation principale"]],
-            children: [
-              NavLink("/", "Accueil", ["nav-link", "active"]),
-              NavLink("/portfolio", "Portfolio", ["nav-link"]),
-              NavLink("/experiences", "Expériences", ["nav-link"]),
-              NavLink("/cv", "CV", ["nav-link"]),
-              NavLink("/contact", "Contact", ["nav-link"]),
-              ...(authenticated
-                ? [
-                    {
-                      type: "span",
-                      attributes: [["class", ["nav-link", "user-status"]]],
-                      children: [`👤 ${currentUser?.username ?? ""}`],
-                    },
-                    {
-                      type: "a",
-                      attributes: [["href", "#"], ["class", ["nav-link", "logout-btn"]]],
-                      children: ["Déconnexion"],
-                      events: [
-                        [
-                          "click",
-                          (event) => {
-                            event.preventDefault();
-                            logout();
-                            window.history.pushState({}, undefined, "/");
-                            window.dispatchEvent(new Event("pushstate"));
-                          },
-                        ],
-                      ],
-                    },
-                  ]
-                : [
-                    NavLink("/login", "Connexion", ["nav-link"]),
-                    NavLink("/signup", "Créer un compte", ["nav-link"]),
-                  ]),
-            ],
-          },
-          ThemeSwitcher(),
-        ],
-      },
+      Header("/"),
 
       // ==========================================
       // Main Content

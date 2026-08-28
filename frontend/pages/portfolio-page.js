@@ -1,3 +1,4 @@
+import Header from "../components/header.js";
 import Link from "../components/router/link.js";
 
 export default function PagePortfolio() {
@@ -5,42 +6,37 @@ export default function PagePortfolio() {
     type: "div",
     attributes: [["class", ["page", "page-portfolio"]]],
     children: [
+      Header("/portfolio"),
       {
-        type: "h1",
-        children: ["Portfolio & Projets"],
-      },
-      {
-        type: "nav",
-        children: [
-          Link("/", "← Retour à l'accueil"),
-        ],
-      },
-      {
-        type: "section",
+        type: "main",
         children: [
           {
-            type: "p",
-            children: ["Catalogue des projets réalisés :"],
+            type: "h1",
+            children: ["Portfolio & Projets"],
           },
           {
-            type: "ul",
+            type: "section",
             children: [
               {
-                type: "li",
-                children: [
-                  Link("/portfolio/projet-ecommerce", "Projet E-commerce (voir détail)"),
-                ],
+                type: "p",
+                children: ["Catalogue des projets réalisés :"],
               },
               {
-                type: "li",
+                type: "ul",
+                attributes: [["class", ["routes-list"]]],
                 children: [
-                  Link("/portfolio/portfolio-vanilla-js", "Portfolio Vanilla JS (voir détail)"),
-                ],
-              },
-              {
-                type: "li",
-                children: [
-                  Link("/portfolio/application-mobile-flutter", "Application Mobile (voir détail)"),
+                  {
+                    type: "li",
+                    children: [
+                      Link("/portfolio/projet-ecommerce", "Projet E-commerce (voir détail)"),
+                    ],
+                  },
+                  {
+                    type: "li",
+                    children: [
+                      Link("/portfolio/vanilla-spa-engine", "Vanilla SPA Engine (voir détail)"),
+                    ],
+                  },
                 ],
               },
             ],
