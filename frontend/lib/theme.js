@@ -20,6 +20,7 @@ export function subscribeTheme(listener) {
 }
 
 export function applyTheme(themeName) {
+  if (typeof document === "undefined") return;
   let link = document.getElementById("theme-stylesheet");
   if (!link) {
     link = document.createElement("link");
