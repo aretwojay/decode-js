@@ -1,0 +1,16 @@
+{
+  "rewrites": [
+    { "source": "/portfolio", "destination": "/index.html" },
+    { "source": "/portfolio/:slug", "destination": "/index.html" },
+    { "source": "/cv", "destination": "/index.html" },
+    { "source": "/contact", "destination": "/index.html" },
+    { "source": "/admin", "destination": "/index.html" },
+    { "source": "/table", "destination": "/index.html" },
+    { "source": "/gallery", "destination": "/index.html" },
+    { "source": "/experiences", "destination": "/index.html" },
+    { "source": "/signup", "destination": "/index.html" },
+    { "source": "/login", "destination": "/index.html" },
+    { "source": "/mentions-legales", "destination": "/index.html" },
+    { "source": "/confidentialite", "destination": "/index.html" }
+  ]
+}
