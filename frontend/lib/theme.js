@@ -1,4 +1,5 @@
 import createState from "./create-state.js";
+import { appStore } from "./store.js";
 
 export const AvailablesThemes = ["iris", "yaniss", "ruben"];
 
@@ -13,6 +14,13 @@ export function setTheme(themeName) {
     throw new Error(`Ce Thème n'existe pas : "${themeName}".`);
   }
   themeState.set(themeName);
+
+  if (appStore && typeof appStore.setState === "function") {
+    appStore.setState((state) => ({
+      ...state,
+      theme: themeName,
+    }));
+  }
 }
 
 export function subscribeTheme(listener) {
@@ -21,6 +29,11 @@ export function subscribeTheme(listener) {
 
 export function applyTheme(themeName) {
   if (typeof document === "undefined") return;
+
+  if (document.body) {
+    document.body.dataset.theme = themeName;
+  }
+
   let link = document.getElementById("theme-stylesheet");
   if (!link) {
     link = document.createElement("link");
@@ -33,4 +46,3 @@ export function applyTheme(themeName) {
 
 subscribeTheme(applyTheme);
 applyTheme(getTheme());
-

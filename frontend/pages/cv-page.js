@@ -1,192 +1,49 @@
 import Link from "../components/router/link.js";
+import ThemeSwitcher from "../components/theme-switcher.js";
+import { syncStoreFromApi } from "../lib/api.js";
 import reactive from "../lib/reactive.js";
-import { appStore, updateProfile, addSkill, resetStore } from "../lib/store.js";
-import { renderCVPreview } from "../utils/cv.js";
+import { appStore } from "../lib/store.js";
+import { renderCVTemplate } from "../utils/cv.js";
 
 /**
- * CV & Profile State Management Page Component
- * @returns {Object} Vanilla-engine structure object
+ * CV page - data-driven candidate view
+ * Uses the existing appStore + API sync, and updates live on state change.
  */
-export default function PageCV() {
-  const currentProfile = appStore.getState().profile;
+export default async function PageCV() {
+  try {
+    await syncStoreFromApi(appStore);
+  } catch (error) {
+    console.warn(
+      "[PageCV] API sync failed, keeping current store state:",
+      error,
+    );
+  }
 
   return {
     type: "div",
     attributes: [["class", ["page", "page-cv"]]],
     children: [
       {
-        type: "h1",
-        children: ["Éditeur & Curriculum Vitae (State Management)"],
-      },
-      {
-        type: "nav",
-        children: [
-          Link("/", "← Accueil"),
-          { type: "span", children: [" | "] },
-          Link("/portfolio", "Portfolio"),
-          { type: "span", children: [" | "] },
-          Link("/contact", "Contact"),
-        ],
-      },
-      {
-        type: "section",
-        attributes: [
-          ["id", "editor-form-section"],
-          [
-            "style",
-            [
-              ["marginTop", "16px"],
-              ["padding", "16px"],
-              ["border", "1px solid #cbd5e1"],
-              ["borderRadius", "8px"],
-            ],
-          ],
-        ],
+        type: "div",
+        attributes: [["class", ["cv-page-header"]]],
         children: [
           {
-            type: "h3",
-            children: ["Formulaire d'Édition du Profil"],
-          },
-          {
-            type: "div",
-            attributes: [
-              [
-                "style",
-                [
-                  ["display", "flex"],
-                  ["flexDirection", "column"],
-                  ["gap", "10px"],
-                  ["maxWidth", "500px"],
-                ],
-              ],
-            ],
+            type: "nav",
+            attributes: [["class", ["cv-breadcrumb"]]],
             children: [
-              {
-                type: "label",
-                children: [
-                  "Nom complet : ",
-                  {
-                    type: "input",
-                    attributes: [
-                      ["id", "input-nom"],
-                      ["type", "text"],
-                      ["value", currentProfile.nom],
-                      ["style", [["width", "100%"], ["padding", "6px"]]],
-                    ],
-                    events: [
-                      ["input", (e) => updateProfile({ nom: e.target.value })],
-                    ],
-                  },
-                ],
-              },
-              {
-                type: "label",
-                children: [
-                  "Titre professionnel : ",
-                  {
-                    type: "input",
-                    attributes: [
-                      ["id", "input-titre"],
-                      ["type", "text"],
-                      ["value", currentProfile.titre],
-                      ["style", [["width", "100%"], ["padding", "6px"]]],
-                    ],
-                    events: [
-                      ["input", (e) => updateProfile({ titre: e.target.value })],
-                    ],
-                  },
-                ],
-              },
-              {
-                type: "label",
-                children: [
-                  "Bio / Résumé : ",
-                  {
-                    type: "input",
-                    attributes: [
-                      ["id", "input-bio"],
-                      ["type", "text"],
-                      ["value", currentProfile.bio],
-                      ["style", [["width", "100%"], ["padding", "6px"]]],
-                    ],
-                    events: [
-                      ["input", (e) => updateProfile({ bio: e.target.value })],
-                    ],
-                  },
-                ],
-              },
-              {
-                type: "div",
-                attributes: [
-                  [
-                    "style",
-                    [["marginTop", "8px"], ["display", "flex"], ["gap", "8px"]],
-                  ],
-                ],
-                children: [
-                  {
-                    type: "button",
-                    attributes: [
-                      ["id", "btn-add-skill-ts"],
-                      ["style", [["padding", "6px 12px"], ["cursor", "pointer"]]],
-                    ],
-                    events: [
-                      [
-                        "click",
-                        () =>
-                          addSkill({ titre: "TypeScript", niveau: "avance" }),
-                      ],
-                    ],
-                    children: ["+ Ajouter Compétence TypeScript"],
-                  },
-                  {
-                    type: "button",
-                    attributes: [
-                      ["id", "btn-add-skill-node"],
-                      ["style", [["padding", "6px 12px"], ["cursor", "pointer"]]],
-                    ],
-                    events: [
-                      [
-                        "click",
-                        () =>
-                          addSkill({ titre: "Node.js", niveau: "expert" }),
-                      ],
-                    ],
-                    children: ["+ Ajouter Compétence Node.js"],
-                  },
-                  {
-                    type: "button",
-                    attributes: [
-                      ["id", "btn-reset-store"],
-                      [
-                        "style",
-                        [
-                          ["padding", "6px 12px"],
-                          ["cursor", "pointer"],
-                          ["backgroundColor", "#fee2e2"],
-                          ["borderColor", "#f87171"],
-                        ],
-                      ],
-                    ],
-                    events: [
-                      [
-                        "click",
-                        () => {
-                          resetStore();
-                          window.location.reload();
-                        },
-                      ],
-                    ],
-                    children: ["🔄 Réinitialiser le store"],
-                  },
-                ],
-              },
+              Link("/", "← Accueil"),
+              { type: "span", children: [" | "] },
+              Link("/portfolio", "Portfolio"),
+              { type: "span", children: [" | "] },
+              Link("/experiences", "Expériences"),
+              { type: "span", children: [" | "] },
+              Link("/contact", "Contact"),
             ],
           },
+          ThemeSwitcher(),
         ],
       },
-      // Intégration du composant réactif lié à appStore
-      reactive(appStore, renderCVPreview),
+      reactive(appStore, renderCVTemplate),
     ],
   };
 }
