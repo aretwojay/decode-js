@@ -332,6 +332,119 @@ export async function fetchProfile({ statut } = {}) {
   }
 }
 
+// Pas d'import depuis auth.js ici : auth.js importe déjà API_BASE_URL
+// depuis ce fichier, un import inverse créerait une dépendance circulaire.
+const AUTH_TOKEN_KEY = "imprint_jwt";
+function authedHeaders() {
+  if (typeof localStorage === "undefined") return {};
+  const token = localStorage.getItem(AUTH_TOKEN_KEY);
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+/**
+ * Fetches the profil belonging to the currently authenticated user
+ * (draft or published), regardless of publication status.
+ * @returns {Promise<Object|null>}
+ */
+export async function fetchMyProfile() {
+  try {
+    const res = await apiFetch("profils", { headers: authedHeaders() });
+    const profils = normalizeCollection(res);
+    return profils[0] || null;
+  } catch (err) {
+    return null;
+  }
+}
+
+/**
+ * Creates the profil for the currently authenticated user (one per account).
+ * @param {Object} data
+ * @returns {Promise<Object>}
+ */
+export async function createProfile(data) {
+  const res = await apiFetch("profils", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authedHeaders() },
+    body: JSON.stringify({ data }),
+  });
+  return normalizeEntity(res.data);
+}
+
+/**
+ * Updates the profil of the currently authenticated user.
+ * @param {string} documentId
+ * @param {Object} data
+ * @returns {Promise<Object>}
+ */
+export async function updateProfile(documentId, data) {
+  const res = await apiFetch(`profils/${documentId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...authedHeaders() },
+    body: JSON.stringify({ data }),
+  });
+  return normalizeEntity(res.data);
+}
+
+/**
+ * Fetches the authenticated user's own experiences/projets/competences
+ * (draft or published), regardless of publication status.
+ */
+export async function fetchMyExperiences() {
+  try {
+    const res = await apiFetch("experiences", { headers: authedHeaders() });
+    return normalizeCollection(res);
+  } catch (err) {
+    return [];
+  }
+}
+export async function fetchMyProjects() {
+  try {
+    const res = await apiFetch("projets", { headers: authedHeaders() });
+    return normalizeCollection(res);
+  } catch (err) {
+    return [];
+  }
+}
+export async function fetchMyCompetences() {
+  try {
+    const res = await apiFetch("competences", { headers: authedHeaders() });
+    return normalizeCollection(res);
+  } catch (err) {
+    return [];
+  }
+}
+
+function makeCrud(resource) {
+  return {
+    create: async (data) => {
+      const res = await apiFetch(resource, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authedHeaders() },
+        body: JSON.stringify({ data }),
+      });
+      return normalizeEntity(res.data);
+    },
+    update: async (documentId, data) => {
+      const res = await apiFetch(`${resource}/${documentId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...authedHeaders() },
+        body: JSON.stringify({ data }),
+      });
+      return normalizeEntity(res.data);
+    },
+    remove: async (documentId) => {
+      await apiFetch(`${resource}/${documentId}`, {
+        method: "DELETE",
+        headers: authedHeaders(),
+      });
+    },
+  };
+}
+
+export const experienceCrud = makeCrud("experiences");
+export const projectCrud = makeCrud("projets");
+export const competenceCrud = makeCrud("competences");
+
 /**
  * Sends a contact message to the controlled public ingestion endpoint
  * @param {Object} messageData
@@ -437,6 +550,15 @@ export default {
   fetchCompetences,
   fetchFormations,
   fetchProfile,
+  fetchMyProfile,
+  createProfile,
+  updateProfile,
+  fetchMyExperiences,
+  fetchMyProjects,
+  fetchMyCompetences,
+  experienceCrud,
+  projectCrud,
+  competenceCrud,
   sendMessage,
   syncStoreFromApi,
 };
