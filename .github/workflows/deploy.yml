@@ -1,0 +1,40 @@
+name: Déploiement production
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Commit, tag ou branche à déployer (laisser vide = dernier commit de main). Utiliser pour un rollback : indiquer un commit antérieur."
+        required: false
+        default: ""
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Déployer via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: root
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            cd /opt/imprint
+            REF="${{ github.event.inputs.ref }}"
+            if [ -z "$REF" ]; then
+              ./deploy.sh
+            else
+              ./deploy.sh "$REF"
+            fi
+
+      - name: Vérifier que le site répond
+        run: |
+          sleep 10
+          status=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.DEPLOY_HOST }}/)
+          echo "Statut du site : $status"
+          if [ "$status" != "200" ]; then
+            echo "::error::Le site ne répond pas correctement après déploiement (HTTP $status)"
+            exit 1
+          fi
