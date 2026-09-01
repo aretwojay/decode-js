@@ -1,17 +1,50 @@
-import { API_BASE_URL } from "./api.js";
+import { AUTH_TOKEN_KEY, buildApiUrl } from "./api.js";
 
-const TOKEN_KEY = "imprint_jwt";
 const USER_KEY = "imprint_user";
 
+function getStorage() {
+  if (typeof window === "undefined" || !("localStorage" in window)) return null;
+
+  try {
+    return window.localStorage;
+  } catch (error) {
+    console.warn(
+      "getStorage: localStorage is not available",
+      error && error.message ? error.message : error,
+    );
+    return null;
+  }
+}
+
 export function getToken() {
-  if (typeof localStorage === "undefined") return null;
-  return localStorage.getItem(TOKEN_KEY);
+  const storage = getStorage();
+  if (!storage) return null;
+
+  try {
+    return storage.getItem(AUTH_TOKEN_KEY);
+  } catch (error) {
+    console.warn(
+      "getToken: unable to read token from localStorage",
+      error && error.message ? error.message : error,
+    );
+    return null;
+  }
 }
 
 export function getCurrentUser() {
-  if (typeof localStorage === "undefined") return null;
-  const raw = localStorage.getItem(USER_KEY);
-  return raw ? JSON.parse(raw) : null;
+  const storage = getStorage();
+  if (!storage) return null;
+
+  try {
+    const raw = storage.getItem(USER_KEY);
+    return raw ? JSON.parse(raw) : null;
+  } catch (error) {
+    console.warn(
+      "getCurrentUser: unable to read user from localStorage",
+      error && error.message ? error.message : error,
+    );
+    return null;
+  }
 }
 
 export function isAuthenticated() {
@@ -24,19 +57,37 @@ export function authHeaders() {
 }
 
 function saveSession(jwt, user) {
-  if (typeof localStorage === "undefined") return;
-  localStorage.setItem(TOKEN_KEY, jwt);
-  localStorage.setItem(USER_KEY, JSON.stringify(user));
+  const storage = getStorage();
+  if (!storage) return;
+
+  try {
+    storage.setItem(AUTH_TOKEN_KEY, jwt);
+    storage.setItem(USER_KEY, JSON.stringify(user));
+  } catch (error) {
+    console.warn(
+      "saveSession: unable to persist auth data",
+      error && error.message ? error.message : error,
+    );
+  }
 }
 
 export function logout() {
-  if (typeof localStorage === "undefined") return;
-  localStorage.removeItem(TOKEN_KEY);
-  localStorage.removeItem(USER_KEY);
+  const storage = getStorage();
+  if (!storage) return;
+
+  try {
+    storage.removeItem(AUTH_TOKEN_KEY);
+    storage.removeItem(USER_KEY);
+  } catch (error) {
+    console.warn(
+      "logout: unable to remove auth data",
+      error && error.message ? error.message : error,
+    );
+  }
 }
 
 export async function register({ username, email, password }) {
-  const res = await fetch(`${API_BASE_URL}/api/auth/local/register`, {
+  const res = await fetch(buildApiUrl("auth/local/register"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ username, email, password }),
@@ -50,7 +101,7 @@ export async function register({ username, email, password }) {
 }
 
 export async function login({ identifier, password }) {
-  const res = await fetch(`${API_BASE_URL}/api/auth/local`, {
+  const res = await fetch(buildApiUrl("auth/local"), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ identifier, password }),

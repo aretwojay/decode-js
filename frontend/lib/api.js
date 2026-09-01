@@ -6,11 +6,59 @@
 import { appStore } from "./store.js";
 
 /**
- * Base URL for the Strapi Content API
+ * Resolve the API base URL in a robust, explicit way for different environments:
+ * - Client: prefer window.__API_URL__ when provided (absolute origin or relative path),
+ *   fall back to same-origin + '/api' (nginx proxy pattern).
+ * - Server (SSR/build): prefer process.env.API_URL or process.env.VITE_API_URL
+ *   injected at build/runtime. In production, if no server-side value is present we
+ *   fail fast rather than silently calling localhost.
  */
-export const API_BASE_URL =
-  (typeof window !== "undefined" && window.__API_URL__) ||
-  "http://localhost:1337";
+function resolveApiBaseUrl() {
+  if (typeof window === "undefined") {
+    if (typeof process !== "undefined" && process.env) {
+      if (process.env.API_URL) return process.env.API_URL.replace(/\/$/, "");
+      if (process.env.VITE_API_URL)
+        return process.env.VITE_API_URL.replace(/\/$/, "");
+      if (process.env.NODE_ENV === "development")
+        return "http://localhost:1337";
+    }
+
+    throw new Error(
+      "API base URL is not configured for server-side rendering. Set process.env.API_URL or VITE_API_URL at build/runtime.",
+    );
+  }
+
+  if (typeof window.__API_URL__ === "string" && window.__API_URL__.length > 0) {
+    const configured = window.__API_URL__.trim();
+    if (configured.startsWith("/")) {
+      return (
+        window.location.origin.replace(/\/$/, "") +
+        configured.replace(/\/$/, "")
+      );
+    }
+    return configured.replace(/\/$/, "");
+  }
+
+  if (["localhost", "127.0.0.1"].includes(window.location.hostname)) {
+    return "http://localhost:1337";
+  }
+
+  return window.location.origin.replace(/\/$/, "") + "/api";
+}
+
+export const API_BASE_URL = resolveApiBaseUrl();
+
+export function buildApiUrl(endpoint = "") {
+  const base = API_BASE_URL.replace(/\/$/, "");
+  const normalizedEndpoint = String(endpoint || "").replace(/^\/+/, "");
+
+  if (!normalizedEndpoint) {
+    return base;
+  }
+
+  const apiPrefix = /\/api$/i.test(base) ? "" : "/api";
+  return `${base}${apiPrefix}/${normalizedEndpoint}`;
+}
 
 /**
  * Checks if a value represents a Strapi media file or array of media files
@@ -75,8 +123,8 @@ export function normalizeMedia(media) {
   const fullUrl = rawUrl.startsWith("http")
     ? rawUrl
     : rawUrl
-    ? `${API_BASE_URL}${rawUrl}`
-    : "";
+      ? `${API_BASE_URL}${rawUrl}`
+      : "";
 
   // Normalize responsive formats if present
   const normalizedFormats = {};
@@ -124,7 +172,11 @@ export function normalizeEntity(item) {
   };
 
   for (const [key, value] of Object.entries(item)) {
-    if (["id", "documentId", "createdAt", "updatedAt", "publishedAt"].includes(key)) {
+    if (
+      ["id", "documentId", "createdAt", "updatedAt", "publishedAt"].includes(
+        key,
+      )
+    ) {
       continue;
     }
 
@@ -137,7 +189,9 @@ export function normalizeEntity(item) {
         normalized[key] = normalizeMedia(value);
       } else if (Array.isArray(value)) {
         normalized[key] = value.map((subItem) =>
-          subItem && typeof subItem === "object" ? normalizeEntity(subItem) : subItem
+          subItem && typeof subItem === "object"
+            ? normalizeEntity(subItem)
+            : subItem,
         );
       } else {
         normalized[key] = normalizeEntity(value);
@@ -169,7 +223,7 @@ export function normalizeCollection(response) {
  * @returns {Promise<Object>}
  */
 async function apiFetch(endpoint, options = {}) {
-  const url = `${API_BASE_URL}/api/${endpoint.replace(/^\//, "")}`;
+  const url = buildApiUrl(endpoint);
   const fetchOptions = {
     headers: {
       Accept: "application/json",
@@ -184,7 +238,8 @@ async function apiFetch(endpoint, options = {}) {
 
     if (!response.ok) {
       const errorMessage =
-        data?.error?.message || `HTTP ${response.status} - ${response.statusText}`;
+        data?.error?.message ||
+        `HTTP ${response.status} - ${response.statusText}`;
       const error = new Error(errorMessage);
       error.status = response.status;
       error.details = data?.error?.details || null;
@@ -321,6 +376,130 @@ export async function fetchProfile({ statut } = {}) {
   }
 }
 
+// Pas d'import depuis auth.js ici : auth.js importe déjà API_BASE_URL
+// depuis ce fichier, un import inverse créerait une dépendance circulaire.
+// Keep the auth token key centralized so all auth-related code shares the same storage contract.
+export const AUTH_TOKEN_KEY = "imprint_jwt";
+
+function authedHeaders() {
+  if (typeof window === "undefined" || !("localStorage" in window)) return {};
+
+  try {
+    const token = window.localStorage.getItem(AUTH_TOKEN_KEY);
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  } catch (error) {
+    console.warn(
+      "authedHeaders: unable to access localStorage",
+      error && error.message ? error.message : error,
+    );
+    return {};
+  }
+}
+
+/**
+ * Fetches the profil belonging to the currently authenticated user
+ * (draft or published), regardless of publication status.
+ * @returns {Promise<Object|null>}
+ */
+export async function fetchMyProfile() {
+  try {
+    const res = await apiFetch("profils", { headers: authedHeaders() });
+    const profils = normalizeCollection(res);
+    return profils[0] || null;
+  } catch (err) {
+    return null;
+  }
+}
+
+/**
+ * Creates the profil for the currently authenticated user (one per account).
+ * @param {Object} data
+ * @returns {Promise<Object>}
+ */
+export async function createProfile(data) {
+  const res = await apiFetch("profils", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...authedHeaders() },
+    body: JSON.stringify({ data }),
+  });
+  return normalizeEntity(res.data);
+}
+
+/**
+ * Updates the profil of the currently authenticated user.
+ * @param {string} documentId
+ * @param {Object} data
+ * @returns {Promise<Object>}
+ */
+export async function updateProfile(documentId, data) {
+  const res = await apiFetch(`profils/${documentId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json", ...authedHeaders() },
+    body: JSON.stringify({ data }),
+  });
+  return normalizeEntity(res.data);
+}
+
+/**
+ * Fetches the authenticated user's own experiences/projets/competences
+ * (draft or published), regardless of publication status.
+ */
+export async function fetchMyExperiences() {
+  try {
+    const res = await apiFetch("experiences", { headers: authedHeaders() });
+    return normalizeCollection(res);
+  } catch (err) {
+    return [];
+  }
+}
+export async function fetchMyProjects() {
+  try {
+    const res = await apiFetch("projets", { headers: authedHeaders() });
+    return normalizeCollection(res);
+  } catch (err) {
+    return [];
+  }
+}
+export async function fetchMyCompetences() {
+  try {
+    const res = await apiFetch("competences", { headers: authedHeaders() });
+    return normalizeCollection(res);
+  } catch (err) {
+    return [];
+  }
+}
+
+function makeCrud(resource) {
+  return {
+    create: async (data) => {
+      const res = await apiFetch(resource, {
+        method: "POST",
+        headers: { "Content-Type": "application/json", ...authedHeaders() },
+        body: JSON.stringify({ data }),
+      });
+      return normalizeEntity(res.data);
+    },
+    update: async (documentId, data) => {
+      const res = await apiFetch(`${resource}/${documentId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json", ...authedHeaders() },
+        body: JSON.stringify({ data }),
+      });
+      return normalizeEntity(res.data);
+    },
+    remove: async (documentId) => {
+      await apiFetch(`${resource}/${documentId}`, {
+        method: "DELETE",
+        headers: authedHeaders(),
+      });
+    },
+  };
+}
+
+export const experienceCrud = makeCrud("experiences");
+export const projectCrud = makeCrud("projets");
+export const competenceCrud = makeCrud("competences");
+
 /**
  * Sends a contact message to the controlled public ingestion endpoint
  * @param {Object} messageData
@@ -360,10 +539,16 @@ export async function sendMessage(messageData) {
  * @returns {Promise<Object>}
  */
 export async function syncStoreFromApi(storeInstance = appStore) {
-  const current = storeInstance.getState ? storeInstance.getState() : storeInstance.get();
-  
+  const current = storeInstance.getState
+    ? storeInstance.getState()
+    : storeInstance.get();
+
   if (storeInstance.setState) {
-    storeInstance.setState((state) => ({ ...state, loading: true, error: null }));
+    storeInstance.setState((state) => ({
+      ...state,
+      loading: true,
+      error: null,
+    }));
   }
 
   try {
@@ -399,7 +584,9 @@ export async function syncStoreFromApi(storeInstance = appStore) {
       });
     }
 
-    return storeInstance.getState ? storeInstance.getState() : storeInstance.get();
+    return storeInstance.getState
+      ? storeInstance.getState()
+      : storeInstance.get();
   } catch (err) {
     console.error("[API Client] Failed to synchronize store with API:", err);
     const errorPatch = {
@@ -409,7 +596,9 @@ export async function syncStoreFromApi(storeInstance = appStore) {
     if (storeInstance.setState) {
       storeInstance.setState((state) => ({ ...state, ...errorPatch }));
     }
-    return storeInstance.getState ? storeInstance.getState() : storeInstance.get();
+    return storeInstance.getState
+      ? storeInstance.getState()
+      : storeInstance.get();
   }
 }
 
@@ -426,6 +615,15 @@ export default {
   fetchCompetences,
   fetchFormations,
   fetchProfile,
+  fetchMyProfile,
+  createProfile,
+  updateProfile,
+  fetchMyExperiences,
+  fetchMyProjects,
+  fetchMyCompetences,
+  experienceCrud,
+  projectCrud,
+  competenceCrud,
   sendMessage,
   syncStoreFromApi,
 };
