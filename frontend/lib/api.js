@@ -6,11 +6,22 @@
 import { appStore } from "./store.js";
 
 /**
- * Base URL for the Strapi Content API
+ * Base URL for the Strapi Content API.
+ * - En local, le frontend (port 5500) et Strapi (port 1337) sont sur des
+ *   origines différentes : on cible localhost:1337 explicitement.
+ * - En production, nginx sert le frontend et proxy /api/ vers Strapi sur
+ *   la même origine : on utilise directement l'origine courante.
  */
-export const API_BASE_URL =
-  (typeof window !== "undefined" && window.__API_URL__) ||
-  "http://localhost:1337";
+function resolveApiBaseUrl() {
+  if (typeof window === "undefined") return "http://localhost:1337";
+  if (window.__API_URL__) return window.__API_URL__;
+  if (["localhost", "127.0.0.1"].includes(window.location.hostname)) {
+    return "http://localhost:1337";
+  }
+  return window.location.origin;
+}
+
+export const API_BASE_URL = resolveApiBaseUrl();
 
 /**
  * Checks if a value represents a Strapi media file or array of media files
