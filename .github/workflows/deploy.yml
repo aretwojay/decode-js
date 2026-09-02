@@ -24,9 +24,9 @@ jobs:
             cd /opt/imprint
             REF="${{ github.event.inputs.ref }}"
             if [ -z "$REF" ]; then
-              ./deploy.sh
+              bash deploy.sh
             else
-              ./deploy.sh "$REF"
+              bash deploy.sh "$REF"
             fi
 
       - name: Vérifier que le site répond
