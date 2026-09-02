@@ -7,6 +7,7 @@
 import { factories } from '@strapi/strapi';
 import { slugify } from '../../../utils/slugify';
 import { dedupeByDocumentId } from '../../../utils/ownership';
+import { checkStatusTransition } from '../../../utils/workflow';
 
 const VALID_STATUTS = ['brouillon', 'pret_a_relire', 'publie', 'archive'];
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -30,13 +31,30 @@ export default factories.createCoreController('api::profil.profil', ({ strapi })
 
   async findOne(ctx) {
     const { id } = ctx.params;
-    const entry = await strapi.db.query('api::profil.profil').findOne({ where: { id }, populate: ['owner'] });
-    if (!entry) return ctx.notFound();
+    // Avec draftAndPublish, un documentId correspond à 2 lignes (brouillon +
+    // publiée). On les récupère toutes les deux pour ne pas tomber par hasard
+    // sur la version brouillon quand une version publiée existe aussi.
+    const rows = await strapi.db
+      .query('api::profil.profil')
+      .findMany({ where: { documentId: id }, populate: ['owner'] });
+    if (rows.length === 0) return ctx.notFound();
 
-    const isOwner = Boolean(ctx.state.user && entry.owner?.id === ctx.state.user.id);
-    if (!entry.publishedAt && !isOwner) return ctx.forbidden();
+    const publishedRow = rows.find((r) => r.publishedAt);
+    const draftRow = rows.find((r) => !r.publishedAt);
+    const isOwner = Boolean(
+      ctx.state.user &&
+        [publishedRow, draftRow].some((r) => r?.owner?.id === ctx.state.user.id)
+    );
+    if (!publishedRow && !isOwner) return ctx.forbidden();
 
-    return await super.findOne(ctx);
+    const entry = isOwner ? draftRow || publishedRow : publishedRow;
+
+    // On ne délègue pas à super.findOne(ctx) : le champ "owner" (relation
+    // vers le modèle User) fait échouer toute la requête en 403 dès qu'il
+    // est inclus dans la sérialisation par défaut. On renvoie l'entrée
+    // qu'on a déjà récupérée, sans ce champ sensible.
+    const { owner, ...safeEntry } = entry;
+    return { data: safeEntry, meta: {} };
   },
 
   async create(ctx) {
@@ -139,23 +157,47 @@ export default factories.createCoreController('api::profil.profil', ({ strapi })
     // users-permissions : impossible à passer dans le body de la requête REST.
     // On crée l'entrée normalement, puis on attache le propriétaire en interne.
     const result = await super.create(ctx);
-    const createdId = (result as any)?.data?.id;
-    if (createdId) {
-      await strapi.db
+    const createdDocumentId = (result as any)?.data?.documentId;
+    if (createdDocumentId) {
+      // draftAndPublish crée 2 lignes (brouillon + publiée) partageant le
+      // même documentId : il faut attacher le propriétaire aux deux, sinon
+      // la ligne qui n'a pas encore été touchée n'a pas d'owner et casse
+      // les vérifications de propriété selon la ligne que Strapi renvoie.
+      // (updateMany ne supporte pas l'écriture directe d'une relation ici,
+      // on met donc à jour chaque ligne individuellement.)
+      const rows = await strapi.db
         .query('api::profil.profil')
-        .update({ where: { id: createdId }, data: { owner: ctx.state.user.id } });
+        .findMany({ where: { documentId: createdDocumentId }, select: ['id'] });
+      for (const row of rows) {
+        await strapi.db
+          .query('api::profil.profil')
+          .update({ where: { id: row.id }, data: { owner: ctx.state.user.id } });
+      }
     }
     return result;
   },
 
   async update(ctx) {
     const { id } = ctx.params;
-    const target = await strapi.db.query('api::profil.profil').findOne({ where: { id }, populate: ['owner'] });
-    if (!target) return ctx.notFound();
-    if (!ctx.state.user || target.owner?.id !== ctx.state.user.id) return ctx.forbidden();
+    const targetRows = await strapi.db
+      .query('api::profil.profil')
+      .findMany({ where: { documentId: id }, populate: ['owner'] });
+    if (targetRows.length === 0) return ctx.notFound();
+    const isOwner = Boolean(ctx.state.user && targetRows.some((r) => r.owner?.id === ctx.state.user.id));
+    if (!isOwner) return ctx.forbidden();
+    // On préfère la ligne brouillon comme référence de l'état courant : c'est
+    // la version la plus à jour du point de vue de l'utilisateur qui édite.
+    const target = targetRows.find((r) => !r.publishedAt) || targetRows[0];
 
     const rawData = (ctx.request.body?.data || ctx.request.body || {}) as Record<string, any>;
     const errors: Record<string, string> = {};
+
+    if (rawData.statut !== undefined && rawData.statut !== target.statut) {
+      const transitionError = checkStatusTransition(target.statut, rawData.statut);
+      if (transitionError) {
+        return ctx.badRequest(transitionError);
+      }
+    }
 
     if (rawData.nom !== undefined) {
       const nom = typeof rawData.nom === 'string' ? rawData.nom.trim() : '';
@@ -228,9 +270,12 @@ export default factories.createCoreController('api::profil.profil', ({ strapi })
 
   async delete(ctx) {
     const { id } = ctx.params;
-    const target = await strapi.db.query('api::profil.profil').findOne({ where: { id }, populate: ['owner'] });
-    if (!target) return ctx.notFound();
-    if (!ctx.state.user || target.owner?.id !== ctx.state.user.id) return ctx.forbidden();
+    const targetRows = await strapi.db
+      .query('api::profil.profil')
+      .findMany({ where: { documentId: id }, populate: ['owner'] });
+    if (targetRows.length === 0) return ctx.notFound();
+    const isOwner = Boolean(ctx.state.user && targetRows.some((r) => r.owner?.id === ctx.state.user.id));
+    if (!isOwner) return ctx.forbidden();
 
     return await super.delete(ctx);
   },
