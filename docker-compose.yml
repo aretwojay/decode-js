@@ -7,6 +7,7 @@ services:
       - ./backend/.env
     volumes:
       - strapi_data:/app/.tmp
+      - strapi_uploads:/app/public/uploads
     ports:
       - "1337:1337"
     environment:
@@ -26,3 +27,4 @@ services:
 
 volumes:
   strapi_data:
+  strapi_uploads:
