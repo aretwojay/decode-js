@@ -1,14 +1,18 @@
 import Header, { NavLink } from "../components/header.js";
 import { fetchProfile, fetchProjects } from "../lib/api.js";
 import { appStore } from "../lib/store.js";
+import { getTheme } from "../lib/theme.js";
 import {
   resolveCandidateProfile,
   resolveProjectsToDisplay,
   renderHeroSection,
+  renderAboutSection,
+  renderServicesSection,
   renderFeaturedSection,
   renderOverviewSection,
   renderSiteFooter,
 } from "../utils/home.js";
+import { renderContactSection } from "../utils/contact-section.js";
 
 /**
  * Single-Page Landing View (T0014)
@@ -36,6 +40,7 @@ export default async function PageHome() {
   }
 
   const storeState = appStore.getState ? appStore.getState() : appStore.get();
+  const isIris = getTheme() === "iris";
 
   // Resolve Candidate Profile & Showcase Projects
   const candidateData = resolveCandidateProfile(profile, storeState?.profile);
@@ -59,39 +64,49 @@ export default async function PageHome() {
           // Hero Introduction Section
           renderHeroSection(candidateData),
 
+          ...(isIris ? [renderAboutSection(candidateData)] : []),
+
+          ...(isIris ? [renderServicesSection()] : []),
+
           // Featured Projects Showcase Section
           renderFeaturedSection(projectsToDisplay, hasFeatured),
 
-          // Quick Navigation & Overview Section
-          renderOverviewSection(),
+          ...(isIris ? [renderContactSection({ headingTag: "h2" })] : []),
 
-          // Demos & Technical Modules Section
-          {
-            type: "section",
-            attributes: [["class", ["section", "demos-section"]]],
-            children: [
-              {
-                type: "p",
-                attributes: [
-                  [
-                    "style",
-                    [
-                      ["color", "var(--text-muted)"],
-                      ["fontSize", "0.85rem"],
-                    ],
+          // Quick Navigation & Overview Section
+          ...(isIris
+            ? []
+            : [
+                renderOverviewSection(),
+
+                // Demos & Technical Modules Section
+                {
+                  type: "section",
+                  attributes: [["class", ["section", "demos-section"]]],
+                  children: [
+                    {
+                      type: "p",
+                      attributes: [
+                        [
+                          "style",
+                          [
+                            ["color", "var(--text-muted)"],
+                            ["fontSize", "0.85rem"],
+                          ],
+                        ],
+                      ],
+                      children: [
+                        "Démos techniques du moteur Vanilla : ",
+                        NavLink("/table", "Table Réactive", ["footer-link"]),
+                        { type: "span", children: [" • "] },
+                        NavLink("/gallery", "Galerie d'Images", ["footer-link"]),
+                        { type: "span", children: [" • "] },
+                        NavLink("/admin", "Espace Admin Strapi", ["footer-link"]),
+                      ],
+                    },
                   ],
-                ],
-                children: [
-                  "Démos techniques du moteur Vanilla : ",
-                  NavLink("/table", "Table Réactive", ["footer-link"]),
-                  { type: "span", children: [" • "] },
-                  NavLink("/gallery", "Galerie d'Images", ["footer-link"]),
-                  { type: "span", children: [" • "] },
-                  NavLink("/admin", "Espace Admin Strapi", ["footer-link"]),
-                ],
-              },
-            ],
-          },
+                },
+              ]),
         ],
       },
 
