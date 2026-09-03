@@ -30,9 +30,11 @@ jobs:
             fi
 
       - name: Vérifier que le site répond
+        env:
+          DEPLOY_HOST: ${{ secrets.DEPLOY_HOST }}
         run: |
           sleep 10
-          status=$(curl -s -o /dev/null -w "%{http_code}" http://${{ secrets.DEPLOY_HOST }}/)
+          status=$(curl -s -o /dev/null -w "%{http_code}" "http://${DEPLOY_HOST}/")
           echo "Statut du site : $status"
           if [ "$status" != "200" ]; then
             echo "::error::Le site ne répond pas correctement après déploiement (HTTP $status)"
