@@ -25,11 +25,13 @@ export default async function PageHome() {
   let featuredProjects = [];
   let allProjects = [];
 
+  const currentTheme = getTheme();
+
   try {
     const [fetchedProfile, fetchedFeatured, fetchedAll] = await Promise.all([
-      fetchProfile(),
-      fetchProjects({ featured: true }),
-      fetchProjects(),
+      fetchProfile({ theme: currentTheme }),
+      fetchProjects({ featured: true, theme: currentTheme }),
+      fetchProjects({ theme: currentTheme }),
     ]);
 
     profile = fetchedProfile;
@@ -40,7 +42,7 @@ export default async function PageHome() {
   }
 
   const storeState = appStore.getState ? appStore.getState() : appStore.get();
-  const isIris = getTheme() === "iris";
+  const isIris = currentTheme === "iris";
 
   // Resolve Candidate Profile & Showcase Projects
   const candidateData = resolveCandidateProfile(profile, storeState?.profile);
@@ -71,7 +73,16 @@ export default async function PageHome() {
           // Featured Projects Showcase Section
           renderFeaturedSection(projectsToDisplay, hasFeatured),
 
-          ...(isIris ? [renderContactSection({ headingTag: "h2" })] : []),
+          ...(isIris
+            ? [
+                renderContactSection({
+                  headingTag: "h2",
+                  phone: candidateData.candidatePhone,
+                  email: candidateData.candidateEmail || undefined,
+                  location: candidateData.candidateLocation,
+                }),
+              ]
+            : []),
 
           // Quick Navigation & Overview Section
           ...(isIris

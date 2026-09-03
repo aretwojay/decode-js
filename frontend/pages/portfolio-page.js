@@ -17,9 +17,10 @@ import {
  */
 export default async function PagePortfolio() {
   let projects = [];
+  const currentTheme = getTheme();
 
   try {
-    const fetched = await fetchProjects();
+    const fetched = await fetchProjects({ theme: currentTheme });
     if (fetched && fetched.length > 0) {
       projects = fetched;
     }
@@ -37,7 +38,7 @@ export default async function PagePortfolio() {
     }
   }
 
-  if (getTheme() === "iris") {
+  if (currentTheme === "iris") {
     return {
       type: "div",
       attributes: [["class", ["page", "page-portfolio"]]],

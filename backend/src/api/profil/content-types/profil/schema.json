@@ -90,6 +90,14 @@
         "publie",
         "archive"
       ]
+    },
+    "theme": {
+      "type": "enumeration",
+      "enum": [
+        "iris",
+        "yaniss",
+        "ruben"
+      ]
     }
   }
 }

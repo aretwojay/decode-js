@@ -260,7 +260,7 @@ async function apiFetch(endpoint, options = {}) {
  * @param {string} [options.statut] - Optional workflow status filter
  * @returns {Promise<Array>}
  */
-export async function fetchProjects({ featured = false, statut } = {}) {
+export async function fetchProjects({ featured = false, statut, theme } = {}) {
   try {
     let query = `projets?populate=*`;
     if (statut) {
@@ -268,6 +268,9 @@ export async function fetchProjects({ featured = false, statut } = {}) {
     }
     if (featured) {
       query += `&filters[en_vedette][$eq]=true`;
+    }
+    if (theme) {
+      query += `&filters[profil][theme][$eq]=${encodeURIComponent(theme)}`;
     }
     const res = await apiFetch(query);
     return normalizeCollection(res);
@@ -362,11 +365,14 @@ export async function fetchFormations({ statut } = {}) {
  * @param {string} [options.statut] - Optional workflow status filter
  * @returns {Promise<Object|null>}
  */
-export async function fetchProfile({ statut } = {}) {
+export async function fetchProfile({ statut, theme } = {}) {
   try {
     let query = `profils?populate=*`;
     if (statut) {
       query += `&filters[statut][$eq]=${encodeURIComponent(statut)}`;
+    }
+    if (theme) {
+      query += `&filters[theme][$eq]=${encodeURIComponent(theme)}`;
     }
     const res = await apiFetch(query);
     const profils = normalizeCollection(res);
