@@ -1,4 +1,5 @@
 import Header from "../components/header.js";
+import { renderContactSection } from "../utils/contact-section.js";
 
 export default function PageContact() {
   return {
@@ -8,23 +9,7 @@ export default function PageContact() {
       Header("/contact"),
       {
         type: "main",
-        children: [
-          {
-            type: "h1",
-            children: ["Contact"],
-          },
-          {
-            type: "section",
-            children: [
-              {
-                type: "p",
-                children: [
-                  "Formulaire de contact et coordonnées du candidat connectés à l'API Strapi.",
-                ],
-              },
-            ],
-          },
-        ],
+        children: [renderContactSection({ headingTag: "h1" })],
       },
     ],
   };

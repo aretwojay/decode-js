@@ -3,10 +3,12 @@ import { fetchProjects } from "../lib/api.js";
 import { appStore } from "../lib/store.js";
 import createState from "../lib/create-state.js";
 import reactive from "../lib/reactive.js";
+import { getTheme } from "../lib/theme.js";
 import {
   DEFAULT_PROJECTS,
   extractAllTechnologies,
   renderProjectsGrid,
+  renderPortfolioIris,
 } from "../utils/portfolio.js";
 
 /**
@@ -33,6 +35,14 @@ export default async function PagePortfolio() {
     } else {
       projects = DEFAULT_PROJECTS;
     }
+  }
+
+  if (getTheme() === "iris") {
+    return {
+      type: "div",
+      attributes: [["class", ["page", "page-portfolio"]]],
+      children: [Header("/portfolio"), renderPortfolioIris(projects)],
+    };
   }
 
   const allTechs = extractAllTechnologies(projects);

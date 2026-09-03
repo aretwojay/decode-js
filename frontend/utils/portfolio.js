@@ -105,6 +105,223 @@ export function extractAllTechnologies(projects) {
   return Array.from(techSet).sort();
 }
 
+function collectBlockText(node) {
+  if (!node) return "";
+  if (typeof node.text === "string") return node.text;
+  if (Array.isArray(node.children)) return node.children.map(collectBlockText).join("");
+  return "";
+}
+
+export function extractProjectHighlights(project) {
+  const blocks = project?.descriptionBlocks;
+  if (!Array.isArray(blocks) || blocks.length === 0) {
+    const text = typeof project?.description === "string" ? project.description : "";
+    return text ? [text] : [];
+  }
+
+  const bullets = [];
+  for (const block of blocks) {
+    if (block.type === "list" && Array.isArray(block.children)) {
+      for (const item of block.children) {
+        const text = collectBlockText(item).trim();
+        if (text) bullets.push(text);
+      }
+    } else {
+      const text = collectBlockText(block).trim();
+      if (text) bullets.push(text);
+    }
+  }
+  return bullets;
+}
+
+function scheduleScrollReveal() {
+  if (typeof window === "undefined") return;
+  setTimeout(() => {
+    const blocks = document.querySelectorAll(".portfolio-block");
+    if (!blocks.length) return;
+
+    if (typeof IntersectionObserver === "undefined") {
+      blocks.forEach((el) => el.classList.add("is-visible"));
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("is-visible");
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.15 }
+    );
+    blocks.forEach((el) => observer.observe(el));
+  }, 0);
+}
+
+export function renderPortfolioIris(projects) {
+  scheduleScrollReveal();
+
+  return {
+    type: "main",
+    children: [
+      {
+        type: "section",
+        attributes: [["class", ["section", "portfolio-hero-iris"]]],
+        children: [
+          {
+            type: "div",
+            attributes: [["class", ["section-header-center"]]],
+            children: [
+              { type: "h1", attributes: [["class", ["section-title"]]], children: ["Mes projets"] },
+              {
+                type: "p",
+                attributes: [["class", ["section-subtitle", "portfolio-subtitle-large"]]],
+                children: ["Tableau de bord Techniques et Réalisations"],
+              },
+              {
+                type: "p",
+                attributes: [["class", ["portfolio-lead"]]],
+                children: [
+                  "Une sélection d'applications web robustes et scalables, mêlant architectures back-end complexes et intégrations front-end.",
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        type: "section",
+        attributes: [["class", ["section", "portfolio-list-iris"]]],
+        children: projects.map((project) => {
+          const coverImage =
+            Array.isArray(project.image) && project.image.length > 0
+              ? project.image[0].formats?.medium?.url || project.image[0].url
+              : null;
+
+          const highlights = extractProjectHighlights(project);
+          const year = project.date_realisation
+            ? String(project.date_realisation).slice(0, 4)
+            : null;
+          const techs = extractTechnologies(project);
+
+          return {
+            type: "article",
+            attributes: [
+              ["id", `project-${project.slug || project.id}`],
+              ["class", ["portfolio-block"]],
+            ],
+            children: [
+              {
+                type: "div",
+                attributes: [["class", ["portfolio-block-image"]]],
+                children: [
+                  ...(coverImage
+                    ? [{ type: "img", attributes: [["src", coverImage], ["alt", project.titre || "Projet"]] }]
+                    : []),
+                  ...(techs.length > 0
+                    ? [
+                        {
+                          type: "div",
+                          attributes: [["class", ["portfolio-tags"]]],
+                          children: techs.map((t) => ({
+                            type: "span",
+                            attributes: [["class", ["tag"]]],
+                            children: [t],
+                          })),
+                        },
+                      ]
+                    : []),
+                ],
+              },
+              {
+                type: "div",
+                attributes: [["class", ["portfolio-block-body"]]],
+                children: [
+                  {
+                    type: "h2",
+                    attributes: [["class", ["portfolio-block-title"]]],
+                    children: [project.resume || project.titre || "Projet"],
+                  },
+                  highlights.length > 0
+                    ? {
+                        type: "ul",
+                        attributes: [["class", ["portfolio-highlights"]]],
+                        children: highlights.map((h) => ({ type: "li", children: [h] })),
+                      }
+                    : { type: "span", children: [] },
+                  {
+                    type: "div",
+                    attributes: [["class", ["portfolio-info"]]],
+                    children: [
+                      {
+                        type: "span",
+                        attributes: [["class", ["portfolio-info-label"]]],
+                        children: ["Info du projet"],
+                      },
+                      year
+                        ? {
+                            type: "div",
+                            attributes: [["class", ["portfolio-info-row"]]],
+                            children: [
+                              { type: "span", children: ["Année"] },
+                              { type: "span", children: [year] },
+                            ],
+                          }
+                        : { type: "span", children: [] },
+                      project.role
+                        ? {
+                            type: "div",
+                            attributes: [["class", ["portfolio-info-row"]]],
+                            children: [
+                              { type: "span", children: ["Rôle"] },
+                              { type: "span", children: [project.role] },
+                            ],
+                          }
+                        : { type: "span", children: [] },
+                    ],
+                  },
+                  {
+                    type: "div",
+                    attributes: [["class", ["portfolio-block-actions"]]],
+                    children: [
+                      project.lien_demo
+                        ? {
+                            type: "a",
+                            attributes: [
+                              ["href", project.lien_demo],
+                              ["target", "_blank"],
+                              ["rel", "noopener noreferrer"],
+                              ["class", ["portfolio-action-link"]],
+                            ],
+                            children: ["Voir le projet ↗"],
+                          }
+                        : { type: "span", children: [] },
+                      project.lien_mobile
+                        ? {
+                            type: "a",
+                            attributes: [
+                              ["href", project.lien_mobile],
+                              ["target", "_blank"],
+                              ["rel", "noopener noreferrer"],
+                              ["class", ["portfolio-action-link", "portfolio-action-link-alt"]],
+                            ],
+                            children: ["Télécharger l'app mobile ▶"],
+                          }
+                        : { type: "span", children: [] },
+                    ],
+                  },
+                ],
+              },
+            ],
+          };
+        }),
+      },
+    ],
+  };
+}
+
 /**
  * Renders the reactive projects grid and metadata count bar
  * @param {Object} state - { search, techFilter, statusFilter }

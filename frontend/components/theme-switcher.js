@@ -54,6 +54,7 @@ export default function ThemeSwitcher() {
                     }
                   });
                 }
+                window.dispatchEvent(new Event("pushstate"));
               },
             ],
           ],

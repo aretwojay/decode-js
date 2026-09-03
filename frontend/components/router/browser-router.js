@@ -45,6 +45,11 @@ export default function BrowserRouter(rootElement, routes) {
     } else {
       rootElement.appendChild(generateStructure(structure));
     }
+
+    if (window.location.hash) {
+      const target = document.getElementById(window.location.hash.slice(1));
+      if (target) target.scrollIntoView({ behavior: "smooth" });
+    }
   }
   window.addEventListener("popstate", refreshPage);
   window.addEventListener("pushstate", refreshPage);
