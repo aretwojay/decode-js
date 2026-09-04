@@ -287,7 +287,16 @@ export function renderAboutSection(candidateData) {
         type: "div",
         attributes: [["class", ["hero-actions", "centered-actions"]]],
         children: [
-          NavLink("/cv", "Télécharger mon CV", ["btn", "btn-primary"]),
+          {
+            type: "a",
+            attributes: [
+              ["href", "/cv"],
+              ["target", "_blank"],
+              ["rel", "noopener noreferrer"],
+              ["class", ["btn", "btn-primary", "cv-nav-link"]],
+            ],
+            children: ["Télécharger mon CV"],
+          },
         ],
       },
     ],
