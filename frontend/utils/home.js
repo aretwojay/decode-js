@@ -52,6 +52,9 @@ export function resolveCandidateProfile(profile, storeProfile) {
     isAvailable: profile?.disponible !== undefined ? profile.disponible : true,
     githubUrl: profile?.github || "https://github.com",
     linkedinUrl: profile?.linkedin || "https://linkedin.com",
+    candidateEmail: profile?.email || storeProfile?.email || "",
+    candidatePhone: profile?.telephone || storeProfile?.telephone || "",
+    candidateLocation: profile?.localisation || storeProfile?.localisation || "",
   };
 }
 

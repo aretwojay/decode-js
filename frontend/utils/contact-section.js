@@ -30,8 +30,14 @@ function renderFeedback(state) {
   return { type: "p", children: [""] };
 }
 
-export function renderContactSection({ headingTag = "h2" } = {}) {
+export function renderContactSection({
+  headingTag = "h2",
+  phone = "",
+  email = "contact@example.com",
+  location = "",
+} = {}) {
   const isIris = getTheme() === "iris";
+  const phoneHref = `tel:${phone.replace(/[^+\d]/g, "")}`;
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -92,20 +98,22 @@ export function renderContactSection({ headingTag = "h2" } = {}) {
                     ],
                   }
                 : { type: "span", children: [] },
-              {
-                type: "div",
-                attributes: [["class", ["contact-info-item"]]],
-                children: [
-                  isIris
-                    ? { type: "span", attributes: [["class", ["contact-icon-badge"]]], children: [{ type: "div", attributes: [["class", ["contact-icon-glyph", "icon-phone"]]], children: [] }] }
-                    : "📞 ",
-                  {
-                    type: "a",
-                    attributes: [["href", "tel:+33775845952"]],
-                    children: ["07 75 84 59 52"],
-                  },
-                ],
-              },
+              phone
+                ? {
+                    type: "div",
+                    attributes: [["class", ["contact-info-item"]]],
+                    children: [
+                      isIris
+                        ? { type: "span", attributes: [["class", ["contact-icon-badge"]]], children: [{ type: "div", attributes: [["class", ["contact-icon-glyph", "icon-phone"]]], children: [] }] }
+                        : "📞 ",
+                      {
+                        type: "a",
+                        attributes: [["href", phoneHref]],
+                        children: [phone],
+                      },
+                    ],
+                  }
+                : { type: "span", children: [] },
               {
                 type: "div",
                 attributes: [["class", ["contact-info-item"]]],
@@ -115,21 +123,23 @@ export function renderContactSection({ headingTag = "h2" } = {}) {
                     : "✉️ ",
                   {
                     type: "a",
-                    attributes: [["href", "mailto:havilaayivodji6@gmail.com"]],
-                    children: ["havilaayivodji6@gmail.com"],
+                    attributes: [["href", `mailto:${email}`]],
+                    children: [email],
                   },
                 ],
               },
-              {
-                type: "div",
-                attributes: [["class", ["contact-info-item"]]],
-                children: [
-                  isIris
-                    ? { type: "span", attributes: [["class", ["contact-icon-badge"]]], children: [{ type: "div", attributes: [["class", ["contact-icon-glyph", "icon-pin"]]], children: [] }] }
-                    : "📍 ",
-                  { type: "span", children: ["Sannois 95110, France"] },
-                ],
-              },
+              location
+                ? {
+                    type: "div",
+                    attributes: [["class", ["contact-info-item"]]],
+                    children: [
+                      isIris
+                        ? { type: "span", attributes: [["class", ["contact-icon-badge"]]], children: [{ type: "div", attributes: [["class", ["contact-icon-glyph", "icon-pin"]]], children: [] }] }
+                        : "📍 ",
+                      { type: "span", children: [location] },
+                    ],
+                  }
+                : { type: "span", children: [] },
             ],
           },
           {
