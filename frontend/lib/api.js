@@ -48,6 +48,14 @@ function resolveApiBaseUrl() {
 
 export const API_BASE_URL = resolveApiBaseUrl();
 
+/**
+ * Uploaded files (images, PDFs...) are served by Strapi at the root
+ * (/uploads/...), not under /api. API_BASE_URL includes the /api suffix
+ * in production (nginx proxy pattern), so media URLs need their own base
+ * without it, or they'd resolve to a path nginx never proxies.
+ */
+export const MEDIA_BASE_URL = API_BASE_URL.replace(/\/api\/?$/, "");
+
 export function buildApiUrl(endpoint = "") {
   const base = API_BASE_URL.replace(/\/$/, "");
   const normalizedEndpoint = String(endpoint || "").replace(/^\/+/, "");
@@ -123,7 +131,7 @@ export function normalizeMedia(media) {
   const fullUrl = rawUrl.startsWith("http")
     ? rawUrl
     : rawUrl
-      ? `${API_BASE_URL}${rawUrl}`
+      ? `${MEDIA_BASE_URL}${rawUrl}`
       : "";
 
   // Normalize responsive formats if present
@@ -135,7 +143,7 @@ export function normalizeMedia(media) {
           ...formatVal,
           url: formatVal.url.startsWith("http")
             ? formatVal.url
-            : `${API_BASE_URL}${formatVal.url}`,
+            : `${MEDIA_BASE_URL}${formatVal.url}`,
         };
       }
     }
