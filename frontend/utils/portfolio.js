@@ -140,8 +140,10 @@ function scheduleScrollReveal() {
     const blocks = document.querySelectorAll(".portfolio-block");
     if (!blocks.length) return;
 
+    const reveal = (el) => el.classList.add("is-visible");
+
     if (typeof IntersectionObserver === "undefined") {
-      blocks.forEach((el) => el.classList.add("is-visible"));
+      blocks.forEach(reveal);
       return;
     }
 
@@ -149,14 +151,19 @@ function scheduleScrollReveal() {
       (entries) => {
         entries.forEach((entry) => {
           if (entry.isIntersecting) {
-            entry.target.classList.add("is-visible");
+            reveal(entry.target);
             observer.unobserve(entry.target);
           }
         });
       },
-      { threshold: 0.15 }
+      { threshold: 0, rootMargin: "200px 0px" }
     );
     blocks.forEach((el) => observer.observe(el));
+
+    // Safety net: on some layouts (tall stacked blocks, unusual viewport
+    // sizes) intersection can be missed entirely. Never leave content
+    // permanently invisible.
+    setTimeout(() => blocks.forEach(reveal), 2000);
   }, 0);
 }
 
