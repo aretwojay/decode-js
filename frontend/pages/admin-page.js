@@ -2,6 +2,14 @@ import Header from "../components/header.js";
 import Link from "../components/router/link.js";
 import { navigate } from "../utils/navigation.js";
 import { isAuthenticated } from "../lib/auth.js";
+import createState from "../lib/create-state.js";
+import reactive from "../lib/reactive.js";
+import {
+  renderFeedbackBanner,
+  renderEmptyState,
+  renderInlineConfirm,
+  showToast,
+} from "../components/ui-feedback.js";
 import {
   fetchMyProfile,
   createProfile,
@@ -33,12 +41,14 @@ function ProfileForm(profile) {
     try {
       if (isNew) {
         await createProfile(data);
+        showToast("Profil créé avec succès !", "success");
       } else {
         await updateProfile(profile.documentId, data);
+        showToast("Profil mis à jour avec succès !", "success");
       }
       refresh();
     } catch (err) {
-      alert("Erreur : " + err.message);
+      showToast("Erreur lors de l'enregistrement : " + err.message, "error");
     }
   }
 
@@ -122,25 +132,30 @@ function ProfileForm(profile) {
 }
 
 function CrudSection(title, items, labelField, crud, extraFields = {}) {
+  const deletingIdState = createState(null);
+
   async function handleAdd(event) {
     event.preventDefault();
     const form = event.target;
     const data = { [labelField]: form[labelField].value, ...extraFields };
     try {
       await crud.create(data);
+      showToast(`${title} ajouté(e) avec succès !`, "success");
+      form.reset();
       refresh();
     } catch (err) {
-      alert("Erreur : " + err.message);
+      showToast("Erreur lors de l'ajout : " + err.message, "error");
     }
   }
 
   async function handleDelete(documentId) {
-    if (!confirm("Confirmer la suppression ?")) return;
     try {
       await crud.remove(documentId);
+      showToast(`Élément supprimé avec succès.`, "info");
+      deletingIdState.set(null);
       refresh();
     } catch (err) {
-      alert("Erreur : " + err.message);
+      showToast("Erreur lors de la suppression : " + err.message, "error");
     }
   }
 
@@ -149,25 +164,47 @@ function CrudSection(title, items, labelField, crud, extraFields = {}) {
     attributes: [["class", ["admin-section"]]],
     children: [
       { type: "h2", children: [title] },
-      {
-        type: "ul",
-        children:
-          items.length === 0
-            ? [{ type: "li", children: ["Rien pour l'instant."] }]
-            : items.map((item) => ({
+      items.length === 0
+        ? renderEmptyState({
+            icon: "📋",
+            title: `Aucun élément dans « ${title} »`,
+            description: `Utilisez le formulaire ci-dessous pour ajouter votre premier élément à cette section.`,
+          })
+        : reactive(deletingIdState, (deletingId) => ({
+            type: "ul",
+            attributes: [["class", ["admin-list"]]],
+            children: items.map((item) => {
+              const isDeleting = deletingId === item.documentId;
+              return {
                 type: "li",
                 attributes: [["class", ["admin-row"]]],
                 children: [
-                  { type: "span", children: [item[labelField] || "(sans titre)"] },
                   {
-                    type: "button",
-                    attributes: [["type", "button"]],
-                    children: ["Supprimer"],
-                    events: [["click", () => handleDelete(item.documentId)]],
+                    type: "span",
+                    attributes: [["class", ["admin-row-title"]]],
+                    children: [item[labelField] || "(sans titre)"],
                   },
+                  isDeleting
+                    ? renderInlineConfirm({
+                        message: "Supprimer définitivement ?",
+                        onConfirm: () => handleDelete(item.documentId),
+                        onCancel: () => deletingIdState.set(null),
+                      })
+                    : {
+                        type: "button",
+                        attributes: [
+                          ["type", "button"],
+                          ["class", ["btn", "btn-sm", "btn-secondary"]],
+                        ],
+                        children: ["Supprimer"],
+                        events: [
+                          ["click", () => deletingIdState.set(item.documentId)],
+                        ],
+                      },
                 ],
-              })),
-      },
+              };
+            }),
+          })),
       {
         type: "form",
         attributes: [["class", ["admin-add-form"]]],
@@ -184,7 +221,10 @@ function CrudSection(title, items, labelField, crud, extraFields = {}) {
           },
           {
             type: "button",
-            attributes: [["type", "submit"]],
+            attributes: [
+              ["type", "submit"],
+              ["class", ["btn", "btn-primary"]],
+            ],
             children: ["Ajouter"],
           },
         ],
@@ -226,21 +266,57 @@ export default async function PageAdmin() {
     };
   }
 
-  const profile = await fetchMyProfile();
+  let profile = null;
+  let experiences = [];
+  let projects = [];
+  let competences = [];
 
-  if (!profile) {
+  try {
+    profile = await fetchMyProfile();
+
+    if (!profile) {
+      return {
+        type: "div",
+        attributes: [["class", ["page", "page-admin"]]],
+        children: [
+          Header("/admin"),
+          { type: "main", children: [ProfileForm(null)] },
+        ],
+      };
+    }
+
+    const [exp, proj, comp] = await Promise.all([
+      fetchMyExperiences(),
+      fetchMyProjects(),
+      fetchMyCompetences(),
+    ]);
+
+    experiences = exp || [];
+    projects = proj || [];
+    competences = comp || [];
+  } catch (err) {
+    console.error("[PageAdmin] Failed to load admin data:", err);
     return {
       type: "div",
       attributes: [["class", ["page", "page-admin"]]],
-      children: [Header("/admin"), { type: "main", children: [ProfileForm(null)] }],
+      children: [
+        Header("/admin"),
+        {
+          type: "main",
+          children: [
+            renderFeedbackBanner({
+              type: "error",
+              message:
+                "Impossible de charger vos données d'administration : " +
+                (err.message || "session expirée ou serveur indisponible."),
+              actionText: "Se reconnecter",
+              onAction: () => navigate("/login"),
+            }),
+          ],
+        },
+      ],
     };
   }
-
-  const [experiences, projects, competences] = await Promise.all([
-    fetchMyExperiences(),
-    fetchMyProjects(),
-    fetchMyCompetences(),
-  ]);
 
   return {
     type: "div",
@@ -259,7 +335,12 @@ export default async function PageAdmin() {
                 slug: slugify(data.titre),
                 entreprise: "À compléter",
                 date_debut: new Date().toISOString().slice(0, 10),
-                description: [{ type: "paragraph", children: [{ type: "text", text: "À compléter" }] }],
+                description: [
+                  {
+                    type: "paragraph",
+                    children: [{ type: "text", text: "À compléter" }],
+                  },
+                ],
               }),
             remove: experienceCrud.remove,
           }),
@@ -268,12 +349,18 @@ export default async function PageAdmin() {
               projectCrud.create({
                 ...data,
                 slug: slugify(data.titre),
-                description: [{ type: "paragraph", children: [{ type: "text", text: "À compléter" }] }],
+                description: [
+                  {
+                    type: "paragraph",
+                    children: [{ type: "text", text: "À compléter" }],
+                  },
+                ],
               }),
             remove: projectCrud.remove,
           }),
           CrudSection("Compétences", competences, "titre", {
-            create: (data) => competenceCrud.create({ ...data, niveau: "intermediaire" }),
+            create: (data) =>
+              competenceCrud.create({ ...data, niveau: "intermediaire" }),
             remove: competenceCrud.remove,
           }),
         ],

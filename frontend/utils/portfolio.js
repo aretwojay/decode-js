@@ -1,67 +1,11 @@
 import { NavLink } from "../components/header.js";
+import { renderEmptyState } from "../components/ui-feedback.js";
+import { globalOfflineState } from "../lib/use-offline.js";
 
 /**
  * Fallback projects dataset for offline / empty store states
  */
-export const DEFAULT_PROJECTS = [
-  {
-    id: 101,
-    titre: "Vanilla SPA Engine & Architecture MVC",
-    slug: "vanilla-spa-engine",
-    resume:
-      "Moteur de rendu frontend réactif complet en JavaScript ES Modules pur, sans framework ni dépendances tierces.",
-    description:
-      "Conception d'une architecture modulaire basée sur le pattern MVC, un routeur SPA History API, un gestionnaire d'état réactif et un compilateur de structures DOM.",
-    technologies: ["JavaScript ES6+", "Reactive State", "SPA Router", "CSS3"],
-    en_vedette: true,
-    statut: "publie",
-    date_realisation: "2024-03-15",
-    lien_repo: "https://github.com",
-    lien_demo: "https://demo.example.com",
-  },
-  {
-    id: 102,
-    titre: "CMS Headless Strapi 5 & API Sécurisée",
-    slug: "strapi-headless-cms",
-    resume:
-      "Modélisation de données d'entreprise, contrôleurs personnalisés avec assainissement, validation stricte et ingestion contrôlée.",
-    description:
-      "Backend Strapi 5 avec collections modulaires, gestion multi-tenant, permissions granulaires et intégration PostgreSQL / SQLite.",
-    technologies: ["Strapi 5", "TypeScript", "REST API", "PostgreSQL"],
-    en_vedette: true,
-    statut: "publie",
-    date_realisation: "2024-02-20",
-    lien_repo: "https://github.com",
-  },
-  {
-    id: 103,
-    titre: "Design System & Thèmes Cyberpunk / Minimal",
-    slug: "design-system-themes",
-    resume:
-      "Système de thèmes modulaires dynamiques (Iris, Ruben, Yaniss) avec basculement d'attributs sans rechargement de page.",
-    description:
-      "Variables CSS modernes, glassmorphism, conformité accessibilité WCAG AA et animations légères.",
-    technologies: ["CSS3", "Design System", "WCAG AA", "Web Components"],
-    en_vedette: false,
-    statut: "publie",
-    date_realisation: "2024-01-10",
-  },
-  {
-    id: 104,
-    titre: "Plateforme E-Commerce Interactive",
-    slug: "projet-ecommerce",
-    resume:
-      "Boutique en ligne avec catalogue interactif, filtrage en temps réel et panier réactif.",
-    description:
-      "Expérience utilisateur fluide intégrant la synchronisation locale du panier, la gestion des stocks et un parcours de commande optimisé.",
-    technologies: ["JavaScript", "Strapi", "CSS3", "LocalState"],
-    en_vedette: false,
-    statut: "publie",
-    date_realisation: "2023-11-28",
-    lien_repo: "https://github.com",
-    lien_demo: "https://shop.example.com",
-  },
-];
+export const DEFAULT_PROJECTS = [];
 
 /**
  * Extracts and normalizes technologies from a project item
@@ -191,133 +135,178 @@ export function renderPortfolioIris(projects) {
           },
         ],
       },
-      {
-        type: "section",
-        attributes: [["class", ["section", "portfolio-list-iris"]]],
-        children: projects.map((project) => {
-          const coverImage =
-            Array.isArray(project.image) && project.image.length > 0
-              ? project.image[0].formats?.medium?.url || project.image[0].url
-              : null;
+      projects.length > 0
+        ? {
+            type: "section",
+            attributes: [["class", ["section", "portfolio-list-iris"]]],
+            children: projects.map((project) => {
+              const coverImage =
+                Array.isArray(project.image) && project.image.length > 0
+                  ? project.image[0].formats?.medium?.url || project.image[0].url
+                  : null;
 
-          const highlights = extractProjectHighlights(project);
-          const year = project.date_realisation
-            ? String(project.date_realisation).slice(0, 4)
-            : null;
-          const techs = extractTechnologies(project);
+              const highlights = extractProjectHighlights(project);
+              const year = project.date_realisation
+                ? String(project.date_realisation).slice(0, 4)
+                : null;
+              const techs = extractTechnologies(project);
 
-          return {
-            type: "article",
-            attributes: [
-              ["id", `project-${project.slug || project.id}`],
-              ["class", ["portfolio-block"]],
-            ],
-            children: [
-              {
-                type: "div",
-                attributes: [["class", ["portfolio-block-image"]]],
-                children: [
-                  ...(coverImage
-                    ? [{ type: "img", attributes: [["src", coverImage], ["alt", project.titre || "Projet"]] }]
-                    : []),
-                  ...(techs.length > 0
-                    ? [
-                        {
-                          type: "div",
-                          attributes: [["class", ["portfolio-tags"]]],
-                          children: techs.map((t) => ({
-                            type: "span",
-                            attributes: [["class", ["tag"]]],
-                            children: [t],
-                          })),
-                        },
-                      ]
-                    : []),
+              return {
+                type: "article",
+                attributes: [
+                  ["id", `project-${project.slug || project.id}`],
+                  ["class", ["portfolio-block"]],
                 ],
-              },
-              {
-                type: "div",
-                attributes: [["class", ["portfolio-block-body"]]],
                 children: [
-                  {
-                    type: "h2",
-                    attributes: [["class", ["portfolio-block-title"]]],
-                    children: [project.resume || project.titre || "Projet"],
-                  },
-                  highlights.length > 0
-                    ? {
-                        type: "ul",
-                        attributes: [["class", ["portfolio-highlights"]]],
-                        children: highlights.map((h) => ({ type: "li", children: [h] })),
-                      }
-                    : { type: "span", children: [] },
                   {
                     type: "div",
-                    attributes: [["class", ["portfolio-info"]]],
+                    attributes: [["class", ["portfolio-block-image"]]],
+                    children: [
+                      ...(coverImage
+                        ? [{ type: "img", attributes: [["src", coverImage], ["alt", project.titre || "Projet"]] }]
+                        : []),
+                      ...(techs.length > 0
+                        ? [
+                            {
+                              type: "div",
+                              attributes: [["class", ["portfolio-tags"]]],
+                              children: techs.map((t) => ({
+                                type: "span",
+                                attributes: [["class", ["tag"]]],
+                                children: [t],
+                              })),
+                            },
+                          ]
+                        : []),
+                    ],
+                  },
+                  {
+                    type: "div",
+                    attributes: [["class", ["portfolio-block-body"]]],
                     children: [
                       {
-                        type: "span",
-                        attributes: [["class", ["portfolio-info-label"]]],
-                        children: ["Info du projet"],
+                        type: "h2",
+                        attributes: [["class", ["portfolio-block-title"]]],
+                        children: [project.resume || project.titre || "Projet"],
                       },
-                      year
+                      highlights.length > 0
                         ? {
-                            type: "div",
-                            attributes: [["class", ["portfolio-info-row"]]],
-                            children: [
-                              { type: "span", children: ["Année"] },
-                              { type: "span", children: [year] },
-                            ],
+                            type: "ul",
+                            attributes: [["class", ["portfolio-highlights"]]],
+                            children: highlights.map((h) => ({ type: "li", children: [h] })),
                           }
                         : { type: "span", children: [] },
-                      project.role
-                        ? {
-                            type: "div",
-                            attributes: [["class", ["portfolio-info-row"]]],
-                            children: [
-                              { type: "span", children: ["Rôle"] },
-                              { type: "span", children: [project.role] },
-                            ],
-                          }
-                        : { type: "span", children: [] },
-                    ],
-                  },
-                  {
-                    type: "div",
-                    attributes: [["class", ["portfolio-block-actions"]]],
-                    children: [
-                      project.lien_demo
-                        ? {
-                            type: "a",
-                            attributes: [
-                              ["href", project.lien_demo],
-                              ["target", "_blank"],
-                              ["rel", "noopener noreferrer"],
-                              ["class", ["portfolio-action-link"]],
-                            ],
-                            children: ["Voir le projet ↗"],
-                          }
-                        : { type: "span", children: [] },
-                      project.lien_mobile
-                        ? {
-                            type: "a",
-                            attributes: [
-                              ["href", project.lien_mobile],
-                              ["target", "_blank"],
-                              ["rel", "noopener noreferrer"],
-                              ["class", ["portfolio-action-link", "portfolio-action-link-alt"]],
-                            ],
-                            children: ["Télécharger l'app mobile ▶"],
-                          }
-                        : { type: "span", children: [] },
+                      {
+                        type: "div",
+                        attributes: [["class", ["portfolio-info"]]],
+                        children: [
+                          {
+                            type: "span",
+                            attributes: [["class", ["portfolio-info-label"]]],
+                            children: ["Année"],
+                          },
+                          {
+                            type: "span",
+                            attributes: [["class", ["portfolio-info-value"]]],
+                            children: [year || "Récent"],
+                          },
+                        ],
+                      },
+                      {
+                        type: "div",
+                        attributes: [["class", ["portfolio-info"]]],
+                        children: [
+                          {
+                            type: "span",
+                            attributes: [["class", ["portfolio-info-label"]]],
+                            children: ["Rôle"],
+                          },
+                          {
+                            type: "span",
+                            attributes: [["class", ["portfolio-info-value"]]],
+                            children: [project.role || "Développement Fullstack"],
+                          },
+                        ],
+                      },
+                      {
+                        type: "p",
+                        attributes: [["class", ["portfolio-block-desc"]]],
+                        children: [
+                          typeof project.description === "string"
+                            ? project.description
+                            : "Architecture et réalisation technique.",
+                        ],
+                      },
+                      {
+                        type: "div",
+                        attributes: [["class", ["portfolio-actions"]]],
+                        children: [
+                          project.lien_demo
+                            ? {
+                                type: "a",
+                                attributes: [
+                                  ["href", project.lien_demo],
+                                  ["target", "_blank"],
+                                  ["rel", "noopener noreferrer"],
+                                  ["class", ["portfolio-action-link"]],
+                                ],
+                                children: ["Voir le projet ▶"],
+                              }
+                            : { type: "span", children: [] },
+                          project.lien_repo
+                            ? {
+                                type: "a",
+                                attributes: [
+                                  ["href", project.lien_repo],
+                                  ["target", "_blank"],
+                                  ["rel", "noopener noreferrer"],
+                                  ["class", ["portfolio-action-link", "portfolio-action-link-alt"]],
+                                ],
+                                children: ["Code source (GitHub) ▶"],
+                              }
+                            : { type: "span", children: [] },
+                          project.lien_mobile
+                            ? {
+                                type: "a",
+                                attributes: [
+                                  ["href", project.lien_mobile],
+                                  ["target", "_blank"],
+                                  ["rel", "noopener noreferrer"],
+                                  ["class", ["portfolio-action-link", "portfolio-action-link-alt"]],
+                                ],
+                                children: ["Télécharger l'app mobile ▶"],
+                              }
+                            : { type: "span", children: [] },
+                        ],
+                      },
                     ],
                   },
                 ],
-              },
-            ],
-          };
-        }),
-      },
+              };
+            }),
+          }
+        : renderEmptyState(
+            globalOfflineState?.get && globalOfflineState.get().isOffline
+              ? {
+                  icon: "📡",
+                  title: "Mode hors-ligne : aucun projet disponible",
+                  description:
+                    "Le serveur distant est actuellement indisponible et aucun projet n'est enregistré en cache local.",
+                  actionText: "🔄 Réessayer la connexion",
+                  onAction: () => {
+                    if (typeof window !== "undefined") {
+                      window.location.reload();
+                    }
+                  },
+                }
+              : {
+                  icon: "📂",
+                  title: "Aucun projet publié",
+                  description:
+                    "Aucun projet n'a encore été publié dans ce portfolio.",
+                  actionText: null,
+                },
+          ),
     ],
   };
 }
@@ -525,6 +514,29 @@ export function renderProjectsGrid(state, allProjects, updateState) {
               };
             }),
           }
+        : allProjects.length === 0
+        ? renderEmptyState(
+            globalOfflineState?.get && globalOfflineState.get().isOffline
+              ? {
+                  icon: "📡",
+                  title: "Mode hors-ligne : aucun projet disponible",
+                  description:
+                    "Le serveur distant est actuellement indisponible et aucun projet n'est enregistré en cache local.",
+                  actionText: "🔄 Réessayer la connexion",
+                  onAction: () => {
+                    if (typeof window !== "undefined") {
+                      window.location.reload();
+                    }
+                  },
+                }
+              : {
+                  icon: "📂",
+                  title: "Aucun projet publié",
+                  description:
+                    "Aucun projet n'a encore été publié dans ce catalogue.",
+                  actionText: null,
+                },
+          )
         : {
             type: "div",
             attributes: [["class", ["empty-state-card"]]],

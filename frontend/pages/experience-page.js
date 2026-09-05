@@ -3,8 +3,9 @@ import { fetchExperiences } from "../lib/api.js";
 import { appStore } from "../lib/store.js";
 import createState from "../lib/create-state.js";
 import reactive from "../lib/reactive.js";
+import useOffline from "../lib/use-offline.js";
+import { renderEmptyState } from "../components/ui-feedback.js";
 import {
-  DEFAULT_EXPERIENCES,
   extractAllSkills,
   sortExperiencesChronologically,
   renderExperiencesResults,
@@ -15,25 +16,77 @@ import {
  * @returns {Promise<Object>} Vanilla-engine structure object
  */
 export default async function PageExperience() {
-  let experiences = [];
+  const offline = useOffline({
+    defaultMessage: "Mode hors-ligne : serveur distant indisponible.",
+  });
 
-  try {
-    const fetched = await fetchExperiences();
-    if (fetched && fetched.length > 0) {
-      experiences = fetched;
-    }
-  } catch (err) {
-    console.warn("[PageExperience] API offline, falling back to local store:", err);
-  }
+  let experiences = await offline.execute(() => fetchExperiences(), {
+    fallback: [],
+  });
 
-  // Fallback to appStore if API returned empty
-  if (experiences.length === 0) {
+  // Only fall back to local cache if offline
+  if (offline.isOffline()) {
     const storeState = appStore.getState ? appStore.getState() : appStore.get();
     if (storeState?.experiences && storeState.experiences.length > 0) {
       experiences = storeState.experiences;
-    } else {
-      experiences = DEFAULT_EXPERIENCES;
+      offline.setOffline(
+        "Mode hors-ligne : données des expériences chargées depuis le cache local.",
+      );
     }
+  }
+
+  if (!experiences || experiences.length === 0) {
+    const isOffline = offline.isOffline();
+
+    return {
+      type: "div",
+      attributes: [["class", ["page", "page-experiences"]]],
+      children: [
+        Header("/experiences"),
+        ...offline.getBannerChildren(),
+        {
+          type: "main",
+          attributes: [["class", ["experiences-main"]]],
+          children: [
+            {
+              type: "header",
+              attributes: [["class", ["page-header"]]],
+              children: [
+                {
+                  type: "h1",
+                  attributes: [["class", ["page-title"]]],
+                  children: ["Expériences Professionnelles"],
+                },
+                {
+                  type: "p",
+                  attributes: [["class", ["page-description"]]],
+                  children: [
+                    "Parcours professionnel, responsabilités exercées, compétences techniques mises en œuvre et réalisations majeures.",
+                  ],
+                },
+              ],
+            },
+            renderEmptyState({
+              icon: isOffline ? "📡" : "💼",
+              title: isOffline
+                ? "Mode hors-ligne : aucune expérience disponible"
+                : "Aucune expérience enregistrée",
+              description: isOffline
+                ? "Le serveur distant est actuellement indisponible et aucune expérience professionnelle n'est enregistrée en cache local."
+                : "Aucune expérience professionnelle n'a été publiée pour le moment.",
+              actionText: isOffline ? "🔄 Réessayer la connexion" : null,
+              onAction: isOffline
+                ? () => {
+                    if (typeof window !== "undefined") {
+                      window.location.reload();
+                    }
+                  }
+                : null,
+            }),
+          ],
+        },
+      ],
+    };
   }
 
   const sortedExperiences = sortExperiencesChronologically(experiences);
@@ -51,7 +104,7 @@ export default async function PageExperience() {
 
     // 1. Synchronize search input without disrupting focus
     const searchInputs = document.querySelectorAll(
-      ".page-experiences .search-input"
+      ".page-experiences .search-input",
     );
     searchInputs.forEach((input) => {
       if (input.value !== state.search) {
@@ -61,7 +114,7 @@ export default async function PageExperience() {
 
     // 2. Synchronize skill filter active pills
     const skillBtns = document.querySelectorAll(
-      ".page-experiences [data-skill]"
+      ".page-experiences [data-skill]",
     );
     skillBtns.forEach((btn) => {
       const val = btn.dataset.skill;
@@ -75,7 +128,7 @@ export default async function PageExperience() {
 
   // Reactive node that only replaces the results area (timeline, count), leaving controls mounted and focused
   const reactiveResultsNode = reactive(filterState, (state) =>
-    renderExperiencesResults(state, sortedExperiences, filterState.setState)
+    renderExperiencesResults(state, sortedExperiences, filterState.setState),
   );
 
   return {
@@ -89,6 +142,8 @@ export default async function PageExperience() {
       {
         type: "main",
         children: [
+          ...offline.getBannerChildren(),
+
           // Page Title & Header
           {
             type: "header",
@@ -132,7 +187,10 @@ export default async function PageExperience() {
                     attributes: [
                       ["type", "text"],
                       ["class", ["search-input"]],
-                      ["placeholder", "Rechercher par poste, entreprise, compétence…"],
+                      [
+                        "placeholder",
+                        "Rechercher par poste, entreprise, compétence…",
+                      ],
                       ["value", filterState.get().search],
                       ["aria-label", "Rechercher une expérience"],
                     ],

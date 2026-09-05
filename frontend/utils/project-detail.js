@@ -1,8 +1,8 @@
 import { NavLink } from "../components/header.js";
-import { extractTechnologies, DEFAULT_PROJECTS } from "./portfolio.js";
+import { extractTechnologies } from "./portfolio.js";
 
 /**
- * Resolves a project by slug with fallback cascade: API -> appStore -> DEFAULT_PROJECTS -> not_found
+ * Resolves a project by slug with fallback cascade: API -> appStore -> not_found
  * @param {string} slug - Target project slug
  * @param {Object|null} fetchedProject - Project returned from API
  * @param {Array} [storeProjects] - Projects from local appStore
@@ -19,9 +19,7 @@ export function resolveProjectDetail(slug, fetchedProject, storeProjects = []) {
   }
 
   // 1. Search in store projects
-  const pool = (storeProjects && storeProjects.length > 0)
-    ? storeProjects
-    : DEFAULT_PROJECTS;
+  const pool = Array.isArray(storeProjects) ? storeProjects : [];
 
   const found = pool.find((p) => {
     const pSlug = (p.slug || "").toLowerCase();
@@ -346,7 +344,7 @@ export function renderProjectDetail(project) {
  * @param {string} slug - Missing project slug
  * @returns {Object} Vanilla-engine structure object
  */
-export function renderProjectNotFound(slug) {
+export function renderProjectNotFound(slug, isOffline = false) {
   return {
     type: "section",
     attributes: [
@@ -358,28 +356,54 @@ export function renderProjectNotFound(slug) {
       {
         type: "span",
         attributes: [["class", ["empty-state-icon"]]],
-        children: ["🔍"],
+        children: [isOffline ? "📡" : "🔍"],
       },
       {
         type: "h1",
         attributes: [["class", ["empty-state-title"]]],
-        children: ["Projet introuvable"],
+        children: [
+          isOffline ? "Projet indisponible hors-ligne" : "Projet introuvable",
+        ],
       },
       {
         type: "p",
         attributes: [["class", ["empty-state-desc"]]],
         children: [
-          `Le projet identifié par le slug « ${slug || "non spécifié"} » n'existe pas ou n'est plus accessible publiquement.`,
+          isOffline
+            ? `Impossible de charger le projet « ${slug || "non spécifié"} » car le serveur distant est indisponible et aucun cache local n'est disponible.`
+            : `Le projet identifié par le slug « ${slug || "non spécifié"} » n'existe pas ou n'est plus accessible publiquement.`,
         ],
       },
       {
         type: "div",
         attributes: [["class", ["not-found-actions"]]],
         children: [
+          ...(isOffline
+            ? [
+                {
+                  type: "button",
+                  attributes: [
+                    ["class", ["btn", "btn-primary"]],
+                    ["type", "button"],
+                  ],
+                  children: ["🔄 Réessayer la connexion"],
+                  events: [
+                    [
+                      "click",
+                      () => {
+                        if (typeof window !== "undefined") {
+                          window.location.reload();
+                        }
+                      },
+                    ],
+                  ],
+                },
+              ]
+            : []),
           NavLink(
             "/portfolio",
             "← Retourner au catalogue de projets",
-            ["btn", "btn-primary"]
+            [isOffline ? "btn-secondary" : "btn-primary", "btn"],
           ),
           NavLink("/", "Accueil du portfolio", ["btn", "btn-secondary"]),
         ],

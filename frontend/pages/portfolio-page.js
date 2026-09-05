@@ -4,8 +4,8 @@ import { appStore } from "../lib/store.js";
 import createState from "../lib/create-state.js";
 import reactive from "../lib/reactive.js";
 import { getTheme } from "../lib/theme.js";
+import useOffline from "../lib/use-offline.js";
 import {
-  DEFAULT_PROJECTS,
   extractAllTechnologies,
   renderProjectsGrid,
   renderPortfolioIris,
@@ -16,25 +16,24 @@ import {
  * @returns {Promise<Object>} Vanilla-engine structure object
  */
 export default async function PagePortfolio() {
-  let projects = [];
+  const offline = useOffline({
+    defaultMessage: "Mode hors-ligne : serveur distant indisponible.",
+  });
   const currentTheme = getTheme();
 
-  try {
-    const fetched = await fetchProjects({ theme: currentTheme });
-    if (fetched && fetched.length > 0) {
-      projects = fetched;
-    }
-  } catch (err) {
-    console.warn("[PagePortfolio] API offline, falling back to local store:", err);
-  }
+  let projects = await offline.execute(
+    () => fetchProjects({ theme: currentTheme }),
+    { fallback: [] },
+  );
 
-  // Fallback to appStore if API returned empty
-  if (projects.length === 0) {
+  // Only fall back to local cache if offline
+  if (offline.isOffline()) {
     const storeState = appStore.getState ? appStore.getState() : appStore.get();
     if (storeState?.projects && storeState.projects.length > 0) {
       projects = storeState.projects;
-    } else {
-      projects = DEFAULT_PROJECTS;
+      offline.setOffline(
+        "Mode hors-ligne : projets affichés depuis le cache local.",
+      );
     }
   }
 
@@ -42,7 +41,11 @@ export default async function PagePortfolio() {
     return {
       type: "div",
       attributes: [["class", ["page", "page-portfolio"]]],
-      children: [Header("/portfolio"), renderPortfolioIris(projects)],
+      children: [
+        Header("/portfolio"),
+        ...offline.getBannerChildren(),
+        renderPortfolioIris(projects),
+      ],
     };
   }
 
@@ -61,7 +64,7 @@ export default async function PagePortfolio() {
 
     // 1. Synchronize search input without disrupting focus if already matching
     const searchInputs = document.querySelectorAll(
-      ".page-portfolio .search-input"
+      ".page-portfolio .search-input",
     );
     searchInputs.forEach((input) => {
       if (input.value !== state.search) {
@@ -71,7 +74,7 @@ export default async function PagePortfolio() {
 
     // 2. Synchronize status filter active pills
     const statusBtns = document.querySelectorAll(
-      ".page-portfolio [data-status]"
+      ".page-portfolio [data-status]",
     );
     statusBtns.forEach((btn) => {
       const val = btn.dataset.status;
@@ -83,9 +86,7 @@ export default async function PagePortfolio() {
     });
 
     // 3. Synchronize technology filter active pills
-    const techBtns = document.querySelectorAll(
-      ".page-portfolio [data-tech]"
-    );
+    const techBtns = document.querySelectorAll(".page-portfolio [data-tech]");
     techBtns.forEach((btn) => {
       const val = btn.dataset.tech;
       if (val === state.techFilter) {
@@ -98,7 +99,7 @@ export default async function PagePortfolio() {
 
   // Reactive node that only replaces the grid and metadata, leaving controls mounted and focused
   const reactiveGridNode = reactive(filterState, (state) =>
-    renderProjectsGrid(state, projects, filterState.setState)
+    renderProjectsGrid(state, projects, filterState.setState),
   );
 
   return {
@@ -112,6 +113,8 @@ export default async function PagePortfolio() {
       {
         type: "main",
         children: [
+          ...offline.getBannerChildren(),
+
           // Page Title & Header
           {
             type: "header",
@@ -155,7 +158,10 @@ export default async function PagePortfolio() {
                     attributes: [
                       ["type", "text"],
                       ["class", ["search-input"]],
-                      ["placeholder", "Rechercher par mot-clé, titre, technologie…"],
+                      [
+                        "placeholder",
+                        "Rechercher par mot-clé, titre, technologie…",
+                      ],
                       ["value", filterState.get().search],
                       ["aria-label", "Rechercher un projet"],
                     ],

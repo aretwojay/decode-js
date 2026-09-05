@@ -1,47 +1,59 @@
 import createState from "./create-state.js";
 
-const STORAGE_KEY = "vanilla_portfolio_store";
+const STORAGE_KEY = "vanilla_portfolio_store_v2";
 
 const initialPortfolioState = {
-  profile: {
-    nom: "Jean Dupont",
-    titre: "Développeur Fullstack Vanilla JS & Strapi",
-    bio: "Passionné par l'ingénierie logicielle, les architectures modulaires sans framework et les CMS headless.",
-    email: "jean.dupont@example.com",
-    ville: "Paris, France",
-  },
-  skills: [
-    { id: 1, titre: "JavaScript Vanilla", niveau: "expert" },
-    { id: 2, titre: "Strapi CMS", niveau: "avance" },
-    { id: 3, titre: "CSS / Design Systems", niveau: "avance" },
-  ],
-  experiences: [
-    {
-      id: 1,
-      titre: "Lead Développeur Frontend",
-      entreprise: "Tech Innovation",
-      date_debut: "2024-01-01",
-      date_fin: "",
-      description: "Conception du moteur Vanilla-Engine pour portfolios dynamiques.",
-    },
-  ],
-  projects: [
-    {
-      id: 1,
-      titre: "Plateforme E-Commerce",
-      slug: "projet-ecommerce",
-      description: "Boutique en ligne avec catalogue interactif et panier réactif.",
-      technologies: ["JavaScript", "Strapi", "CSS"],
-    },
-  ],
+  profile: null,
+  skills: [],
+  experiences: [],
+  projects: [],
 };
 
 function loadStoredState() {
   try {
     if (typeof localStorage !== "undefined") {
+      // Clean up legacy store key containing initial mock items
+      localStorage.removeItem("vanilla_portfolio_store");
+
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
-        return JSON.parse(saved);
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed?.projects)) {
+          parsed.projects = parsed.projects.filter(
+            (p) =>
+              p &&
+              ![1, 101, 102, 103, 104].includes(p.id) &&
+              p.slug !== "projet-ecommerce" &&
+              p.slug !== "vanilla-spa-engine" &&
+              p.slug !== "strapi-headless-cms" &&
+              p.slug !== "design-system-themes",
+          );
+        }
+        if (Array.isArray(parsed?.experiences)) {
+          parsed.experiences = parsed.experiences.filter(
+            (e) =>
+              e &&
+              ![1, 2, 3].includes(e.id) &&
+              e.entreprise !== "Tech Innovation" &&
+              e.entreprise !== "Tech Innovation Studio" &&
+              e.entreprise !== "Digital Horizons Agency" &&
+              e.entreprise !== "Creative Studio Paris",
+          );
+        }
+        if (Array.isArray(parsed?.skills)) {
+          parsed.skills = parsed.skills.filter(
+            (s) =>
+              s &&
+              ![1, 2, 3].includes(s.id) &&
+              s.titre !== "JavaScript Vanilla" &&
+              s.titre !== "Strapi CMS" &&
+              s.titre !== "CSS / Design Systems",
+          );
+        }
+        if (parsed?.profile?.email === "jean.dupont@example.com") {
+          parsed.profile = null;
+        }
+        return parsed;
       }
     }
   } catch (error) {

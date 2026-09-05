@@ -2,6 +2,7 @@ import createState from "../lib/create-state.js";
 import reactive from "../lib/reactive.js";
 import { sendMessage } from "../lib/api.js";
 import { getTheme } from "../lib/theme.js";
+import { showToast } from "../components/ui-feedback.js";
 
 const formState = createState({
   nom: "",
@@ -60,8 +61,11 @@ export function renderContactSection({
     const result = await sendMessage({ nom, email, contenu });
     if (result.success) {
       formState.set({ nom: "", email: "", contenu: "", status: "success", error: "" });
+      showToast("Message envoyé avec succès ! Merci.", "success");
     } else {
-      formState.set((s) => ({ ...s, status: "error", error: result.error || "Erreur lors de l'envoi." }));
+      const errText = result.error || "Erreur lors de l'envoi du message.";
+      formState.set((s) => ({ ...s, status: "error", error: errText }));
+      showToast(errText, "error");
     }
   }
 

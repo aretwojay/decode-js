@@ -3,14 +3,17 @@ import { renderContactSection } from "../utils/contact-section.js";
 import { fetchProfile } from "../lib/api.js";
 import { getTheme } from "../lib/theme.js";
 import { resolveCandidateProfile } from "../utils/home.js";
+import useOffline from "../lib/use-offline.js";
 
 export default async function PageContact() {
-  let profile = null;
-  try {
-    profile = await fetchProfile({ theme: getTheme() });
-  } catch (err) {
-    console.warn("[PageContact] API offline:", err);
-  }
+  const offline = useOffline({
+    defaultMessage: "Mode hors-ligne : serveur distant indisponible.",
+  });
+
+  const profile = await offline.execute(
+    () => fetchProfile({ theme: getTheme() }),
+    { fallback: null },
+  );
 
   const candidateData = resolveCandidateProfile(profile, null);
 
@@ -22,6 +25,7 @@ export default async function PageContact() {
       {
         type: "main",
         children: [
+          ...offline.getBannerChildren(),
           renderContactSection({
             headingTag: "h1",
             phone: candidateData.candidatePhone,
