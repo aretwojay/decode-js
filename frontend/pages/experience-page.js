@@ -1,4 +1,5 @@
 import Header from "../components/header.js";
+import Footer from "../components/footer.js";
 import { fetchExperiences } from "../lib/api.js";
 import { appStore } from "../lib/store.js";
 import createState from "../lib/create-state.js";
@@ -85,6 +86,7 @@ export default async function PageExperience() {
             }),
           ],
         },
+        Footer(),
       ],
     };
   }
@@ -275,6 +277,7 @@ export default async function PageExperience() {
           reactiveResultsNode,
         ],
       },
+      Footer(),
     ],
   };
 }

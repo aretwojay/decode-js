@@ -132,9 +132,25 @@ export default function BrowserRouter(rootElement, routes) {
         rootElement.appendChild(generateStructure(structure));
       }
 
+      // Scroll restoration & anchor management (T0020 Axe 1)
       if (window.location.hash) {
-        const target = document.getElementById(window.location.hash.slice(1));
-        if (target) target.scrollIntoView({ behavior: "smooth" });
+        setTimeout(() => {
+          const hashId = window.location.hash.slice(1);
+          const target = document.getElementById(hashId);
+          if (target) {
+            target.scrollIntoView({ behavior: "smooth" });
+          }
+        }, 50);
+      } else {
+        window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+      }
+
+      // Focus management for screen readers and keyboard navigation (T0020 Axe 1)
+      const focusTarget =
+        rootElement.querySelector("main") || rootElement.querySelector("h1");
+      if (focusTarget) {
+        focusTarget.setAttribute("tabindex", "-1");
+        focusTarget.focus({ preventScroll: true });
       }
     } catch (err) {
       console.error("[BrowserRouter] Error loading route:", pathname, err);

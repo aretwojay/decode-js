@@ -1,4 +1,5 @@
 import Header from "../components/header.js";
+import Footer from "../components/footer.js";
 import { fetchProjects } from "../lib/api.js";
 import { appStore } from "../lib/store.js";
 import createState from "../lib/create-state.js";
@@ -7,6 +8,7 @@ import { getTheme } from "../lib/theme.js";
 import useOffline from "../lib/use-offline.js";
 import {
   extractAllTechnologies,
+  extractTechnologies,
   renderProjectsGrid,
   renderPortfolioIris,
 } from "../utils/portfolio.js";
@@ -37,14 +39,32 @@ export default async function PagePortfolio() {
     }
   }
 
+  const urlParams =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search)
+      : null;
+  const initialTech = urlParams?.get("tech") || "all";
+  const initialSearch = urlParams?.get("search") || "";
+  const initialStatus = urlParams?.get("status") || "all";
+
   if (currentTheme === "iris") {
+    const irisProjects =
+      initialTech !== "all"
+        ? projects.filter((p) =>
+            extractTechnologies(p).some(
+              (t) => t.toLowerCase() === initialTech.toLowerCase()
+            )
+          )
+        : projects;
+
     return {
       type: "div",
       attributes: [["class", ["page", "page-portfolio"]]],
       children: [
         Header("/portfolio"),
         ...offline.getBannerChildren(),
-        renderPortfolioIris(projects),
+        renderPortfolioIris(irisProjects),
+        Footer(),
       ],
     };
   }
@@ -53,13 +73,31 @@ export default async function PagePortfolio() {
 
   // Local reactive state for search and filters
   const filterState = createState({
-    search: "",
-    techFilter: "all",
-    statusFilter: "all",
+    search: initialSearch,
+    techFilter: initialTech,
+    statusFilter: initialStatus,
   });
 
   // Subscribe to update controls when state is reset or changed externally
   filterState.subscribe((state) => {
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams();
+      if (state.search) params.set("search", state.search);
+      if (state.techFilter && state.techFilter !== "all") {
+        params.set("tech", state.techFilter);
+      }
+      if (state.statusFilter && state.statusFilter !== "all") {
+        params.set("status", state.statusFilter);
+      }
+      const queryStr = params.toString();
+      const newUrl = queryStr
+        ? `${window.location.pathname}?${queryStr}`
+        : window.location.pathname;
+      if (`${window.location.pathname}${window.location.search}` !== newUrl) {
+        window.history.replaceState({}, undefined, newUrl);
+      }
+    }
+
     if (typeof document === "undefined") return;
 
     // 1. Synchronize search input without disrupting focus if already matching
@@ -306,6 +344,7 @@ export default async function PagePortfolio() {
           reactiveGridNode,
         ],
       },
+      Footer(),
     ],
   };
 }

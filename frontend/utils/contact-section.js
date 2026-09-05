@@ -7,6 +7,7 @@ import { showToast } from "../components/ui-feedback.js";
 const formState = createState({
   nom: "",
   email: "",
+  sujet: "",
   contenu: "",
   status: "idle",
   error: "",
@@ -36,13 +37,24 @@ export function renderContactSection({
   phone = "",
   email = "contact@example.com",
   location = "",
+  initialSubject = "",
 } = {}) {
   const isIris = getTheme() === "iris";
   const phoneHref = `tel:${phone.replace(/[^+\d]/g, "")}`;
 
+  // Pre-fill subject from parameters or URL if provided
+  const urlParams =
+    typeof window !== "undefined"
+      ? new URLSearchParams(window.location.search)
+      : null;
+  const paramSubject = initialSubject || urlParams?.get("subject") || "";
+  if (paramSubject && !formState.get().sujet) {
+    formState.set((s) => ({ ...s, sujet: paramSubject }));
+  }
+
   async function handleSubmit(event) {
     event.preventDefault();
-    const { nom, email, contenu } = formState.get();
+    const { nom, email, sujet, contenu } = formState.get();
 
     if (!nom || nom.length < 2) {
       formState.set((s) => ({ ...s, status: "error", error: "Le nom complet est requis." }));
@@ -58,9 +70,9 @@ export function renderContactSection({
     }
 
     formState.set((s) => ({ ...s, status: "loading", error: "" }));
-    const result = await sendMessage({ nom, email, contenu });
+    const result = await sendMessage({ nom, email, sujet, contenu });
     if (result.success) {
-      formState.set({ nom: "", email: "", contenu: "", status: "success", error: "" });
+      formState.set({ nom: "", email: "", sujet: "", contenu: "", status: "success", error: "" });
       showToast("Message envoyé avec succès ! Merci.", "success");
     } else {
       const errText = result.error || "Erreur lors de l'envoi du message.";
@@ -170,6 +182,27 @@ export function renderContactSection({
                     type: "input",
                     attributes: [["type", "email"], ["placeholder", "example@mail.com"]],
                     events: [["input", (e) => formState.set((s) => ({ ...s, email: e.target.value }))]],
+                  },
+                ],
+              },
+              {
+                type: "label",
+                children: [
+                  "Sujet",
+                  {
+                    type: "input",
+                    attributes: [
+                      ["type", "text"],
+                      ["placeholder", "Objet du message..."],
+                      ["value", formState.get().sujet || ""],
+                    ],
+                    events: [
+                      [
+                        "input",
+                        (e) =>
+                          formState.set((s) => ({ ...s, sujet: e.target.value })),
+                      ],
+                    ],
                   },
                 ],
               },

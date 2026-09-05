@@ -99,6 +99,15 @@ export function NavLink(url, children, classNames = [], extraAttrs = []) {
         "click",
         (event) => {
           event.preventDefault();
+          const nav = document.querySelector(".main-nav");
+          if (nav && nav.classList.contains("is-open")) {
+            nav.classList.remove("is-open");
+            const toggle = document.querySelector(".mobile-menu-toggle");
+            if (toggle) {
+              toggle.classList.remove("is-open");
+              toggle.setAttribute("aria-expanded", "false");
+            }
+          }
           window.history.pushState({}, undefined, url);
           window.dispatchEvent(new Event("pushstate"));
         },
@@ -110,10 +119,17 @@ export function NavLink(url, children, classNames = [], extraAttrs = []) {
 
 /**
  * Reusable Header & Navigation component
- * @param {string} [activePath="/"]
+ * @param {string} [activePath]
  * @returns {Object} Vanilla-engine structure object
  */
-export default function Header(activePath = "/") {
+export default function Header(activePath) {
+  const currentPath =
+    activePath !== undefined
+      ? activePath
+      : typeof window !== "undefined"
+      ? window.location.pathname
+      : "/";
+
   const authenticated = isAuthenticated();
   const currentUser = getCurrentUser();
   const isIris = getTheme() === "iris";
@@ -155,13 +171,19 @@ export default function Header(activePath = "/") {
       ["aria-label", "Navigation principale"],
     ],
     children: [
-      ...links.map(({ url, label }) =>
-        NavLink(
+      ...links.map(({ url, label }) => {
+        const isExactMatch = currentPath === url;
+        const isParentMatch =
+          url !== "/" &&
+          (currentPath.startsWith(url + "/") || currentPath.startsWith(url + "?"));
+        const isActive = isExactMatch || isParentMatch;
+
+        return NavLink(
           url,
           label,
-          activePath === url ? ["nav-link", "active"] : ["nav-link"],
-        ),
-      ),
+          isActive ? ["nav-link", "active"] : ["nav-link"],
+        );
+      }),
       ...(authenticated
         ? [
             {
@@ -195,12 +217,12 @@ export default function Header(activePath = "/") {
               NavLink(
                 "/login",
                 "Login",
-                activePath === "/login" ? ["nav-link", "active"] : ["nav-link"],
+                currentPath === "/login" ? ["nav-link", "active"] : ["nav-link"],
               ),
               NavLink(
                 "/signup",
                 "Signup",
-                activePath === "/signup"
+                currentPath === "/signup"
                   ? ["nav-link", "active"]
                   : ["nav-link"],
               ),
@@ -245,6 +267,6 @@ export default function Header(activePath = "/") {
   return {
     type: "header",
     attributes: [["class", ["site-header"]]],
-    children: [logo, nav, ThemeSwitcher()],
+    children: [logo, nav, MobileMenuToggle(), ThemeSwitcher()],
   };
 }

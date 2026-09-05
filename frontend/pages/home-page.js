@@ -1,4 +1,5 @@
 import Header, { NavLink } from "../components/header.js";
+import Footer from "../components/footer.js";
 import { fetchProfile, fetchProjects } from "../lib/api.js";
 import { appStore } from "../lib/store.js";
 import { getTheme } from "../lib/theme.js";
@@ -11,7 +12,6 @@ import {
   renderServicesSection,
   renderFeaturedSection,
   renderOverviewSection,
-  renderSiteFooter,
 } from "../utils/home.js";
 import { renderContactSection } from "../utils/contact-section.js";
 
@@ -128,12 +128,12 @@ export default async function PageHome() {
         ],
       },
 
-      // Site Footer
-      renderSiteFooter(
-        candidateData.candidateName,
-        candidateData.githubUrl,
-        candidateData.linkedinUrl,
-      ),
+      // Site Footer (T0020)
+      Footer({
+        candidateName: candidateData.candidateName,
+        githubUrl: candidateData.githubUrl,
+        linkedinUrl: candidateData.linkedinUrl,
+      }),
     ],
   };
 }
