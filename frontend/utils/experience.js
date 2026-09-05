@@ -1,3 +1,6 @@
+import { renderEmptyState } from "../components/ui-feedback.js";
+import { globalOfflineState } from "../lib/use-offline.js";
+
 /**
  * Experience Utilities & Render Helpers
  */
@@ -5,55 +8,7 @@
 /**
  * Fallback experiences dataset for offline / initial states
  */
-export const DEFAULT_EXPERIENCES = [
-  {
-    id: 1,
-    titre: "Lead Développeur Frontend & Architecte Vanilla JS",
-    entreprise: "Tech Innovation Studio",
-    date_debut: "2023-09-01",
-    date_fin: "",
-    description:
-      "Conception intégrale du moteur Vanilla-Engine pour portfolios dynamiques : routage History SPA, gestion d'état réactif par abonnements et moteur d'interpolation de templates sans framework.",
-    competences: [
-      { id: 1, titre: "Vanilla JS" },
-      { id: 2, titre: "Architecture Logicielle" },
-      { id: 3, titre: "Performance Web" },
-      { id: 4, titre: "Design System" },
-    ],
-    statut: "publie",
-  },
-  {
-    id: 2,
-    titre: "Développeur Fullstack Web & Strapi CMS",
-    entreprise: "Digital Horizons Agency",
-    date_debut: "2022-03-01",
-    date_fin: "2023-08-31",
-    description:
-      "Développement d'APIs Headless Strapi 5, gestion des permissions granulaires, assainissement des entrées utilisateur, sécurisation des flux et création d'interfaces d'administration personnalisées.",
-    competences: [
-      { id: 5, titre: "Strapi 5" },
-      { id: 6, titre: "TypeScript" },
-      { id: 7, titre: "PostgreSQL" },
-      { id: 8, titre: "REST API" },
-    ],
-    statut: "publie",
-  },
-  {
-    id: 3,
-    titre: "Intégrateur Web & Développeur UI/UX",
-    entreprise: "Creative Studio Paris",
-    date_debut: "2020-10-01",
-    date_fin: "2022-02-28",
-    description:
-      "Intégration d'interfaces web responsives conformes aux normes WCAG AA, développement de systèmes de thèmes dynamiques et optimisation des Core Web Vitals.",
-    competences: [
-      { id: 9, titre: "CSS3 / SASS" },
-      { id: 10, titre: "Accessibilité WCAG" },
-      { id: 11, titre: "UI/UX Design" },
-    ],
-    statut: "publie",
-  },
-];
+export const DEFAULT_EXPERIENCES = [];
 
 /**
  * Formats ISO dates into a readable French period string
@@ -300,6 +255,29 @@ export function renderExperiencesResults(state, allExperiences, updateState) {
               };
             }),
           }
+        : allExperiences.length === 0
+        ? renderEmptyState(
+            globalOfflineState?.get && globalOfflineState.get().isOffline
+              ? {
+                  icon: "📡",
+                  title: "Mode hors-ligne : aucune expérience disponible",
+                  description:
+                    "Le serveur distant est actuellement indisponible et aucune expérience professionnelle n'est enregistrée en cache local.",
+                  actionText: "🔄 Réessayer la connexion",
+                  onAction: () => {
+                    if (typeof window !== "undefined") {
+                      window.location.reload();
+                    }
+                  },
+                }
+              : {
+                  icon: "💼",
+                  title: "Aucune expérience enregistrée",
+                  description:
+                    "Aucune expérience professionnelle n'a été publiée pour le moment.",
+                  actionText: null,
+                },
+          )
         : {
             type: "div",
             attributes: [["class", ["empty-state-card"]]],

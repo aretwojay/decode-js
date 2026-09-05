@@ -1,36 +1,11 @@
 import { NavLink } from "../components/header.js";
 import { getTheme } from "../lib/theme.js";
 import { extractTechnologies } from "./portfolio.js";
+import { renderEmptyState } from "../components/ui-feedback.js";
+import { globalOfflineState } from "../lib/use-offline.js";
 
 
-export const DEFAULT_HOME_PROJECTS = [
-  {
-    id: 101,
-    slug: "vanilla-spa-engine",
-    titre: "Vanilla SPA Engine & Architecture MVC",
-    resume:
-      "Moteur de rendu frontend réactif complet en JavaScript pur (ES Modules), sans aucun framework ni dépendance externe.",
-    en_vedette: true,
-    competences: [
-      { id: 1, titre: "JavaScript ES6+" },
-      { id: 2, titre: "Reactive State" },
-      { id: 3, titre: "SPA Router" },
-    ],
-  },
-  {
-    id: 102,
-    slug: "strapi-headless-cms",
-    titre: "CMS Headless Strapi 5 & API Sécurisée",
-    resume:
-      "Modélisation de données d'entreprise, contrôleurs personnalisés avec assainissement, validation stricte et ingestion contrôlée.",
-    en_vedette: true,
-    competences: [
-      { id: 4, titre: "Strapi 5" },
-      { id: 5, titre: "TypeScript" },
-      { id: 6, titre: "REST API" },
-    ],
-  },
-];
+export const DEFAULT_HOME_PROJECTS = [];
 
 /**
  * Resolves candidate profile fields with fallbacks
@@ -70,14 +45,14 @@ export function resolveProjectsToDisplay(
   allProjects = [],
   storeProjects = []
 ) {
-  const hasFeatured = featuredProjects.length > 0;
+  const hasFeatured = Array.isArray(featuredProjects) && featuredProjects.length > 0;
   const projectsToDisplay = hasFeatured
     ? featuredProjects
-    : allProjects.length > 0
+    : Array.isArray(allProjects) && allProjects.length > 0
     ? allProjects.slice(0, 3)
-    : storeProjects && storeProjects.length > 0
+    : Array.isArray(storeProjects) && storeProjects.length > 0
     ? storeProjects.slice(0, 3)
-    : DEFAULT_HOME_PROJECTS;
+    : [];
 
   return { projectsToDisplay, hasFeatured };
 }
@@ -475,10 +450,34 @@ export function renderFeaturedSection(projectsToDisplay, hasFeatured) {
             : NavLink("/portfolio", "Voir tout le catalogue →", ["section-link"]),
         ],
       },
-      {
-        type: "div",
-        attributes: [["class", ["grid", "projects-grid"]]],
-        children: projectsToDisplay.map((project, index) => {
+      projectsToDisplay.length === 0
+        ? renderEmptyState(
+            globalOfflineState?.get && globalOfflineState.get().isOffline
+              ? {
+                  icon: "📡",
+                  title: "Mode hors-ligne : aucun projet disponible",
+                  description:
+                    "Le serveur distant est actuellement indisponible et aucun projet n'est enregistré en cache local.",
+                  actionText: "🔄 Réessayer la connexion",
+                  onAction: () => {
+                    if (typeof window !== "undefined") {
+                      window.location.reload();
+                    }
+                  },
+                }
+              : {
+                  icon: "📂",
+                  title: "Aucun projet en vedette pour l'instant",
+                  description:
+                    "Consultez l'ensemble des réalisations et travaux techniques dans notre catalogue complet.",
+                  actionText: "Explorer tout le portfolio",
+                  actionHref: "/portfolio",
+                },
+          )
+        : {
+            type: "div",
+            attributes: [["class", ["grid", "projects-grid"]]],
+            children: projectsToDisplay.map((project, index) => {
           const projectTags =
             project.competences && project.competences.length > 0
               ? project.competences.map((c) => c.titre || c.name || c)

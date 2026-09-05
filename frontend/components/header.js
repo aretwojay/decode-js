@@ -49,7 +49,10 @@ function ModeToggle() {
     attributes: [
       ["type", "button"],
       ["class", ["mode-toggle"]],
-      ["aria-label", mode === "light" ? "Passer en mode sombre" : "Passer en mode clair"],
+      [
+        "aria-label",
+        mode === "light" ? "Passer en mode sombre" : "Passer en mode clair",
+      ],
     ],
     events: [
       [
@@ -60,13 +63,17 @@ function ModeToggle() {
           const isLight = getMode() === "light";
           event.currentTarget.setAttribute(
             "aria-label",
-            isLight ? "Passer en mode sombre" : "Passer en mode clair"
+            isLight ? "Passer en mode sombre" : "Passer en mode clair",
           );
         },
       ],
     ],
     children: [
-      { type: "span", attributes: [["class", ["mode-toggle-icon"]]], children: [] },
+      {
+        type: "span",
+        attributes: [["class", ["mode-toggle-icon"]]],
+        children: [],
+      },
     ],
   };
 }
@@ -138,19 +145,22 @@ export default function Header(activePath = "/") {
         children: [isIris ? "Iris" : "⚡ Portfolio.js"],
       },
     ],
-    ["logo-link"]
+    ["logo-link"],
   );
 
   const nav = {
     type: "nav",
-    attributes: [["class", ["main-nav"]], ["aria-label", "Navigation principale"]],
+    attributes: [
+      ["class", ["main-nav"]],
+      ["aria-label", "Navigation principale"],
+    ],
     children: [
       ...links.map(({ url, label }) =>
         NavLink(
           url,
           label,
-          activePath === url ? ["nav-link", "active"] : ["nav-link"]
-        )
+          activePath === url ? ["nav-link", "active"] : ["nav-link"],
+        ),
       ),
       ...(authenticated
         ? [
@@ -161,7 +171,10 @@ export default function Header(activePath = "/") {
             },
             {
               type: "a",
-              attributes: [["href", "#"], ["class", ["nav-link", "logout-btn"]]],
+              attributes: [
+                ["href", "#"],
+                ["class", ["nav-link", "logout-btn"]],
+              ],
               children: ["Déconnexion"],
               events: [
                 [
@@ -177,19 +190,21 @@ export default function Header(activePath = "/") {
             },
           ]
         : isIris
-        ? []
-        : [
-            NavLink(
-              "/login",
-              "Login",
-              activePath === "/login" ? ["nav-link", "active"] : ["nav-link"]
-            ),
-            NavLink(
-              "/signup",
-              "Signup",
-              activePath === "/signup" ? ["nav-link", "active"] : ["nav-link"]
-            ),
-          ]),
+          ? []
+          : [
+              NavLink(
+                "/login",
+                "Login",
+                activePath === "/login" ? ["nav-link", "active"] : ["nav-link"],
+              ),
+              NavLink(
+                "/signup",
+                "Signup",
+                activePath === "/signup"
+                  ? ["nav-link", "active"]
+                  : ["nav-link"],
+              ),
+            ]),
       ...(isIris
         ? [
             {

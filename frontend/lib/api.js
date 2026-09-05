@@ -4,6 +4,7 @@
  */
 
 import { appStore } from "./store.js";
+import { globalOfflineState } from "./use-offline.js";
 
 /**
  * Resolve the API base URL in a robust, explicit way for different environments:
@@ -254,9 +255,26 @@ async function apiFetch(endpoint, options = {}) {
       throw error;
     }
 
+    if (globalOfflineState?.get && globalOfflineState.get().isOffline) {
+      globalOfflineState.set((state) => ({
+        ...state,
+        isOffline: false,
+        message: "",
+        lastChecked: Date.now(),
+      }));
+    }
+
     return data;
   } catch (err) {
     console.warn(`[API Client] Error on ${url}:`, err.message);
+    if (globalOfflineState?.set && !globalOfflineState.get().isOffline) {
+      globalOfflineState.set((state) => ({
+        ...state,
+        isOffline: true,
+        message: "Mode hors-ligne : serveur distant indisponible.",
+        lastChecked: Date.now(),
+      }));
+    }
     throw err;
   }
 }

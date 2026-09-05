@@ -2,6 +2,7 @@ import Header, { NavLink } from "../components/header.js";
 import { fetchProfile, fetchProjects } from "../lib/api.js";
 import { appStore } from "../lib/store.js";
 import { getTheme } from "../lib/theme.js";
+import useOffline from "../lib/use-offline.js";
 import {
   resolveCandidateProfile,
   resolveProjectsToDisplay,
@@ -20,28 +21,28 @@ import { renderContactSection } from "../utils/contact-section.js";
  * @returns {Promise<Object>} Vanilla-engine structure object
  */
 export default async function PageHome() {
-  // 1. Fetch live data with graceful offline/store fallback
-  let profile = null;
-  let featuredProjects = [];
-  let allProjects = [];
+  const offline = useOffline({
+    defaultMessage: "Mode hors-ligne : serveur distant indisponible.",
+  });
 
   const currentTheme = getTheme();
 
-  try {
-    const [fetchedProfile, fetchedFeatured, fetchedAll] = await Promise.all([
-      fetchProfile({ theme: currentTheme }),
-      fetchProjects({ featured: true, theme: currentTheme }),
-      fetchProjects({ theme: currentTheme }),
-    ]);
+  const [profile, featuredProjects, allProjects] = await offline.execute(
+    () =>
+      Promise.all([
+        fetchProfile({ theme: currentTheme }),
+        fetchProjects({ featured: true, theme: currentTheme }),
+        fetchProjects({ theme: currentTheme }),
+      ]),
+    { fallback: [null, [], []] },
+  );
 
-    profile = fetchedProfile;
-    featuredProjects = fetchedFeatured || [];
-    allProjects = fetchedAll || [];
-  } catch (err) {
-    console.warn("[PageHome] API offline, falling back to appStore:", err);
-  }
-
-  const storeState = appStore.getState ? appStore.getState() : appStore.get();
+  const isOffline = offline.isOffline();
+  const storeState = isOffline
+    ? appStore.getState
+      ? appStore.getState()
+      : appStore.get()
+    : null;
   const isIris = currentTheme === "iris";
 
   // Resolve Candidate Profile & Showcase Projects
@@ -49,7 +50,7 @@ export default async function PageHome() {
   const { projectsToDisplay, hasFeatured } = resolveProjectsToDisplay(
     featuredProjects,
     allProjects,
-    storeState?.projects
+    storeState?.projects,
   );
 
   return {
@@ -63,6 +64,8 @@ export default async function PageHome() {
       {
         type: "main",
         children: [
+          ...offline.getBannerChildren(),
+
           // Hero Introduction Section
           renderHeroSection(candidateData),
 
@@ -110,9 +113,13 @@ export default async function PageHome() {
                         "Démos techniques du moteur Vanilla : ",
                         NavLink("/table", "Table Réactive", ["footer-link"]),
                         { type: "span", children: [" • "] },
-                        NavLink("/gallery", "Galerie d'Images", ["footer-link"]),
+                        NavLink("/gallery", "Galerie d'Images", [
+                          "footer-link",
+                        ]),
                         { type: "span", children: [" • "] },
-                        NavLink("/admin", "Espace Admin Strapi", ["footer-link"]),
+                        NavLink("/admin", "Espace Admin Strapi", [
+                          "footer-link",
+                        ]),
                       ],
                     },
                   ],
@@ -125,7 +132,7 @@ export default async function PageHome() {
       renderSiteFooter(
         candidateData.candidateName,
         candidateData.githubUrl,
-        candidateData.linkedinUrl
+        candidateData.linkedinUrl,
       ),
     ],
   };
