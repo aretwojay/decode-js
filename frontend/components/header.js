@@ -16,6 +16,32 @@ function scheduleCvLinkUpdate() {
   }, 0);
 }
 
+function MobileMenuToggle() {
+  return {
+    type: "button",
+    attributes: [
+      ["type", "button"],
+      ["class", ["mobile-menu-toggle"]],
+      ["aria-label", "Ouvrir le menu"],
+      ["aria-expanded", "false"],
+    ],
+    events: [
+      [
+        "click",
+        (event) => {
+          const nav = document.querySelector(".main-nav");
+          const isOpen = nav?.classList.toggle("is-open");
+          event.currentTarget.classList.toggle("is-open", isOpen);
+          event.currentTarget.setAttribute("aria-expanded", String(Boolean(isOpen)));
+        },
+      ],
+    ],
+    children: [
+      { type: "span", attributes: [["class", ["mobile-menu-toggle-icon"]]], children: [] },
+    ],
+  };
+}
+
 function ModeToggle() {
   const mode = getMode();
   return {
@@ -195,7 +221,7 @@ export default function Header(activePath = "/") {
         {
           type: "div",
           attributes: [["class", ["header-mainrow"]]],
-          children: [logo, nav],
+          children: [logo, nav, MobileMenuToggle()],
         },
       ],
     };
