@@ -1,5 +1,6 @@
 import { renderEmptyState } from "../components/ui-feedback.js";
 import { globalOfflineState } from "../lib/use-offline.js";
+import { NavLink } from "../components/header.js";
 
 /**
  * Experience Utilities & Render Helpers
@@ -244,11 +245,14 @@ export function renderExperiencesResults(state, allExperiences, updateState) {
                     ? {
                         type: "div",
                         attributes: [["class", ["tags-list"]]],
-                        children: skills.map((s) => ({
-                          type: "span",
-                          attributes: [["class", ["tag"]]],
-                          children: [s],
-                        })),
+                        children: skills.map((s) =>
+                          NavLink(
+                            `/portfolio?tech=${encodeURIComponent(s)}`,
+                            s,
+                            ["tag", "tag-clickable"],
+                            [["title", `Voir les projets liés à la compétence ${s}`]]
+                          )
+                        ),
                       }
                     : { type: "span", children: [] },
                 ],

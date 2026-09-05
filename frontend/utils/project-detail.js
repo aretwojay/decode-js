@@ -151,11 +151,17 @@ export function renderProjectDetail(project) {
           ["aria-label", "Fil d'Ariane"],
         ],
         children: [
-          NavLink("/portfolio", "← Retour au catalogue", ["breadcrumb-link"]),
+          NavLink("/", "Accueil", ["breadcrumb-link"]),
           {
             type: "span",
             attributes: [["class", ["breadcrumb-separator"]]],
-            children: [" / "],
+            children: [" > "],
+          },
+          NavLink("/portfolio", "Portfolio", ["breadcrumb-link"]),
+          {
+            type: "span",
+            attributes: [["class", ["breadcrumb-separator"]]],
+            children: [" > "],
           },
           {
             type: "span",
@@ -262,11 +268,14 @@ export function renderProjectDetail(project) {
               {
                 type: "div",
                 attributes: [["class", ["tags-list", "techs-detail-list"]]],
-                children: techs.map((t) => ({
-                  type: "span",
-                  attributes: [["class", ["tag", "tag-large"]]],
-                  children: [t],
-                })),
+                children: techs.map((t) =>
+                  NavLink(
+                    `/portfolio?tech=${encodeURIComponent(t)}`,
+                    t,
+                    ["tag", "tag-large", "tag-clickable"],
+                    [["title", `Voir tous les projets utilisant ${t}`]]
+                  )
+                ),
               },
             ],
           }
@@ -329,8 +338,10 @@ export function renderProjectDetail(project) {
               }
             : { type: "span", children: [] },
           NavLink(
-            "/contact",
-            "✉️ Me contacter à propos de ce projet",
+            `/contact?subject=${encodeURIComponent(
+              `Discussion sur le projet : ${project.titre || "Projet"}`
+            )}`,
+            "💬 Discuter de ce projet",
             ["btn", "btn-secondary", "action-btn"]
           ),
         ],

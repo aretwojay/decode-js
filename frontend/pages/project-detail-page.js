@@ -1,4 +1,5 @@
 import Header from "../components/header.js";
+import Footer from "../components/footer.js";
 import { fetchProjectBySlug } from "../lib/api.js";
 import { appStore } from "../lib/store.js";
 import useOffline from "../lib/use-offline.js";
@@ -65,6 +66,7 @@ export default async function PageProjectDetail(params = {}) {
             : renderProjectNotFound(slug, offline.isOffline()),
         ],
       },
+      Footer(),
     ],
   };
 }

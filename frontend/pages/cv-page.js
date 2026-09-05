@@ -1,4 +1,5 @@
 import Header from "../components/header.js";
+import Footer from "../components/footer.js";
 import { syncStoreFromApi } from "../lib/api.js";
 import reactive from "../lib/reactive.js";
 import { appStore } from "../lib/store.js";
@@ -23,6 +24,7 @@ export default async function PageCV() {
       Header("/cv"),
       ...offline.getBannerChildren(),
       reactive(appStore, renderCVTemplate),
+      Footer(),
     ],
   };
 }

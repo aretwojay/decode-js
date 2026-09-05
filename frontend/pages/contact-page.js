@@ -1,4 +1,5 @@
 import Header from "../components/header.js";
+import Footer from "../components/footer.js";
 import { renderContactSection } from "../utils/contact-section.js";
 import { fetchProfile } from "../lib/api.js";
 import { getTheme } from "../lib/theme.js";
@@ -34,6 +35,7 @@ export default async function PageContact() {
           }),
         ],
       },
+      Footer(),
     ],
   };
 }
