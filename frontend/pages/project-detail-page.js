@@ -8,6 +8,7 @@ import {
   renderProjectDetail,
   renderProjectNotFound,
 } from "../utils/project-detail.js";
+import { updateHead } from "../utils/head-manager.js";
 
 /**
  * Portfolio Dynamic Detail Page Component (T0016)
@@ -43,6 +44,28 @@ export default async function PageProjectDetail(params = {}) {
 
   if (isOffline && !fetchedProject && project) {
     offline.setOffline("Mode hors-ligne : projet affiché depuis le cache local.");
+  }
+
+  // Dynamic SEO metadata based on resolved project domain entity (T0021)
+  if (status === "success" && project) {
+    const desc =
+      project.resume ||
+      (typeof project.description === "string"
+        ? project.description.slice(0, 160)
+        : "Présentation et architecture du projet.");
+    updateHead({
+      title: `${project.titre || "Projet"} | Portfolio`,
+      description: desc,
+      type: "article",
+      image: project.image?.url || null,
+    });
+  } else {
+    updateHead({
+      title: "Projet introuvable | Portfolio",
+      description: `Le projet "${slug}" n'a pas été trouvé ou n'existe plus.`,
+      type: "website",
+      image: null,
+    });
   }
 
   return {

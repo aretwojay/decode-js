@@ -1,11 +1,19 @@
 import Header, { NavLink } from "../components/header.js";
 import Footer from "../components/footer.js";
+import { updateHead } from "../utils/head-manager.js";
 
 /**
  * Global 404 Not Found Page Component (T0020)
  * @returns {Object} Vanilla-engine structure object
  */
 export default function Page404() {
+  updateHead({
+    title: "Page introuvable | 404",
+    description:
+      "L'adresse que vous tentez d'ouvrir n'existe pas ou a été déplacée.",
+    type: "website",
+  });
+
   return {
     type: "div",
     attributes: [["class", ["page", "page-404"]]],
