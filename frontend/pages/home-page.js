@@ -4,6 +4,7 @@ import { fetchProfile, fetchProjects } from "../lib/api.js";
 import { appStore } from "../lib/store.js";
 import { getTheme } from "../lib/theme.js";
 import useOffline from "../lib/use-offline.js";
+import { updateHead } from "../utils/head-manager.js";
 import {
   resolveCandidateProfile,
   resolveProjectsToDisplay,
@@ -47,6 +48,16 @@ export default async function PageHome() {
 
   // Resolve Candidate Profile & Showcase Projects
   const candidateData = resolveCandidateProfile(profile, storeState?.profile);
+
+  // Dynamic SEO metadata based on resolved candidate profile (T0021)
+  updateHead({
+    title: `${candidateData.candidateName} — ${candidateData.candidateTitle}`,
+    description: candidateData.candidateBio
+      ? candidateData.candidateBio.slice(0, 160)
+      : undefined,
+    image: profile?.avatar?.url || null,
+    type: "website",
+  });
   const { projectsToDisplay, hasFeatured } = resolveProjectsToDisplay(
     featuredProjects,
     allProjects,

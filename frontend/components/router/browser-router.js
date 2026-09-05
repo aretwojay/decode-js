@@ -1,6 +1,7 @@
 import generateStructure from "../../lib/generate-structure.js";
 import Header from "../header.js";
 import Link from "./link.js";
+import { setRouteHead, updateHead } from "../../utils/head-manager.js";
 
 export function matchRoute(routes, pathname) {
   const normalizedPath = pathname === "/" ? "/" : pathname.replace(/\/+$/, "");
@@ -121,6 +122,10 @@ export default function BrowserRouter(rootElement, routes) {
         generator: routes["*"],
         params: {},
       };
+
+      // Set baseline SEO head tags for the detected route (T0021)
+      setRouteHead(pathname);
+
       const structure = await match.generator(match.params);
 
       if (rootElement.childNodes[0]) {
@@ -154,6 +159,11 @@ export default function BrowserRouter(rootElement, routes) {
       }
     } catch (err) {
       console.error("[BrowserRouter] Error loading route:", pathname, err);
+      updateHead({
+        title: "Impossible de charger cette page | Erreur",
+        description:
+          err?.message || "Une erreur inattendue est survenue lors de la navigation.",
+      });
       const errorStructure = renderRouterError(err, pathname, refreshPage);
       if (rootElement.childNodes[0]) {
         rootElement.replaceChild(
