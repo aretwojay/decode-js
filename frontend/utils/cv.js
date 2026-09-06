@@ -246,7 +246,10 @@ export function renderExperiencesSection(experiences = []) {
   if (normalized.length === 0) {
     return {
       type: "section",
-      attributes: [["class", ["cv-experiences-section"]]],
+      attributes: [
+        ["id", "experiences"],
+        ["class", ["cv-experiences-section"]],
+      ],
       children: [
         { type: "h2", children: ["Expériences Professionnelles"] },
         {
@@ -260,7 +263,10 @@ export function renderExperiencesSection(experiences = []) {
 
   return {
     type: "section",
-    attributes: [["class", ["cv-experiences-section"]]],
+    attributes: [
+      ["id", "experiences"],
+      ["class", ["cv-experiences-section"]],
+    ],
     children: [
       { type: "h2", children: ["Expériences Professionnelles"] },
       {
@@ -325,7 +331,10 @@ export function renderSkillsSection(skills = []) {
   if (normalized.length === 0) {
     return {
       type: "section",
-      attributes: [["class", ["cv-skills-section"]]],
+      attributes: [
+        ["id", "competences"],
+        ["class", ["cv-skills-section"]],
+      ],
       children: [
         { type: "h2", children: ["Compétences"] },
         {
@@ -360,7 +369,10 @@ export function renderSkillsSection(skills = []) {
 
   return {
     type: "section",
-    attributes: [["class", ["cv-skills-section"]]],
+    attributes: [
+      ["id", "competences"],
+      ["class", ["cv-skills-section"]],
+    ],
     children: [
       { type: "h2", children: ["Compétences"] },
       ...Object.entries(skillsByLevel)
@@ -609,7 +621,10 @@ export function renderCVTemplate(state = {}) {
       { type: "hr", attributes: [["class", ["cv-divider"]]] },
       {
         type: "section",
-        attributes: [["class", ["cv-section-block"]]],
+        attributes: [
+          ["id", "experiences"],
+          ["class", ["cv-section-block"]],
+        ],
         children: [
           { type: "h2", children: ["Expériences professionnelles"] },
           { type: "ul", children: experienceList },
@@ -618,7 +633,10 @@ export function renderCVTemplate(state = {}) {
       { type: "hr", attributes: [["class", ["cv-divider"]]] },
       {
         type: "section",
-        attributes: [["class", ["cv-section-block"]]],
+        attributes: [
+          ["id", "competences"],
+          ["class", ["cv-section-block"]],
+        ],
         children: [
           { type: "h2", children: ["Compétences"] },
           { type: "ul", children: skillList },

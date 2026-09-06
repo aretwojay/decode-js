@@ -187,15 +187,43 @@ export default function BrowserRouter(rootElement, routes) {
   refreshPage();
 }
 
-export function BrowserLink(url, title) {
+export function BrowserLink(url, title, classNames = [], extraAttrs = []) {
+  const isAnchor = typeof url === "string" && url.startsWith("#");
+  const isTargetBlank =
+    Array.isArray(extraAttrs) &&
+    extraAttrs.some(([k, v]) => k === "target" && v === "_blank");
+
   return {
     type: "a",
-    attributes: [["href", url]],
-    children: [title],
+    attributes: [
+      ["href", url],
+      ...(Array.isArray(classNames) && classNames.length > 0
+        ? [["class", classNames]]
+        : typeof classNames === "string" && classNames
+        ? [["class", [classNames]]]
+        : []),
+      ...(Array.isArray(extraAttrs) ? extraAttrs : []),
+    ],
+    children: Array.isArray(title) ? title : [title],
     events: [
       [
         "click",
         (event) => {
+          if (isTargetBlank) {
+            return;
+          }
+          if (isAnchor) {
+            event.preventDefault();
+            const targetId = url.slice(1);
+            const target = document.getElementById(targetId);
+            if (target) {
+              target.scrollIntoView({ behavior: "smooth" });
+              if (typeof window !== "undefined" && window.history?.replaceState) {
+                window.history.replaceState(null, "", url);
+              }
+            }
+            return;
+          }
           event.preventDefault();
           window.history.pushState({}, undefined, url);
           window.dispatchEvent(new Event("pushstate"));
