@@ -117,7 +117,13 @@ export function NavLink(url, children, classNames = [], extraAttrs = []) {
       [
         "click",
         (event) => {
-          event.preventDefault();
+          const isTargetBlank =
+            Array.isArray(extraAttrs) &&
+            extraAttrs.some(([k, v]) => k === "target" && v === "_blank");
+          if (isTargetBlank || (typeof url === "string" && url.startsWith("http"))) {
+            return;
+          }
+
           const nav = document.querySelector(".main-nav");
           if (nav && nav.classList.contains("is-open")) {
             nav.classList.remove("is-open");
@@ -127,6 +133,34 @@ export function NavLink(url, children, classNames = [], extraAttrs = []) {
               toggle.setAttribute("aria-expanded", "false");
             }
           }
+
+          if (typeof url === "string" && url.includes("#")) {
+            const [targetPath, targetHash] = url.split("#");
+            const currentPath =
+              typeof window !== "undefined"
+                ? window.location.pathname === "/"
+                  ? "/"
+                  : window.location.pathname.replace(/\/+$/, "")
+                : "";
+            const normalizedTargetPath =
+              targetPath === "" || targetPath === "/"
+                ? "/"
+                : targetPath.replace(/\/+$/, "");
+
+            if ((targetPath === "" || normalizedTargetPath === currentPath) && targetHash) {
+              event.preventDefault();
+              const target = document.getElementById(targetHash);
+              if (target) {
+                target.scrollIntoView({ behavior: "smooth" });
+                if (typeof window !== "undefined" && window.history?.replaceState) {
+                  window.history.replaceState(null, "", `#${targetHash}`);
+                }
+                return;
+              }
+            }
+          }
+
+          event.preventDefault();
           window.history.pushState({}, undefined, url);
           window.dispatchEvent(new Event("pushstate"));
         },

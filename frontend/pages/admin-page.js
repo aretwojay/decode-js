@@ -66,6 +66,32 @@ function renderStatusBadge(statut) {
   };
 }
 
+function AdminAnchorLink(targetId, label, extraClass = "") {
+  return {
+    type: "a",
+    attributes: [
+      ["href", `#${targetId}`],
+      ["class", ["admin-nav-link", extraClass].filter(Boolean)],
+    ],
+    events: [
+      [
+        "click",
+        (event) => {
+          event.preventDefault();
+          const target = document.getElementById(targetId);
+          if (target) {
+            target.scrollIntoView({ behavior: "smooth" });
+            if (typeof window !== "undefined" && window.history?.replaceState) {
+              window.history.replaceState(null, "", `#${targetId}`);
+            }
+          }
+        },
+      ],
+    ],
+    children: [label],
+  };
+}
+
 /**
  * 1. FORMULAIRE DE PROFIL UTILISATEUR
  */
@@ -110,7 +136,10 @@ function ProfileForm(profile) {
 
   return {
     type: "section",
-    attributes: [["class", ["admin-section", "admin-profile-section"]]],
+    attributes: [
+      ["id", "profile-management"],
+      ["class", ["admin-section", "admin-profile-section"]],
+    ],
     children: [
       {
         type: "header",
@@ -1723,10 +1752,20 @@ export default async function PageAdmin() {
                   ["aria-label", "Accès rapide aux sections de gestion"],
                 ],
                 children: [
-                  Link("#projects-management", `💼 Projets (${projects.length})`, ["admin-nav-link"]),
-                  Link("#experiences-management", `📋 Expériences (${experiences.length})`, ["admin-nav-link"]),
-                  Link("#competences-management", `⚡ Compétences (${competences.length})`, ["admin-nav-link"]),
-                  Link("/portfolio", "🌐 Voir le Portfolio Public", ["admin-nav-link", "admin-nav-link-ext"], [["target", "_blank"]]),
+                  AdminAnchorLink("profile-management", "👤 Mon Profil"),
+                  AdminAnchorLink("projects-management", `💼 Projets (${projects.length})`),
+                  AdminAnchorLink("experiences-management", `📋 Expériences (${experiences.length})`),
+                  AdminAnchorLink("competences-management", `⚡ Compétences (${competences.length})`),
+                  {
+                    type: "a",
+                    attributes: [
+                      ["href", "/portfolio"],
+                      ["target", "_blank"],
+                      ["rel", "noopener noreferrer"],
+                      ["class", ["admin-nav-link", "admin-nav-link-ext"]],
+                    ],
+                    children: ["🌐 Voir le Portfolio Public"],
+                  },
                 ],
               },
             ],

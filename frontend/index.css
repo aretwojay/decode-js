@@ -2034,6 +2034,7 @@ img {
   gap: 24px;
   box-shadow: var(--shadow-md);
   backdrop-filter: blur(8px);
+  scroll-margin-top: 24px;
 }
 
 .admin-section-header {
