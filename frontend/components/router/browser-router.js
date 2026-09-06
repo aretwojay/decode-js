@@ -117,8 +117,12 @@ function renderRouterError(error, pathname, onRetry) {
 }
 
 export default function BrowserRouter(rootElement, routes) {
+  let isInitialRender = true;
+
   async function refreshPage() {
     const pathname = window.location.pathname;
+    const shouldMoveFocus = !isInitialRender;
+    isInitialRender = false;
     setRouteLoading(true);
 
     try {
@@ -155,11 +159,13 @@ export default function BrowserRouter(rootElement, routes) {
       }
 
       // Focus management for screen readers and keyboard navigation (T0020 Axe 1)
-      const focusTarget =
-        rootElement.querySelector("main") || rootElement.querySelector("h1");
-      if (focusTarget) {
-        focusTarget.setAttribute("tabindex", "-1");
-        focusTarget.focus({ preventScroll: true });
+      if (shouldMoveFocus) {
+        const focusTarget =
+          rootElement.querySelector("main") || rootElement.querySelector("h1");
+        if (focusTarget) {
+          focusTarget.setAttribute("tabindex", "-1");
+          focusTarget.focus({ preventScroll: true });
+        }
       }
     } catch (err) {
       console.error("[BrowserRouter] Error loading route:", pathname, err);
