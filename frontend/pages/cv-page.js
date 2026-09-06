@@ -22,8 +22,17 @@ export default async function PageCV() {
     attributes: [["class", ["page", "page-cv"]]],
     children: [
       Header("/cv"),
-      ...offline.getBannerChildren(),
-      reactive(appStore, renderCVTemplate),
+      {
+        type: "main",
+        attributes: [
+          ["id", "main-content"],
+          ["tabindex", "-1"],
+        ],
+        children: [
+          ...offline.getBannerChildren(),
+          reactive(appStore, renderCVTemplate),
+        ],
+      },
       Footer(),
     ],
   };

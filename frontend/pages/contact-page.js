@@ -25,6 +25,10 @@ export default async function PageContact() {
       Header("/contact"),
       {
         type: "main",
+        attributes: [
+          ["id", "main-content"],
+          ["tabindex", "-1"],
+        ],
         children: [
           ...offline.getBannerChildren(),
           renderContactSection({

@@ -143,6 +143,10 @@ export default async function PageExperience() {
       // Main Content Area
       {
         type: "main",
+        attributes: [
+          ["id", "main-content"],
+          ["tabindex", "-1"],
+        ],
         children: [
           ...offline.getBannerChildren(),
 

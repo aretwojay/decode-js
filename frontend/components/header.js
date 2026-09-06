@@ -40,6 +40,20 @@ function MobileMenuToggle() {
           );
         },
       ],
+      [
+        "keydown",
+        (event) => {
+          if (event.key === "Escape") {
+            const nav = document.querySelector(".main-nav");
+            if (nav?.classList.contains("is-open")) {
+              nav.classList.remove("is-open");
+              event.currentTarget.classList.remove("is-open");
+              event.currentTarget.setAttribute("aria-expanded", "false");
+              event.currentTarget.setAttribute("aria-label", "Ouvrir le menu");
+            }
+          }
+        },
+      ],
     ],
     children: [
       { type: "span", attributes: [["class", ["mobile-menu-toggle-icon"]]], children: [] },
@@ -176,6 +190,26 @@ export default function Header(activePath) {
       ["class", ["main-nav"]],
       ["aria-label", "Navigation principale"],
     ],
+    events: [
+      [
+        "keydown",
+        (event) => {
+          if (event.key === "Escape") {
+            const navEl = document.querySelector(".main-nav");
+            if (navEl?.classList.contains("is-open")) {
+              navEl.classList.remove("is-open");
+              const toggle = document.querySelector(".mobile-menu-toggle");
+              if (toggle) {
+                toggle.classList.remove("is-open");
+                toggle.setAttribute("aria-expanded", "false");
+                toggle.setAttribute("aria-label", "Ouvrir le menu");
+                toggle.focus();
+              }
+            }
+          }
+        },
+      ],
+    ],
     children: [
       ...links.map(({ url, label }) => {
         const isExactMatch = currentPath === url;
@@ -188,6 +222,7 @@ export default function Header(activePath) {
           url,
           label,
           isActive ? ["nav-link", "active"] : ["nav-link"],
+          isActive ? [["aria-current", "page"]] : [],
         );
       }),
       ...(authenticated
@@ -224,6 +259,7 @@ export default function Header(activePath) {
                 "/login",
                 "Login",
                 currentPath === "/login" ? ["nav-link", "active"] : ["nav-link"],
+                currentPath === "/login" ? [["aria-current", "page"]] : [],
               ),
               NavLink(
                 "/signup",
@@ -231,6 +267,7 @@ export default function Header(activePath) {
                 currentPath === "/signup"
                   ? ["nav-link", "active"]
                   : ["nav-link"],
+                currentPath === "/signup" ? [["aria-current", "page"]] : [],
               ),
             ]),
       ...(isIris

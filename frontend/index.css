@@ -64,6 +64,10 @@ img {
   height: auto;
   display: block;
 }
+:focus-visible {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 3px;
+}
 
 .skip-link {
   position: absolute;

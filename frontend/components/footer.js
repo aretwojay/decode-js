@@ -36,6 +36,8 @@ export default function Footer(options = {}) {
       : true;
 
   const isIris = getTheme() === "iris";
+  const currentPath =
+    typeof window !== "undefined" ? window.location.pathname : "/";
 
   if (isIris) {
     return {
@@ -54,7 +56,7 @@ export default function Footer(options = {}) {
                 ["target", "_blank"],
                 ["rel", "noopener noreferrer"],
                 ["class", ["footer-icon-link"]],
-                ["aria-label", "Instagram"],
+                ["aria-label", "Instagram (ouvre un nouvel onglet)"],
               ],
               children: [
                 {
@@ -76,7 +78,7 @@ export default function Footer(options = {}) {
                 ["target", "_blank"],
                 ["rel", "noopener noreferrer"],
                 ["class", ["footer-icon-link"]],
-                ["aria-label", "LinkedIn"],
+                ["aria-label", "LinkedIn (ouvre un nouvel onglet)"],
               ],
               children: [
                 {
@@ -100,7 +102,7 @@ export default function Footer(options = {}) {
                 ["target", "_blank"],
                 ["rel", "noopener noreferrer"],
                 ["class", ["footer-icon-link"]],
-                ["aria-label", "GitHub"],
+                ["aria-label", "GitHub (ouvre un nouvel onglet)"],
               ],
               children: [
                 {
@@ -159,12 +161,24 @@ export default function Footer(options = {}) {
               ["aria-label", "Navigation pied de page"],
             ],
             children: [
-              NavLink("/", "Accueil", ["footer-link"]),
-              NavLink("/portfolio", "Portfolio", ["footer-link"]),
-              NavLink("/experiences", "Expériences", ["footer-link"]),
-              NavLink("/cv", "CV", ["footer-link"]),
-              NavLink("/contact", "Contact", ["footer-link"]),
-            ],
+              { url: "/", label: "Accueil" },
+              { url: "/portfolio", label: "Portfolio" },
+              { url: "/experiences", label: "Expériences" },
+              { url: "/cv", label: "CV" },
+              { url: "/contact", label: "Contact" },
+            ].map(({ url, label }) => {
+              const isExactMatch = currentPath === url;
+              const isParentMatch =
+                url !== "/" &&
+                (currentPath.startsWith(url + "/") || currentPath.startsWith(url + "?"));
+              const isActive = isExactMatch || isParentMatch;
+              return NavLink(
+                url,
+                label,
+                isActive ? ["footer-link", "active"] : ["footer-link"],
+                isActive ? [["aria-current", "page"]] : [],
+              );
+            }),
           },
           {
             type: "div",
@@ -177,6 +191,7 @@ export default function Footer(options = {}) {
                   ["target", "_blank"],
                   ["rel", "noopener noreferrer"],
                   ["class", ["footer-link", "footer-social-link"]],
+                  ["aria-label", "GitHub (ouvre un nouvel onglet)"],
                 ],
                 children: ["GitHub"],
               },
@@ -187,6 +202,7 @@ export default function Footer(options = {}) {
                   ["target", "_blank"],
                   ["rel", "noopener noreferrer"],
                   ["class", ["footer-link", "footer-social-link"]],
+                  ["aria-label", "LinkedIn (ouvre un nouvel onglet)"],
                 ],
                 children: ["LinkedIn"],
               },

@@ -33,7 +33,7 @@ body {
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent-primary) !important;
+  outline: 2px solid var(--accent-hover, #A855F7) !important;
   outline-offset: 3px !important;
 }
 
