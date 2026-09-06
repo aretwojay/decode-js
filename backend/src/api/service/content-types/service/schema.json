@@ -1,0 +1,68 @@
+{
+  "kind": "collectionType",
+  "collectionName": "services",
+  "info": {
+    "singularName": "service",
+    "pluralName": "services",
+    "displayName": "Service",
+    "description": "Cartes de présentation des services (section \"Ce que je fais\")"
+  },
+  "options": {
+    "draftAndPublish": true
+  },
+  "pluginOptions": {},
+  "attributes": {
+    "profil": {
+      "type": "relation",
+      "relation": "manyToOne",
+      "target": "api::profil.profil"
+    },
+    "titre": {
+      "type": "string",
+      "required": true,
+      "minLength": 2,
+      "maxLength": 100
+    },
+    "description": {
+      "type": "text",
+      "required": true,
+      "maxLength": 500
+    },
+    "icone": {
+      "type": "enumeration",
+      "required": true,
+      "enum": [
+        "code",
+        "palette",
+        "search",
+        "cloud"
+      ]
+    },
+    "ordre": {
+      "type": "integer",
+      "default": 0
+    },
+    "affichage_large": {
+      "type": "boolean",
+      "default": false
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
+    },
+    "statut": {
+      "type": "enumeration",
+      "required": true,
+      "default": "brouillon",
+      "enum": [
+        "brouillon",
+        "pret_a_relire",
+        "publie",
+        "archive"
+      ]
+    }
+  }
+}
