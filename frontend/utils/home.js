@@ -593,7 +593,7 @@ export function renderFeaturedSection(projectsToDisplay, hasFeatured) {
         ? {
             type: "div",
             attributes: [["class", ["hero-actions", "centered-actions"]]],
-            children: [NavLink("/portfolio", "Voir plus", ["btn", "btn-primary"])],
+            children: [NavLink("/portfolio", "Voir tous mes projets", ["btn", "btn-primary"])],
           }
         : { type: "div", children: [] },
     ],
