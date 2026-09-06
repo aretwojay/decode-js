@@ -251,6 +251,10 @@ export default async function PageAdmin() {
         Header("/admin"),
         {
           type: "main",
+          attributes: [
+            ["id", "main-content"],
+            ["tabindex", "-1"],
+          ],
           children: [
             { type: "h1", children: ["Mon compte"] },
             {
@@ -280,7 +284,14 @@ export default async function PageAdmin() {
         attributes: [["class", ["page", "page-admin"]]],
         children: [
           Header("/admin"),
-          { type: "main", children: [ProfileForm(null)] },
+          {
+            type: "main",
+            attributes: [
+              ["id", "main-content"],
+              ["tabindex", "-1"],
+            ],
+            children: [ProfileForm(null)],
+          },
         ],
       };
     }
@@ -303,6 +314,10 @@ export default async function PageAdmin() {
         Header("/admin"),
         {
           type: "main",
+          attributes: [
+            ["id", "main-content"],
+            ["tabindex", "-1"],
+          ],
           children: [
             renderFeedbackBanner({
               type: "error",
@@ -325,6 +340,10 @@ export default async function PageAdmin() {
       Header("/admin"),
       {
         type: "main",
+        attributes: [
+          ["id", "main-content"],
+          ["tabindex", "-1"],
+        ],
         children: [
           { type: "h1", children: ["Mon compte"] },
           ProfileForm(profile),
