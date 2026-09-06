@@ -27,22 +27,25 @@ export default factories.createCoreController('api::projet.projet', ({ strapi })
 
   async findOne(ctx) {
     const { id } = ctx.params;
-    // Avec draftAndPublish, un documentId correspond à 2 lignes (brouillon +
-    // publiée) : on les récupère toutes les deux pour ne pas tomber par
-    // hasard sur la version brouillon quand une version publiée existe.
+    const isNumeric =
+      typeof id === 'number' ||
+      (!isNaN(Number(id)) && !isNaN(parseFloat(String(id))));
+    const where = isNumeric
+      ? { $or: [{ id: Number(id) }, { documentId: String(id) }] }
+      : { documentId: String(id) };
+
     const rows = await strapi.db
       .query('api::projet.projet')
       .findMany({
-        where: { documentId: id },
-        populate: { profil: { populate: ['owner'] }, image: true },
+        where,
+        populate: ['profil', 'image'],
       });
     if (rows.length === 0) return ctx.notFound();
 
     const publishedRow = rows.find((r) => r.publishedAt);
-    const draftRow = rows.find((r) => !r.publishedAt);
     const isOwner = Boolean(
       ctx.state.user &&
-        [publishedRow, draftRow].some((r) => r?.profil?.owner?.id === ctx.state.user.id)
+        (await isOwnChildEntry(strapi, 'api::projet.projet', id, ctx.state.user.id))
     );
     if (!publishedRow && !isOwner) return ctx.forbidden();
 

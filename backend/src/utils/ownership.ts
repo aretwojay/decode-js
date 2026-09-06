@@ -33,11 +33,27 @@ export async function getOwnProfilId(strapi: any, userId: number): Promise<numbe
   return profil?.id ?? null;
 }
 
-export async function isOwnProfil(strapi: any, profilId: string | number, userId: number): Promise<boolean> {
+export async function getOwnProfil(
+  strapi: any,
+  userId: number
+): Promise<{ id: number; documentId: string } | null> {
   const profil = await strapi.db
     .query('api::profil.profil')
-    .findOne({ where: { documentId: profilId }, populate: ['owner'] });
-  return Boolean(profil?.owner?.id === userId);
+    .findOne({ where: { owner: userId }, select: ['id', 'documentId'] });
+  return profil ? { id: profil.id, documentId: profil.documentId } : null;
+}
+
+export async function isOwnProfil(strapi: any, profilId: string | number, userId: number): Promise<boolean> {
+  const isNumeric =
+    typeof profilId === 'number' ||
+    (!isNaN(Number(profilId)) && !isNaN(parseFloat(String(profilId))));
+  const where = isNumeric
+    ? { $or: [{ id: Number(profilId) }, { documentId: String(profilId) }] }
+    : { documentId: String(profilId) };
+  const profil = await strapi.db
+    .query('api::profil.profil')
+    .findOne({ where, populate: ['owner'] });
+  return Boolean(profil?.owner?.id === userId || profil?.owner === userId);
 }
 
 export async function isOwnChildEntry(
@@ -46,10 +62,36 @@ export async function isOwnChildEntry(
   entryId: string | number,
   userId: number
 ): Promise<boolean> {
-  // draftAndPublish : un documentId correspond à 2 lignes (brouillon +
-  // publiée) ; on vérifie les deux plutôt qu'une seule prise au hasard.
+  const ownProfil = await getOwnProfil(strapi, userId);
+  if (!ownProfil) return false;
+
+  const isNumeric =
+    typeof entryId === 'number' ||
+    (!isNaN(Number(entryId)) && !isNaN(parseFloat(String(entryId))));
+  const where = isNumeric
+    ? { $or: [{ id: Number(entryId) }, { documentId: String(entryId) }] }
+    : { documentId: String(entryId) };
+
+  // draftAndPublish : un documentId correspond à 2 lignes (brouillon + publiée)
   const rows = await strapi.db
     .query(uid)
-    .findMany({ where: { documentId: entryId }, populate: { profil: { populate: ['owner'] } } });
-  return rows.some((row: any) => row?.profil?.owner?.id === userId);
+    .findMany({ where, populate: ['profil'] });
+
+  if (rows.length === 0) return false;
+
+  for (const row of rows) {
+    const p = (row as any)?.profil;
+    if (!p) continue;
+
+    // Check by ID or documentId
+    if (typeof p === 'number' && p === ownProfil.id) return true;
+    if (typeof p === 'string' && p === ownProfil.documentId) return true;
+    if (typeof p === 'object') {
+      if (p.id === ownProfil.id) return true;
+      if (p.documentId && p.documentId === ownProfil.documentId) return true;
+      if (p.owner && (p.owner.id === userId || p.owner === userId)) return true;
+    }
+  }
+
+  return false;
 }
