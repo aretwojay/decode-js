@@ -61,6 +61,10 @@ function renderRouterError(error, pathname, onRetry) {
       Header(pathname),
       {
         type: "main",
+        attributes: [
+          ["id", "main-content"],
+          ["tabindex", "-1"],
+        ],
         children: [
           {
             type: "div",

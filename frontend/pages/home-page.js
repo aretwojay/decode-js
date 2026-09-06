@@ -74,6 +74,10 @@ export default async function PageHome() {
       // Main Content Area
       {
         type: "main",
+        attributes: [
+          ["id", "main-content"],
+          ["tabindex", "-1"],
+        ],
         children: [
           ...offline.getBannerChildren(),
 

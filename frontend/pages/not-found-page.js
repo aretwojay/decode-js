@@ -21,6 +21,10 @@ export default function Page404() {
       Header("/"),
       {
         type: "main",
+        attributes: [
+          ["id", "main-content"],
+          ["tabindex", "-1"],
+        ],
         children: [
           {
             type: "div",
