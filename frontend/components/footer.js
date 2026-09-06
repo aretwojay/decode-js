@@ -18,8 +18,8 @@ export default function Footer(options = {}) {
     appStore && typeof appStore.getState === "function"
       ? appStore.getState()
       : appStore && typeof appStore.get === "function"
-      ? appStore.get()
-      : null;
+        ? appStore.get()
+        : null;
   const profile = storeState?.profile;
 
   const candidateName =
@@ -32,8 +32,8 @@ export default function Footer(options = {}) {
     options.isAvailable !== undefined
       ? options.isAvailable
       : profile?.disponible !== undefined
-      ? profile.disponible
-      : true;
+        ? profile.disponible
+        : true;
 
   const isIris = getTheme() === "iris";
   const currentPath =
@@ -133,9 +133,7 @@ export default function Footer(options = {}) {
               {
                 type: "p",
                 attributes: [["class", ["footer-copyright"]]],
-                children: [
-                  `© ${new Date().getFullYear()} ${candidateName}. Propulsé par Vanilla-Engine & Strapi 5.`,
-                ],
+                children: [`© ${new Date().getFullYear()} ${candidateName}.`],
               },
               isAvailable
                 ? {
@@ -170,7 +168,8 @@ export default function Footer(options = {}) {
               const isExactMatch = currentPath === url;
               const isParentMatch =
                 url !== "/" &&
-                (currentPath.startsWith(url + "/") || currentPath.startsWith(url + "?"));
+                (currentPath.startsWith(url + "/") ||
+                  currentPath.startsWith(url + "?"));
               const isActive = isExactMatch || isParentMatch;
               return NavLink(
                 url,
