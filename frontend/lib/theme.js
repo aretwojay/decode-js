@@ -98,3 +98,25 @@ if (appStore && typeof appStore.subscribe === "function") {
   });
 }
 
+// Synchronisation automatique au démarrage côté navigateur
+if (typeof window !== "undefined") {
+  setTimeout(async () => {
+    try {
+      const { fetchProfile } = await import("./api.js");
+      const profile = await fetchProfile();
+      if (profile?.theme) {
+        syncThemeFromProfile(profile);
+      }
+    } catch {}
+  }, 0);
+}
+
+export default {
+  AvailablesThemes,
+  getTheme,
+  setTheme,
+  syncThemeFromProfile,
+  subscribeTheme,
+  applyTheme,
+};
+
