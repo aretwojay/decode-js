@@ -296,13 +296,13 @@ export default function Header(activePath) {
           : [
               NavLink(
                 "/login",
-                "Login",
+                "Connexion",
                 currentPath === "/login" ? ["nav-link", "active"] : ["nav-link"],
                 currentPath === "/login" ? [["aria-current", "page"]] : [],
               ),
               NavLink(
                 "/signup",
-                "Signup",
+                "Inscription",
                 currentPath === "/signup"
                   ? ["nav-link", "active"]
                   : ["nav-link"],

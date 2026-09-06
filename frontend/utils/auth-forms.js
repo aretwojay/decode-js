@@ -10,14 +10,32 @@
  */
 export function renderAuthFeedback(state, loadingMessage = "Chargement…") {
   if (state.loading) {
-    return { type: "p", children: [loadingMessage] };
+    return {
+      type: "div",
+      attributes: [
+        ["class", ["auth-feedback", "auth-feedback-loading"]],
+        ["role", "status"],
+        ["aria-live", "polite"],
+      ],
+      children: [
+        { type: "span", attributes: [["class", ["auth-spinner-icon"]]], children: ["⏳ "] },
+        loadingMessage,
+      ],
+    };
   }
   if (state.error) {
     return {
-      type: "p",
-      attributes: [["style", [["color", "#c0392b"]]]],
-      children: [state.error],
+      type: "div",
+      attributes: [
+        ["class", ["auth-feedback", "auth-feedback-error"]],
+        ["role", "alert"],
+        ["aria-live", "assertive"],
+      ],
+      children: [
+        { type: "span", attributes: [["class", ["auth-error-icon"]]], children: ["⚠️ "] },
+        state.error,
+      ],
     };
   }
-  return { type: "p", children: [""] };
+  return { type: "div", attributes: [["class", ["auth-feedback", "auth-feedback-idle"]]], children: [] };
 }
