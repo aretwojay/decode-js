@@ -41,6 +41,11 @@ function resolveApiBaseUrl() {
   }
 
   if (["localhost", "127.0.0.1"].includes(window.location.hostname)) {
+    // When served on standard ports (80 / 443 / empty) by Nginx reverse proxy,
+    // use same-origin /api path to avoid CORS preflight completely.
+    if (!window.location.port || window.location.port === "80" || window.location.port === "443") {
+      return window.location.origin.replace(/\/$/, "") + "/api";
+    }
     return "http://localhost:1337";
   }
 
