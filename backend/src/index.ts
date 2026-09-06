@@ -87,6 +87,19 @@ export default {
             });
           }
         }
+
+        // Assurer que tous les utilisateurs existants sont assignés au rôle Authenticated
+        const users = await strapi.db.query('plugin::users-permissions.user').findMany({
+          populate: ['role'],
+        });
+        for (const user of users) {
+          if (!user.role || user.role.type === 'public') {
+            await strapi.db.query('plugin::users-permissions.user').update({
+              where: { id: user.id },
+              data: { role: authenticatedRole.id },
+            });
+          }
+        }
       }
     } catch (error) {
       console.error('Erreur lors du bootstrap des permissions :', error);

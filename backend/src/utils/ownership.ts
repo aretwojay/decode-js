@@ -33,14 +33,24 @@ export async function getOwnProfilId(strapi: any, userId: number): Promise<numbe
   return profil?.id ?? null;
 }
 
-export async function getOwnProfil(
+export async function getOwnProfils(
   strapi: any,
   userId: number
-): Promise<{ id: number; documentId: string } | null> {
-  const profil = await strapi.db
+): Promise<{ ids: Set<number>; documentIds: Set<string>; primaryId: number | null }> {
+  const profils = await strapi.db
     .query('api::profil.profil')
-    .findOne({ where: { owner: userId }, select: ['id', 'documentId'] });
-  return profil ? { id: profil.id, documentId: profil.documentId } : null;
+    .findMany({ where: { owner: userId }, select: ['id', 'documentId'] });
+  const ids = new Set<number>();
+  const documentIds = new Set<string>();
+  let primaryId: number | null = null;
+  for (const p of profils) {
+    if (p.id) {
+      ids.add(p.id);
+      if (primaryId === null) primaryId = p.id;
+    }
+    if (p.documentId) documentIds.add(p.documentId);
+  }
+  return { ids, documentIds, primaryId };
 }
 
 export async function isOwnProfil(strapi: any, profilId: string | number, userId: number): Promise<boolean> {
@@ -62,8 +72,8 @@ export async function isOwnChildEntry(
   entryId: string | number,
   userId: number
 ): Promise<boolean> {
-  const ownProfil = await getOwnProfil(strapi, userId);
-  if (!ownProfil) return false;
+  const { ids, documentIds } = await getOwnProfils(strapi, userId);
+  if (ids.size === 0 && documentIds.size === 0) return false;
 
   const isNumeric =
     typeof entryId === 'number' ||
@@ -84,11 +94,11 @@ export async function isOwnChildEntry(
     if (!p) continue;
 
     // Check by ID or documentId
-    if (typeof p === 'number' && p === ownProfil.id) return true;
-    if (typeof p === 'string' && p === ownProfil.documentId) return true;
+    if (typeof p === 'number' && ids.has(p)) return true;
+    if (typeof p === 'string' && documentIds.has(p)) return true;
     if (typeof p === 'object') {
-      if (p.id === ownProfil.id) return true;
-      if (p.documentId && p.documentId === ownProfil.documentId) return true;
+      if (p.id && ids.has(p.id)) return true;
+      if (p.documentId && documentIds.has(p.documentId)) return true;
       if (p.owner && (p.owner.id === userId || p.owner === userId)) return true;
     }
   }
