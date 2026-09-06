@@ -6,6 +6,7 @@
 
 import { factories } from '@strapi/strapi';
 import { getOwnProfilId, isOwnChildEntry, dedupeByDocumentId } from '../../../utils/ownership';
+import { checkStatusTransition } from '../../../utils/workflow';
 
 const VALID_STATUTS = ['brouillon', 'pret_a_relire', 'publie', 'archive'];
 const ISO_DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
@@ -24,13 +25,18 @@ export default factories.createCoreController('api::experience.experience', ({ s
 
   async findOne(ctx) {
     const { id } = ctx.params;
-    const entry = await strapi.db
+    const rows = await strapi.db
       .query('api::experience.experience')
-      .findOne({ where: { id }, populate: { profil: { populate: ['owner'] } } });
-    if (!entry) return ctx.notFound();
+      .findMany({ where: { documentId: id }, populate: { profil: { populate: ['owner'] } } });
+    if (rows.length === 0) return ctx.notFound();
 
-    const isOwner = Boolean(ctx.state.user && entry.profil?.owner?.id === ctx.state.user.id);
-    if (!entry.publishedAt && !isOwner) return ctx.forbidden();
+    const publishedRow = rows.find((r) => r.publishedAt);
+    const draftRow = rows.find((r) => !r.publishedAt);
+    const isOwner = Boolean(
+      ctx.state.user &&
+        [publishedRow, draftRow].some((r) => r?.profil?.owner?.id === ctx.state.user.id)
+    );
+    if (!publishedRow && !isOwner) return ctx.forbidden();
 
     return await super.findOne(ctx);
   },
@@ -103,6 +109,16 @@ export default factories.createCoreController('api::experience.experience', ({ s
     }
 
     const rawData = (ctx.request.body?.data || ctx.request.body || {}) as Record<string, any>;
+
+    if (rawData.statut !== undefined) {
+      const current = await strapi.db.query('api::experience.experience').findOne({ where: { documentId: id }, select: ['statut'] });
+      if (current && rawData.statut !== current.statut) {
+        const transitionError = checkStatusTransition(current.statut, rawData.statut);
+        if (transitionError) {
+          return ctx.badRequest(transitionError);
+        }
+      }
+    }
     const errors: Record<string, string> = {};
 
     if (rawData.titre !== undefined) {

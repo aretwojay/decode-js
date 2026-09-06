@@ -1,31 +1,41 @@
-import Link from "../components/router/link.js";
+import Header from "../components/header.js";
+import Footer from "../components/footer.js";
+import { renderContactSection } from "../utils/contact-section.js";
+import { fetchProfile } from "../lib/api.js";
+import { getTheme } from "../lib/theme.js";
+import { resolveCandidateProfile } from "../utils/home.js";
+import useOffline from "../lib/use-offline.js";
 
-export default function PageContact() {
+export default async function PageContact() {
+  const offline = useOffline({
+    defaultMessage: "Mode hors-ligne : serveur distant indisponible.",
+  });
+
+  const profile = await offline.execute(
+    () => fetchProfile({ theme: getTheme() }),
+    { fallback: null },
+  );
+
+  const candidateData = resolveCandidateProfile(profile, null);
+
   return {
     type: "div",
     attributes: [["class", ["page", "page-contact"]]],
     children: [
+      Header("/contact"),
       {
-        type: "h1",
-        children: ["Contact"],
-      },
-      {
-        type: "nav",
+        type: "main",
         children: [
-          Link("/", "← Retour à l'accueil"),
+          ...offline.getBannerChildren(),
+          renderContactSection({
+            headingTag: "h1",
+            phone: candidateData.candidatePhone,
+            email: candidateData.candidateEmail || undefined,
+            location: candidateData.candidateLocation,
+          }),
         ],
       },
-      {
-        type: "section",
-        children: [
-          {
-            type: "p",
-            children: [
-              "Formulaire de contact et coordonnées du candidat.",
-            ],
-          },
-        ],
-      },
+      Footer(),
     ],
   };
 }

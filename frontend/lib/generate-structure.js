@@ -15,8 +15,13 @@ export default function generateStructure(structure) {
         const customStyle = Object.fromEntries(attribute[1]);
         element.style = Object.assign(element.style, customStyle);
       } else if (attribute[0].startsWith("data-")) {
-        const dataKey = attribute[0].replace("data-", "");
-        element.dataset[dataKey] = attribute[1];
+        element.setAttribute(attribute[0], attribute[1]);
+        const dataKey = attribute[0]
+          .replace("data-", "")
+          .replace(/-([a-z])/g, (_, letter) => letter.toUpperCase());
+        try {
+          element.dataset[dataKey] = attribute[1];
+        } catch {}
       } else {
         element.setAttribute(attribute[0], attribute[1]);
       }

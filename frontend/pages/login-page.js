@@ -1,28 +1,17 @@
+import Header from "../components/header.js";
 import Link from "../components/router/link.js";
 import createState from "../lib/create-state.js";
 import reactive from "../lib/reactive.js";
 import { login } from "../lib/auth.js";
+import { navigate } from "../utils/navigation.js";
+import { renderAuthFeedback } from "../utils/auth-forms.js";
 
-function navigate(url) {
-  window.history.pushState({}, undefined, url);
-  window.dispatchEvent(new Event("pushstate"));
-}
-
-const formState = createState({ identifier: "", password: "", error: "", loading: false });
-
-function renderFeedback(state) {
-  if (state.loading) {
-    return { type: "p", children: ["Connexion…"] };
-  }
-  if (state.error) {
-    return {
-      type: "p",
-      attributes: [["style", [["color", "#c0392b"]]]],
-      children: [state.error],
-    };
-  }
-  return { type: "p", children: [""] };
-}
+const formState = createState({
+  identifier: "",
+  password: "",
+  error: "",
+  loading: false,
+});
 
 export default function PageLogin() {
   async function handleSubmit(event) {
@@ -47,46 +36,109 @@ export default function PageLogin() {
     type: "div",
     attributes: [["class", ["page", "page-login"]]],
     children: [
-      { type: "h1", children: ["Se connecter"] },
-      { type: "nav", children: [Link("/", "← Retour à l'accueil")] },
+      Header("/login"),
       {
-        type: "form",
-        attributes: [["style", [["display", "flex"], ["flexDirection", "column"], ["gap", "10px"], ["maxWidth", "400px"]]]],
-        events: [["submit", handleSubmit]],
+        type: "main",
         children: [
           {
-            type: "label",
-            children: [
-              "Email",
-              {
-                type: "input",
-                attributes: [["type", "email"], ["required", true]],
-                events: [["input", (e) => formState.set((s) => ({ ...s, identifier: e.target.value }))]],
-              },
-            ],
-          },
-          {
-            type: "label",
-            children: [
-              "Mot de passe",
-              {
-                type: "input",
-                attributes: [["type", "password"], ["required", true]],
-                events: [["input", (e) => formState.set((s) => ({ ...s, password: e.target.value }))]],
-              },
-            ],
-          },
-          {
-            type: "button",
-            attributes: [["type", "submit"]],
+            type: "h1",
             children: ["Se connecter"],
           },
-          reactive(formState, renderFeedback),
+          {
+            type: "form",
+            attributes: [
+              [
+                "style",
+                [
+                  ["display", "flex"],
+                  ["flexDirection", "column"],
+                  ["gap", "12px"],
+                  ["maxWidth", "400px"],
+                  ["marginTop", "20px"],
+                ],
+              ],
+            ],
+            events: [["submit", handleSubmit]],
+            children: [
+              {
+                type: "label",
+                children: [
+                  "Email ou nom d'utilisateur",
+                  {
+                    type: "input",
+                    attributes: [
+                      ["type", "text"],
+                      ["required", true],
+                      [
+                        "style",
+                        [
+                          ["width", "100%"],
+                          ["padding", "8px"],
+                          ["marginTop", "4px"],
+                        ],
+                      ],
+                    ],
+                    events: [
+                      [
+                        "input",
+                        (e) =>
+                          formState.set((s) => ({
+                            ...s,
+                            identifier: e.target.value,
+                          })),
+                      ],
+                    ],
+                  },
+                ],
+              },
+              {
+                type: "label",
+                children: [
+                  "Mot de passe",
+                  {
+                    type: "input",
+                    attributes: [
+                      ["type", "password"],
+                      ["required", true],
+                      [
+                        "style",
+                        [
+                          ["width", "100%"],
+                          ["padding", "8px"],
+                          ["marginTop", "4px"],
+                        ],
+                      ],
+                    ],
+                    events: [
+                      [
+                        "input",
+                        (e) =>
+                          formState.set((s) => ({
+                            ...s,
+                            password: e.target.value,
+                          })),
+                      ],
+                    ],
+                  },
+                ],
+              },
+              {
+                type: "button",
+                attributes: [
+                  ["type", "submit"],
+                  ["class", ["btn", "btn-primary"]],
+                ],
+                children: ["Se connecter"],
+              },
+              reactive(formState, (s) => renderAuthFeedback(s, "Connexion…")),
+            ],
+          },
+          {
+            type: "p",
+            attributes: [["style", [["marginTop", "16px"]]]],
+            children: ["Pas encore de compte ? ", Link("/signup", "Créer un compte")],
+          },
         ],
-      },
-      {
-        type: "p",
-        children: ["Pas encore de compte ? ", Link("/signup", "Créer un compte")],
       },
     ],
   };

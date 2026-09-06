@@ -36,7 +36,7 @@ export async function getOwnProfilId(strapi: any, userId: number): Promise<numbe
 export async function isOwnProfil(strapi: any, profilId: string | number, userId: number): Promise<boolean> {
   const profil = await strapi.db
     .query('api::profil.profil')
-    .findOne({ where: { id: profilId }, populate: ['owner'] });
+    .findOne({ where: { documentId: profilId }, populate: ['owner'] });
   return Boolean(profil?.owner?.id === userId);
 }
 
@@ -46,8 +46,10 @@ export async function isOwnChildEntry(
   entryId: string | number,
   userId: number
 ): Promise<boolean> {
-  const entry = await strapi.db
+  // draftAndPublish : un documentId correspond à 2 lignes (brouillon +
+  // publiée) ; on vérifie les deux plutôt qu'une seule prise au hasard.
+  const rows = await strapi.db
     .query(uid)
-    .findOne({ where: { id: entryId }, populate: { profil: { populate: ['owner'] } } });
-  return Boolean(entry?.profil?.owner?.id === userId);
+    .findMany({ where: { documentId: entryId }, populate: { profil: { populate: ['owner'] } } });
+  return rows.some((row: any) => row?.profil?.owner?.id === userId);
 }

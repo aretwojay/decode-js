@@ -7,8 +7,9 @@ RUN npm install
 
 COPY . .
 
+RUN npx strapi ts:generate-types
 RUN npm run build
 
 EXPOSE 1337
 
-CMD ["npm", "run", "develop"]
+CMD ["npm", "run", "start"]

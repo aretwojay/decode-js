@@ -37,7 +37,8 @@
       "required": true
     },
     "technologies": {
-      "type": "json"
+      "type": "text",
+      "maxLength": 300
     },
     "competences": {
       "type": "relation",
@@ -50,6 +51,13 @@
     },
     "lien_demo": {
       "type": "string"
+    },
+    "lien_mobile": {
+      "type": "string"
+    },
+    "role": {
+      "type": "string",
+      "maxLength": 150
     },
     "image": {
       "type": "media",

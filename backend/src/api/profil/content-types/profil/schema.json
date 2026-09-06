@@ -90,6 +90,34 @@
         "publie",
         "archive"
       ]
+    },
+    "theme": {
+      "type": "enumeration",
+      "enum": [
+        "iris",
+        "yaniss",
+        "ruben"
+      ]
+    },
+    "accroche_disponibilite": {
+      "type": "string",
+      "maxLength": 200
+    },
+    "accroche_portfolio": {
+      "type": "string",
+      "maxLength": 150
+    },
+    "intro_portfolio": {
+      "type": "text",
+      "maxLength": 400
+    },
+    "message_collaboration": {
+      "type": "text",
+      "maxLength": 400
+    },
+    "accroche_contact": {
+      "type": "string",
+      "maxLength": 150
     }
   }
 }

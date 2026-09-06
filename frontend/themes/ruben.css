@@ -1,5 +1,45 @@
+/* ==========================================================================
+   Theme Ruben — Clean Cyber Minimal Dark Theme (WCAG AA Compliant)
+   ========================================================================== */
+
+:root,
 body {
-  background: #0B0F19;
-  color: #E7EAF3;
-  font-family: monospace;
+  --bg-primary: #0B0F19;
+  --bg-secondary: #131B2E;
+  --bg-card: rgba(19, 27, 46, 0.85);
+  --bg-card-hover: rgba(26, 38, 64, 0.95);
+  --bg-tag: rgba(56, 189, 248, 0.15);
+  --border-color: rgba(226, 232, 240, 0.12);
+  --border-color-hover: rgba(56, 189, 248, 0.45);
+
+  --text-primary: #F8FAFC;
+  --text-secondary: #94A3B8;
+  --text-muted: #64748B;
+
+  --accent-primary: #0284C7;
+  --accent-gradient: linear-gradient(135deg, #0284C7 0%, #06B6D4 100%);
+  --accent-hover: #0EA5E9;
+  --success-color: #10B981;
+  --success-bg: rgba(16, 185, 129, 0.15);
+
+  --font-sans: 'JetBrains Mono', 'Fira Code', monospace;
+  --shadow-glow: 0 0 20px rgba(56, 189, 248, 0.22);
+}
+
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+}
+
+:focus-visible {
+  outline: 2px solid var(--accent-primary) !important;
+  outline-offset: 3px !important;
+}
+
+.nav-link.active {
+  color: #38BDF8 !important;
+  background: rgba(56, 189, 248, 0.18) !important;
+  border: 1px solid rgba(56, 189, 248, 0.45) !important;
+  font-weight: 700 !important;
 }

@@ -1,8 +1,20 @@
 import createState from "./create-state.js";
+import { appStore } from "./store.js";
 
 export const AvailablesThemes = ["iris", "yaniss", "ruben"];
 
-const themeState = createState(AvailablesThemes[0]);
+const STORAGE_KEY = "site-theme";
+
+function readStoredTheme() {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    return AvailablesThemes.includes(stored) ? stored : null;
+  } catch {
+    return null;
+  }
+}
+
+const themeState = createState(readStoredTheme() || AvailablesThemes[0]);
 
 export function getTheme() {
   return themeState.get();
@@ -13,6 +25,17 @@ export function setTheme(themeName) {
     throw new Error(`Ce Thème n'existe pas : "${themeName}".`);
   }
   themeState.set(themeName);
+
+  try {
+    localStorage.setItem(STORAGE_KEY, themeName);
+  } catch {}
+
+  if (appStore && typeof appStore.setState === "function") {
+    appStore.setState((state) => ({
+      ...state,
+      theme: themeName,
+    }));
+  }
 }
 
 export function subscribeTheme(listener) {
@@ -20,6 +43,12 @@ export function subscribeTheme(listener) {
 }
 
 export function applyTheme(themeName) {
+  if (typeof document === "undefined") return;
+
+  if (document.body) {
+    document.body.dataset.theme = themeName;
+  }
+
   let link = document.getElementById("theme-stylesheet");
   if (!link) {
     link = document.createElement("link");
@@ -32,4 +61,3 @@ export function applyTheme(themeName) {
 
 subscribeTheme(applyTheme);
 applyTheme(getTheme());
-
