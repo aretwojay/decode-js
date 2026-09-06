@@ -126,6 +126,22 @@ export function renderDescriptionContent(description) {
 }
 
 /**
+ * Resolves media items list from project.image (array or single object)
+ * @param {Array|Object|null} imageField
+ * @returns {Array<Object>}
+ */
+export function extractProjectMedia(imageField) {
+  if (!imageField) return [];
+  if (Array.isArray(imageField)) {
+    return imageField.filter((m) => m && typeof m === "object" && m.url);
+  }
+  if (typeof imageField === "object" && imageField.url) {
+    return [imageField];
+  }
+  return [];
+}
+
+/**
  * Renders the project detail view structure
  * @param {Object} project - Validated project domain entity
  * @returns {Object} Vanilla-engine structure object
@@ -133,6 +149,9 @@ export function renderDescriptionContent(description) {
 export function renderProjectDetail(project) {
   const techs = extractTechnologies(project);
   const formattedDate = formatProjectDate(project.date_realisation);
+  const allMedia = extractProjectMedia(project.image);
+  const coverMedia = allMedia.length > 0 ? allMedia[0] : null;
+  const galleryMedia = allMedia.length > 1 ? allMedia.slice(1) : [];
 
   return {
     type: "article",
@@ -217,9 +236,9 @@ export function renderProjectDetail(project) {
       },
 
       // ------------------------------------------
-      // Media / Cover Image Preview (if present)
+      // Cover Media / Main Image Preview (if present)
       // ------------------------------------------
-      project.image && project.image.url
+      coverMedia
         ? {
             type: "figure",
             attributes: [["class", ["project-detail-media-wrapper"]]],
@@ -227,24 +246,111 @@ export function renderProjectDetail(project) {
               {
                 type: "img",
                 attributes: [
-                  ["src", project.image.url],
+                  ["src", coverMedia.url],
                   [
                     "alt",
-                    project.image.alternativeText ||
+                    coverMedia.alternativeText ||
                       project.titre ||
-                      "Illustration du projet",
+                      "Illustration principale du projet",
                   ],
                   ["class", ["project-detail-cover-image"]],
                   ["loading", "lazy"],
                 ],
               },
-              project.image.caption
+              coverMedia.caption
                 ? {
                     type: "figcaption",
                     attributes: [["class", ["project-media-caption"]]],
-                    children: [project.image.caption],
+                    children: [coverMedia.caption],
                   }
                 : { type: "span", children: [] },
+            ],
+          }
+        : { type: "span", children: [] },
+
+      // ------------------------------------------
+      // Secondary Media Gallery (if multiple files)
+      // ------------------------------------------
+      galleryMedia.length > 0
+        ? {
+            type: "section",
+            attributes: [
+              ["class", ["project-detail-gallery-section"]],
+              ["aria-label", "Galerie d'illustrations et documents du projet"],
+            ],
+            children: [
+              {
+                type: "h2",
+                attributes: [["class", ["project-detail-subtitle"]]],
+                children: ["Galerie & Fichiers associés"],
+              },
+              {
+                type: "div",
+                attributes: [["class", ["project-detail-gallery-grid"]]],
+                children: galleryMedia.map((m, idx) => {
+                  const isPdf =
+                    m.mime === "application/pdf" ||
+                    (m.url && m.url.toLowerCase().endsWith(".pdf"));
+                  if (isPdf) {
+                    return {
+                      type: "a",
+                      attributes: [
+                        ["href", m.url],
+                        ["target", "_blank"],
+                        ["rel", "noopener noreferrer"],
+                        ["class", ["gallery-file-link"]],
+                        [
+                          "title",
+                          `Consulter le document : ${m.name || "Document PDF"}`,
+                        ],
+                      ],
+                      children: [
+                        {
+                          type: "span",
+                          attributes: [["class", ["gallery-file-icon"]]],
+                          children: ["📄"],
+                        },
+                        {
+                          type: "span",
+                          attributes: [["class", ["gallery-file-name"]]],
+                          children: [m.name || `Document ${idx + 2}`],
+                        },
+                        {
+                          type: "span",
+                          attributes: [["class", ["gallery-file-badge"]]],
+                          children: ["PDF"],
+                        },
+                      ],
+                    };
+                  }
+                  return {
+                    type: "figure",
+                    attributes: [["class", ["gallery-item-card"]]],
+                    children: [
+                      {
+                        type: "img",
+                        attributes: [
+                          ["src", m.formats?.small?.url || m.url],
+                          [
+                            "alt",
+                            m.alternativeText ||
+                              `${project.titre || "Projet"} - Vue ${idx + 2}`,
+                          ],
+                          ["class", ["gallery-item-img"]],
+                          ["loading", "lazy"],
+                        ],
+                      },
+                      m.caption || m.name
+                        ? {
+                            type: "figcaption",
+                            attributes: [["class", ["gallery-item-caption"]]],
+                            children: [m.caption || m.name],
+                          }
+                        : { type: "span", children: [] },
+                    ],
+                  };
+                }),
+              },
             ],
           }
         : { type: "span", children: [] },

@@ -19,7 +19,7 @@ export default factories.createCoreController('api::projet.projet', ({ strapi })
       const ownProfilId = await getOwnProfilId(strapi, ctx.state.user.id);
       const entries = await strapi.db
         .query('api::projet.projet')
-        .findMany({ where: { profil: ownProfilId } });
+        .findMany({ where: { profil: ownProfilId }, populate: ['image', 'profil'] });
       return { data: dedupeByDocumentId(entries), meta: {} };
     }
     return await super.find(ctx);
@@ -32,7 +32,10 @@ export default factories.createCoreController('api::projet.projet', ({ strapi })
     // hasard sur la version brouillon quand une version publiée existe.
     const rows = await strapi.db
       .query('api::projet.projet')
-      .findMany({ where: { documentId: id }, populate: { profil: { populate: ['owner'] } } });
+      .findMany({
+        where: { documentId: id },
+        populate: { profil: { populate: ['owner'] }, image: true },
+      });
     if (rows.length === 0) return ctx.notFound();
 
     const publishedRow = rows.find((r) => r.publishedAt);
