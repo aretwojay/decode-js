@@ -308,10 +308,36 @@ const SERVICES = [
 
 /**
  * Renders "Ce que je fais" (services) section of Home page
+ * @param {Array} [cmsServices] - Services fetched from the CMS (falls back to hardcoded content when empty)
  * @returns {Object} Vanilla-engine structure object
  */
-export function renderServicesSection() {
+export function renderServicesSection(cmsServices = []) {
   const isIris = getTheme() === "iris";
+
+  const services =
+    cmsServices.length > 0
+      ? cmsServices
+      : [
+          ...SERVICES.map((service) => ({
+            titre: service.title,
+            description: service.desc,
+            icone: service.icon,
+            emoji: service.emoji,
+            affichage_large: false,
+          })),
+          {
+            titre: "Déploiement & cloud",
+            description:
+              "Développer une appli, c'est bien ; la mettre en ligne et la faire tourner de façon fiable, c'est ce qui compte vraiment. Mise en production de bout en bout : hébergement, services cloud, envoi d'emails et sécurisation de l'application une fois en ligne. Git / GitHub • Docker • Mise en production • Webhooks • Sécurité des accès.",
+            icone: "cloud",
+            emoji: "☁️",
+            affichage_large: true,
+            image: isIris ? { url: "/public/iris/cloud.png" } : null,
+          },
+        ];
+
+  const regularServices = services.filter((s) => !s.affichage_large);
+  const wideServices = services.filter((s) => s.affichage_large);
 
   return {
     type: "section",
@@ -343,7 +369,7 @@ export function renderServicesSection() {
       {
         type: "div",
         attributes: [["class", ["grid", "services-grid"]]],
-        children: SERVICES.map((service) => ({
+        children: regularServices.map((service) => ({
           type: "div",
           attributes: [["class", ["card", "service-card"]]],
           children: [
@@ -357,28 +383,28 @@ export function renderServicesSection() {
                       attributes: [
                         [
                           "class",
-                          ["service-icon-glyph", `icon-${service.icon}`],
+                          ["service-icon-glyph", `icon-${service.icone}`],
                         ],
                       ],
                       children: [],
                     },
                   ]
-                : [service.emoji],
+                : [service.emoji || "💻"],
             },
             {
               type: "h3",
               attributes: [["class", ["card-title"]]],
-              children: [service.title],
+              children: [service.titre],
             },
             {
               type: "p",
               attributes: [["class", ["card-summary"]]],
-              children: [service.desc],
+              children: [service.description],
             },
           ],
         })),
       },
-      {
+      ...wideServices.map((service) => ({
         type: "div",
         attributes: [["class", ["card", "service-card", "service-card-wide"]]],
         children: [
@@ -394,24 +420,25 @@ export function renderServicesSection() {
                       {
                         type: "div",
                         attributes: [
-                          ["class", ["service-icon-glyph", "icon-cloud"]],
+                          [
+                            "class",
+                            ["service-icon-glyph", `icon-${service.icone}`],
+                          ],
                         ],
                         children: [],
                       },
                     ]
-                  : ["☁️"],
+                  : [service.emoji || "☁️"],
               },
               {
                 type: "h3",
                 attributes: [["class", ["card-title"]]],
-                children: ["Déploiement & cloud"],
+                children: [service.titre],
               },
               {
                 type: "p",
                 attributes: [["class", ["card-summary"]]],
-                children: [
-                  "Développer une appli, c'est bien ; la mettre en ligne et la faire tourner de façon fiable, c'est ce qui compte vraiment. Mise en production de bout en bout : hébergement, services cloud, envoi d'emails et sécurisation de l'application une fois en ligne. Git / GitHub • Docker • Mise en production • Webhooks • Sécurité des accès.",
-                ],
+                children: [service.description],
               },
             ],
           },
@@ -419,14 +446,14 @@ export function renderServicesSection() {
             ? {
                 type: "img",
                 attributes: [
-                  ["src", "/public/iris/cloud.png"],
+                  ["src", service.image?.url || "/public/iris/cloud.png"],
                   ["alt", ""],
                   ["class", ["service-wide-image"]],
                 ],
               }
             : { type: "span", children: [] },
         ],
-      },
+      })),
     ],
   };
 }

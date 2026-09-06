@@ -1,6 +1,6 @@
 import Header, { NavLink } from "../components/header.js";
 import Footer from "../components/footer.js";
-import { fetchProfile, fetchProjects } from "../lib/api.js";
+import { fetchProfile, fetchProjects, fetchServices } from "../lib/api.js";
 import { appStore } from "../lib/store.js";
 import { getTheme } from "../lib/theme.js";
 import useOffline from "../lib/use-offline.js";
@@ -32,8 +32,9 @@ export default async function PageHome() {
         fetchProfile(),
         fetchProjects({ featured: true }),
         fetchProjects(),
+        fetchServices(),
       ]),
-    { fallback: [null, [], []] },
+    { fallback: [null, [], [], []] },
   );
 
   const currentTheme = profile?.theme || getTheme();
@@ -86,7 +87,7 @@ export default async function PageHome() {
 
           ...(isIris ? [renderAboutSection(candidateData)] : []),
 
-          ...(isIris ? [renderServicesSection()] : []),
+          ...(isIris ? [renderServicesSection(services)] : []),
 
           // Featured Projects Showcase Section
           renderFeaturedSection(projectsToDisplay, hasFeatured),

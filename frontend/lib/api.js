@@ -404,6 +404,25 @@ export async function fetchProjects({ featured = false, statut, theme } = {}) {
 }
 
 /**
+ * Fetches published "Ce que je fais" service cards, ordered and theme-scoped
+ * @param {Object} [options]
+ * @param {string} [options.theme]
+ * @returns {Promise<Array>}
+ */
+export async function fetchServices({ theme } = {}) {
+  try {
+    let query = `services?populate=*&sort=ordre:asc`;
+    if (theme) {
+      query += `&filters[profil][theme][$eq]=${encodeURIComponent(theme)}`;
+    }
+    const res = await apiFetch(query);
+    return normalizeCollection(res);
+  } catch (err) {
+    return [];
+  }
+}
+
+/**
  * Fetches a single published project by its slug
  * @param {string} slug
  * @returns {Promise<Object|null>}
@@ -824,6 +843,7 @@ export default {
   normalizeCollection,
   fetchProjects,
   fetchProjectBySlug,
+  fetchServices,
   fetchExperiences,
   fetchSkills,
   fetchCompetences,
