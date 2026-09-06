@@ -17,9 +17,14 @@ export default factories.createCoreController('api::projet.projet', ({ strapi })
   async find(ctx) {
     if (ctx.state.user) {
       const ownProfilId = await getOwnProfilId(strapi, ctx.state.user.id);
+      const where: Record<string, any> = { profil: ownProfilId };
+      const slugFilter = (ctx.query?.filters as any)?.slug?.$eq || (ctx.query?.filters as any)?.slug;
+      if (slugFilter) {
+        where.slug = slugFilter;
+      }
       const entries = await strapi.db
         .query('api::projet.projet')
-        .findMany({ where: { profil: ownProfilId }, populate: ['image', 'profil'] });
+        .findMany({ where, populate: ['image', 'profil'] });
       return { data: dedupeByDocumentId(entries), meta: {} };
     }
     return await super.find(ctx);

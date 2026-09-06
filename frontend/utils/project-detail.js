@@ -126,6 +126,19 @@ export function renderDescriptionContent(description) {
 }
 
 /**
+ * Checks if a media item is an image based on mime type or URL extension
+ * @param {Object} media
+ * @returns {boolean}
+ */
+export function isImageMedia(media) {
+  if (!media || !media.url) return false;
+  if (typeof media.mime === "string" && media.mime.startsWith("image/")) {
+    return true;
+  }
+  return /\.(png|jpe?g|webp|gif|svg|avif)$/i.test(media.url);
+}
+
+/**
  * Resolves media items list from project.image (array or single object)
  * @param {Array|Object|null} imageField
  * @returns {Array<Object>}
@@ -150,8 +163,14 @@ export function renderProjectDetail(project) {
   const techs = extractTechnologies(project);
   const formattedDate = formatProjectDate(project.date_realisation);
   const allMedia = extractProjectMedia(project.image);
-  const coverMedia = allMedia.length > 0 ? allMedia[0] : null;
-  const galleryMedia = allMedia.length > 1 ? allMedia.slice(1) : [];
+  const imageMedia = allMedia.filter(isImageMedia);
+  const documentMedia = allMedia.filter((m) => !isImageMedia(m));
+
+  // The primary cover image is the first image (if any)
+  const coverImage = imageMedia.length > 0 ? imageMedia[0] : null;
+
+  // Display gallery/attachments section if multiple media exist, or if there are attached documents
+  const hasGallery = allMedia.length > 1 || documentMedia.length > 0;
 
   return {
     type: "article",
@@ -236,9 +255,9 @@ export function renderProjectDetail(project) {
       },
 
       // ------------------------------------------
-      // Cover Media / Main Image Preview (if present)
+      // Cover Media / Main Image Preview (if image exists)
       // ------------------------------------------
-      coverMedia
+      coverImage
         ? {
             type: "figure",
             attributes: [["class", ["project-detail-media-wrapper"]]],
@@ -246,10 +265,10 @@ export function renderProjectDetail(project) {
               {
                 type: "img",
                 attributes: [
-                  ["src", coverMedia.url],
+                  ["src", coverImage.url],
                   [
                     "alt",
-                    coverMedia.alternativeText ||
+                    coverImage.alternativeText ||
                       project.titre ||
                       "Illustration principale du projet",
                   ],
@@ -257,11 +276,11 @@ export function renderProjectDetail(project) {
                   ["loading", "lazy"],
                 ],
               },
-              coverMedia.caption
+              coverImage.caption
                 ? {
                     type: "figcaption",
                     attributes: [["class", ["project-media-caption"]]],
-                    children: [coverMedia.caption],
+                    children: [coverImage.caption],
                   }
                 : { type: "span", children: [] },
             ],
@@ -269,9 +288,9 @@ export function renderProjectDetail(project) {
         : { type: "span", children: [] },
 
       // ------------------------------------------
-      // Secondary Media Gallery (if multiple files)
+      // Media Gallery & Attachments Section (displays ALL files)
       // ------------------------------------------
-      galleryMedia.length > 0
+      hasGallery
         ? {
             type: "section",
             attributes: [
@@ -282,16 +301,25 @@ export function renderProjectDetail(project) {
               {
                 type: "h2",
                 attributes: [["class", ["project-detail-subtitle"]]],
-                children: ["Galerie & Fichiers associés"],
+                children: [
+                  documentMedia.length > 0 && imageMedia.length === 0
+                    ? "Documents & Fichiers associés"
+                    : "Galerie & Fichiers associés",
+                ],
               },
               {
                 type: "div",
                 attributes: [["class", ["project-detail-gallery-grid"]]],
-                children: galleryMedia.map((m, idx) => {
-                  const isPdf =
-                    m.mime === "application/pdf" ||
-                    (m.url && m.url.toLowerCase().endsWith(".pdf"));
-                  if (isPdf) {
+                children: allMedia.map((m, idx) => {
+                  if (!isImageMedia(m)) {
+                    // Document link (PDF, etc.)
+                    const isPdf =
+                      m.mime === "application/pdf" ||
+                      (m.url && m.url.toLowerCase().endsWith(".pdf"));
+                    const badgeText = isPdf
+                      ? "PDF"
+                      : (m.ext || "Fichier").replace(/^\./, "").toUpperCase();
+
                     return {
                       type: "a",
                       attributes: [
@@ -301,28 +329,29 @@ export function renderProjectDetail(project) {
                         ["class", ["gallery-file-link"]],
                         [
                           "title",
-                          `Consulter le document : ${m.name || "Document PDF"}`,
+                          `Ouvrir le document : ${m.name || "Document"}`,
                         ],
                       ],
                       children: [
                         {
                           type: "span",
                           attributes: [["class", ["gallery-file-icon"]]],
-                          children: ["📄"],
+                          children: [isPdf ? "📄" : "📎"],
                         },
                         {
                           type: "span",
                           attributes: [["class", ["gallery-file-name"]]],
-                          children: [m.name || `Document ${idx + 2}`],
+                          children: [m.name || `Document ${idx + 1}`],
                         },
                         {
                           type: "span",
                           attributes: [["class", ["gallery-file-badge"]]],
-                          children: ["PDF"],
+                          children: [badgeText],
                         },
                       ],
                     };
                   }
+
                   return {
                     type: "figure",
                     attributes: [["class", ["gallery-item-card"]]],
@@ -330,11 +359,16 @@ export function renderProjectDetail(project) {
                       {
                         type: "img",
                         attributes: [
-                          ["src", m.formats?.small?.url || m.url],
+                          [
+                            "src",
+                            m.formats?.medium?.url ||
+                              m.formats?.small?.url ||
+                              m.url,
+                          ],
                           [
                             "alt",
                             m.alternativeText ||
-                              `${project.titre || "Projet"} - Vue ${idx + 2}`,
+                              `${project.titre || "Projet"} - Vue ${idx + 1}`,
                           ],
                           ["class", ["gallery-item-img"]],
                           ["loading", "lazy"],
