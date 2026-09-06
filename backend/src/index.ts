@@ -25,6 +25,8 @@ export default {
         'api::profil.profil.find',
         'api::profil.profil.findOne',
         'api::message.message.create',
+        'plugin::upload.content-api.find',
+        'plugin::upload.content-api.findOne',
       ];
 
       for (const action of publicActions) {
@@ -56,9 +58,15 @@ export default {
       if (authenticatedRole) {
         const contentTypes = ['profil', 'projet', 'competence', 'experience', 'formation'];
         const crud = ['find', 'findOne', 'create', 'update', 'delete'];
-        const authenticatedActions = contentTypes.flatMap((ct) =>
-          crud.map((action) => `api::${ct}.${ct}.${action}`)
-        );
+        const authenticatedActions = [
+          ...contentTypes.flatMap((ct) =>
+            crud.map((action) => `api::${ct}.${ct}.${action}`)
+          ),
+          'plugin::upload.content-api.upload',
+          'plugin::upload.content-api.find',
+          'plugin::upload.content-api.findOne',
+          'plugin::upload.content-api.destroy',
+        ];
 
         for (const action of authenticatedActions) {
           const existingPermission = await strapi.db

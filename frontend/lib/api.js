@@ -696,6 +696,85 @@ export async function syncStoreFromApi(storeInstance = appStore) {
   }
 }
 
+/**
+ * Uploads one or multiple files to the Strapi Media Library
+ * @param {File|FileList|Array<File>} files
+ * @param {Object} [options] - Optional Strapi ref, refId, field params
+ * @param {string} [options.ref] - Content type UID (e.g. "api::projet.projet")
+ * @param {string|number} [options.refId] - Entry ID
+ * @param {string} [options.field] - Target attribute field name (e.g. "image")
+ * @returns {Promise<Array<Object>>} Array of uploaded media objects
+ */
+export async function uploadMedia(files, options = {}) {
+  const fileList = Array.isArray(files)
+    ? files
+    : files instanceof FileList
+    ? Array.from(files)
+    : files instanceof File
+    ? [files]
+    : [];
+
+  if (fileList.length === 0) {
+    return [];
+  }
+
+  const formData = new FormData();
+  fileList.forEach((file) => {
+    formData.append("files", file);
+  });
+
+  if (options.ref) formData.append("ref", options.ref);
+  if (options.refId) formData.append("refId", String(options.refId));
+  if (options.field) formData.append("field", options.field);
+
+  const authHeaders = options.token
+    ? { Authorization: `Bearer ${options.token}` }
+    : authedHeaders();
+  const url = buildApiUrl("upload");
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      ...authHeaders,
+    },
+    body: formData,
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    const errorMsg =
+      data?.error?.message || `Erreur d'upload média (HTTP ${response.status})`;
+    throw new Error(errorMsg);
+  }
+
+  return Array.isArray(data) ? data : [data];
+}
+
+/**
+ * Deletes a file from the Strapi Media Library by ID
+ * @param {number|string} mediaId
+ * @param {Object} [options]
+ * @returns {Promise<boolean>}
+ */
+export async function deleteMedia(mediaId, options = {}) {
+  if (!mediaId) return false;
+  try {
+    const authHeaders = options.token
+      ? { Authorization: `Bearer ${options.token}` }
+      : authedHeaders();
+    await apiFetch(`upload/files/${mediaId}`, {
+      method: "DELETE",
+      headers: authHeaders,
+    });
+    return true;
+  } catch (err) {
+    console.warn("[API Client] Failed to delete media:", err);
+    throw err;
+  }
+}
+
 export default {
   API_BASE_URL,
   extractBlocksText,
@@ -722,4 +801,6 @@ export default {
   formationCrud,
   sendMessage,
   syncStoreFromApi,
+  uploadMedia,
+  deleteMedia,
 };
