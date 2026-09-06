@@ -121,6 +121,36 @@ export function extractBlocksText(blocks) {
 }
 
 /**
+ * Converts plain or multiline text into Strapi 5 rich text blocks
+ * @param {string|Array} text
+ * @returns {Array<Object>}
+ */
+export function textToBlocks(text) {
+  if (!text) return [];
+  if (Array.isArray(text)) return text;
+  const paragraphs = String(text)
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  if (paragraphs.length === 0) {
+    const trimmed = String(text).trim();
+    if (!trimmed) return [];
+    return [
+      {
+        type: "paragraph",
+        children: [{ type: "text", text: trimmed }],
+      },
+    ];
+  }
+
+  return paragraphs.map((para) => ({
+    type: "paragraph",
+    children: [{ type: "text", text: para }],
+  }));
+}
+
+/**
  * Normalizes a media object or array of media objects from Strapi
  * Ensures absolute URLs for images and attachments
  * @param {Object|Array} media
@@ -562,6 +592,7 @@ function makeCrud(resource) {
 export const experienceCrud = makeCrud("experiences");
 export const projectCrud = makeCrud("projets");
 export const competenceCrud = makeCrud("competences");
+export const formationCrud = makeCrud("formations");
 
 /**
  * Sends a contact message to the controlled public ingestion endpoint
@@ -668,6 +699,7 @@ export async function syncStoreFromApi(storeInstance = appStore) {
 export default {
   API_BASE_URL,
   extractBlocksText,
+  textToBlocks,
   normalizeMedia,
   normalizeEntity,
   normalizeCollection,
@@ -687,6 +719,7 @@ export default {
   experienceCrud,
   projectCrud,
   competenceCrud,
+  formationCrud,
   sendMessage,
   syncStoreFromApi,
 };
