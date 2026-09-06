@@ -4,7 +4,6 @@ import { extractTechnologies } from "./portfolio.js";
 import { renderEmptyState } from "../components/ui-feedback.js";
 import { globalOfflineState } from "../lib/use-offline.js";
 
-
 export const DEFAULT_HOME_PROJECTS = [];
 
 /**
@@ -29,7 +28,8 @@ export function resolveCandidateProfile(profile, storeProfile) {
     linkedinUrl: profile?.linkedin || "https://linkedin.com",
     candidateEmail: profile?.email || storeProfile?.email || "",
     candidatePhone: profile?.telephone || storeProfile?.telephone || "",
-    candidateLocation: profile?.localisation || storeProfile?.localisation || "",
+    candidateLocation:
+      profile?.localisation || storeProfile?.localisation || "",
   };
 }
 
@@ -43,16 +43,17 @@ export function resolveCandidateProfile(profile, storeProfile) {
 export function resolveProjectsToDisplay(
   featuredProjects = [],
   allProjects = [],
-  storeProjects = []
+  storeProjects = [],
 ) {
-  const hasFeatured = Array.isArray(featuredProjects) && featuredProjects.length > 0;
+  const hasFeatured =
+    Array.isArray(featuredProjects) && featuredProjects.length > 0;
   const projectsToDisplay = hasFeatured
     ? featuredProjects
     : Array.isArray(allProjects) && allProjects.length > 0
-    ? allProjects.slice(0, 3)
-    : Array.isArray(storeProjects) && storeProjects.length > 0
-    ? storeProjects.slice(0, 3)
-    : [];
+      ? allProjects.slice(0, 3)
+      : Array.isArray(storeProjects) && storeProjects.length > 0
+        ? storeProjects.slice(0, 3)
+        : [];
 
   return { projectsToDisplay, hasFeatured };
 }
@@ -202,7 +203,10 @@ export function renderHeroSection(candidateData) {
         type: "div",
         attributes: [["class", ["hero-actions"]]],
         children: [
-          NavLink("/portfolio", "Explorer les Projets →", ["btn", "btn-primary"]),
+          NavLink("/portfolio", "Explorer les Projets →", [
+            "btn",
+            "btn-primary",
+          ]),
           NavLink("/cv", "Consulter mon CV", ["btn", "btn-secondary"]),
           NavLink("/contact", "Me Contacter", ["btn", "btn-secondary"]),
         ],
@@ -240,7 +244,10 @@ export function renderAboutSection(candidateData) {
         children: [
           {
             type: "h2",
-            attributes: [["id", "about-heading"], ["class", ["section-title"]]],
+            attributes: [
+              ["id", "about-heading"],
+              ["class", ["section-title"]],
+            ],
             children: ["À propos"],
           },
           {
@@ -346,7 +353,10 @@ export function renderServicesSection(cmsServices = []) {
         children: [
           {
             type: "h2",
-            attributes: [["id", "services-heading"], ["class", ["section-title"]]],
+            attributes: [
+              ["id", "services-heading"],
+              ["class", ["section-title"]],
+            ],
             children: ["Ce que je fais"],
           },
           {
@@ -367,7 +377,18 @@ export function renderServicesSection(cmsServices = []) {
               type: "div",
               attributes: [["class", ["service-icon"]]],
               children: isIris
-                ? [{ type: "div", attributes: [["class", ["service-icon-glyph", `icon-${service.icone}`]]], children: [] }]
+                ? [
+                    {
+                      type: "div",
+                      attributes: [
+                        [
+                          "class",
+                          ["service-icon-glyph", `icon-${service.icone}`],
+                        ],
+                      ],
+                      children: [],
+                    },
+                  ]
                 : [service.emoji || "💻"],
             },
             {
@@ -395,7 +416,18 @@ export function renderServicesSection(cmsServices = []) {
                 type: "div",
                 attributes: [["class", ["service-icon"]]],
                 children: isIris
-                  ? [{ type: "div", attributes: [["class", ["service-icon-glyph", `icon-${service.icone}`]]], children: [] }]
+                  ? [
+                      {
+                        type: "div",
+                        attributes: [
+                          [
+                            "class",
+                            ["service-icon-glyph", `icon-${service.icone}`],
+                          ],
+                        ],
+                        children: [],
+                      },
+                    ]
                   : [service.emoji || "☁️"],
               },
               {
@@ -411,7 +443,14 @@ export function renderServicesSection(cmsServices = []) {
             ],
           },
           isIris
-            ? { type: "img", attributes: [["src", service.image?.url || "/public/iris/cloud.png"], ["alt", ""], ["class", ["service-wide-image"]]] }
+            ? {
+                type: "img",
+                attributes: [
+                  ["src", service.image?.url || "/public/iris/cloud.png"],
+                  ["alt", ""],
+                  ["class", ["service-wide-image"]],
+                ],
+              }
             : { type: "span", children: [] },
         ],
       })),
@@ -437,7 +476,12 @@ export function renderFeaturedSection(projectsToDisplay, hasFeatured) {
     children: [
       {
         type: "div",
-        attributes: [["class", ["section-header", ...(isIris ? ["section-header-center"] : [])]]],
+        attributes: [
+          [
+            "class",
+            ["section-header", ...(isIris ? ["section-header-center"] : [])],
+          ],
+        ],
         children: [
           {
             type: "div",
@@ -452,8 +496,8 @@ export function renderFeaturedSection(projectsToDisplay, hasFeatured) {
                   isIris
                     ? "Mes projets"
                     : hasFeatured
-                    ? "Projets en Vedette"
-                    : "Projets Récents",
+                      ? "Projets en Vedette"
+                      : "Projets Récents",
                 ],
               },
               {
@@ -463,15 +507,17 @@ export function renderFeaturedSection(projectsToDisplay, hasFeatured) {
                   isIris
                     ? "Une partie de mon travail"
                     : hasFeatured
-                    ? "Sélection de réalisations techniques et architectures logicielles"
-                    : "Aperçu des derniers projets publiés",
+                      ? "Sélection de réalisations techniques et architectures logicielles"
+                      : "Aperçu des derniers projets publiés",
                 ],
               },
             ],
           },
           isIris
             ? { type: "span", children: [] }
-            : NavLink("/portfolio", "Voir tout le catalogue →", ["section-link"]),
+            : NavLink("/portfolio", "Voir tout le catalogue →", [
+                "section-link",
+              ]),
         ],
       },
       projectsToDisplay.length === 0
@@ -502,122 +548,127 @@ export function renderFeaturedSection(projectsToDisplay, hasFeatured) {
             type: "div",
             attributes: [["class", ["grid", "projects-grid"]]],
             children: projectsToDisplay.map((project, index) => {
-          const projectTags =
-            project.competences && project.competences.length > 0
-              ? project.competences.map((c) => c.titre || c.name || c)
-              : extractTechnologies(project);
+              const projectTags =
+                project.competences && project.competences.length > 0
+                  ? project.competences.map((c) => c.titre || c.name || c)
+                  : extractTechnologies(project);
 
-          const coverImage =
-            Array.isArray(project.image) && project.image.length > 0
-              ? project.image[0].formats?.small?.url || project.image[0].url
-              : null;
+              const coverImage =
+                Array.isArray(project.image) && project.image.length > 0
+                  ? project.image[0].formats?.small?.url || project.image[0].url
+                  : null;
 
-          if (isIris) {
-            return {
-              type: "div",
-              attributes: [["class", ["project-card-wrap"]]],
-              children: [
-                {
-                  type: "span",
-                  attributes: [["class", ["project-index"]]],
-                  children: [`Projet ${index + 1}`],
-                },
-                NavLink(
-                  `/portfolio#project-${project.slug || project.id}`,
-                  [
-                    coverImage
-                      ? {
-                          type: "img",
-                          attributes: [
-                            ["src", coverImage],
-                            ["alt", project.titre || "Projet"],
-                            ["class", ["project-cover"]],
-                          ],
-                        }
-                      : { type: "span", children: [] },
+              if (isIris) {
+                return {
+                  type: "div",
+                  attributes: [["class", ["project-card-wrap"]]],
+                  children: [
                     {
-                      type: "div",
-                      attributes: [["class", ["project-card-body"]]],
-                      children: [
+                      type: "span",
+                      attributes: [["class", ["project-index"]]],
+                      children: [`Projet ${index + 1}`],
+                    },
+                    NavLink(
+                      `/portfolio#project-${project.slug || project.id}`,
+                      [
+                        coverImage
+                          ? {
+                              type: "img",
+                              attributes: [
+                                ["src", coverImage],
+                                ["alt", project.titre || "Projet"],
+                                ["class", ["project-cover"]],
+                              ],
+                            }
+                          : { type: "span", children: [] },
                         {
-                          type: "h3",
-                          attributes: [["class", ["card-title"]]],
-                          children: [project.titre || "Projet"],
-                        },
-                        {
-                          type: "p",
-                          attributes: [["class", ["card-summary"]]],
+                          type: "div",
+                          attributes: [["class", ["project-card-body"]]],
                           children: [
-                            project.resume ||
-                              (typeof project.description === "string"
-                                ? project.description
-                                : "Architecture et réalisation technique."),
+                            {
+                              type: "h3",
+                              attributes: [["class", ["card-title"]]],
+                              children: [project.titre || "Projet"],
+                            },
+                            {
+                              type: "p",
+                              attributes: [["class", ["card-summary"]]],
+                              children: [
+                                project.resume ||
+                                  (typeof project.description === "string"
+                                    ? project.description
+                                    : "Architecture et réalisation technique."),
+                              ],
+                            },
                           ],
                         },
                       ],
-                    },
+                      ["card", "project-card"],
+                    ),
                   ],
-                  ["card", "project-card"]
-                ),
-              ],
-            };
-          }
+                };
+              }
 
-          return {
-            type: "article",
-            attributes: [["class", ["card", "project-card"]]],
-            children: [
-              Boolean(project.en_vedette)
-                ? {
-                    type: "span",
-                    attributes: [["class", ["card-tag-featured"]]],
-                    children: ["⭐ En Vedette"],
-                  }
-                : { type: "span", children: [] },
-              {
-                type: "h3",
-                attributes: [["class", ["card-title"]]],
-                children: [project.titre || "Projet"],
-              },
-              {
-                type: "p",
-                attributes: [["class", ["card-summary"]]],
+              return {
+                type: "article",
+                attributes: [["class", ["card", "project-card"]]],
                 children: [
-                  project.resume ||
-                    (typeof project.description === "string"
-                      ? project.description
-                      : "Architecture et réalisation technique."),
+                  Boolean(project.en_vedette)
+                    ? {
+                        type: "span",
+                        attributes: [["class", ["card-tag-featured"]]],
+                        children: ["⭐ En Vedette"],
+                      }
+                    : { type: "span", children: [] },
+                  {
+                    type: "h3",
+                    attributes: [["class", ["card-title"]]],
+                    children: [project.titre || "Projet"],
+                  },
+                  {
+                    type: "p",
+                    attributes: [["class", ["card-summary"]]],
+                    children: [
+                      project.resume ||
+                        (typeof project.description === "string"
+                          ? project.description
+                          : "Architecture et réalisation technique."),
+                    ],
+                  },
+                  projectTags.length > 0
+                    ? {
+                        type: "div",
+                        attributes: [["class", ["tags-list"]]],
+                        children: projectTags.map((tag) => ({
+                          type: "span",
+                          attributes: [["class", ["tag"]]],
+                          children: [
+                            typeof tag === "string"
+                              ? tag
+                              : tag.titre || tag.name || String(tag),
+                          ],
+                        })),
+                      }
+                    : { type: "div", children: [] },
+                  NavLink(
+                    `/portfolio/${project.slug || project.id}`,
+                    ["Découvrir le projet →"],
+                    ["card-footer-link"],
+                  ),
                 ],
-              },
-              projectTags.length > 0
-                ? {
-                    type: "div",
-                    attributes: [["class", ["tags-list"]]],
-                    children: projectTags.map((tag) => ({
-                      type: "span",
-                      attributes: [["class", ["tag"]]],
-                      children: [
-                        typeof tag === "string"
-                          ? tag
-                          : tag.titre || tag.name || String(tag),
-                      ],
-                    })),
-                  }
-                : { type: "div", children: [] },
-              NavLink(
-                `/portfolio/${project.slug || project.id}`,
-                ["Découvrir le projet →"],
-                ["card-footer-link"]
-              ),
-            ],
-          };
-        }),
-      },
+              };
+            }),
+          },
       isIris
         ? {
             type: "div",
             attributes: [["class", ["hero-actions", "centered-actions"]]],
-            children: [NavLink("/portfolio", "Voir tous mes projets", ["btn", "btn-primary"])],
+            children: [
+              NavLink("/portfolio", "Voir tous mes projets", [
+                "btn",
+                "btn-primary",
+              ]),
+            ],
           }
         : { type: "div", children: [] },
     ],
@@ -670,7 +721,7 @@ export function renderOverviewSection() {
                 ],
               },
             ],
-            ["overview-card"]
+            ["overview-card"],
           ),
           NavLink(
             "/cv",
@@ -688,7 +739,7 @@ export function renderOverviewSection() {
                 ],
               },
             ],
-            ["overview-card"]
+            ["overview-card"],
           ),
           NavLink(
             "/contact",
@@ -706,7 +757,7 @@ export function renderOverviewSection() {
                 ],
               },
             ],
-            ["overview-card"]
+            ["overview-card"],
           ),
         ],
       },
@@ -743,9 +794,19 @@ export function renderSiteFooter(candidateName, githubUrl, linkedinUrl) {
                 ["class", ["footer-icon-link"]],
                 ["aria-label", "Instagram"],
               ],
-              children: [{ type: "div", attributes: [["class", ["footer-icon", "icon-instagram"]]], children: [] }],
+              children: [
+                {
+                  type: "div",
+                  attributes: [["class", ["footer-icon", "icon-instagram"]]],
+                  children: [],
+                },
+              ],
             },
-            { type: "span", attributes: [["class", ["footer-sep"]]], children: ["|"] },
+            {
+              type: "span",
+              attributes: [["class", ["footer-sep"]]],
+              children: ["|"],
+            },
             {
               type: "a",
               attributes: [
@@ -755,7 +816,13 @@ export function renderSiteFooter(candidateName, githubUrl, linkedinUrl) {
                 ["class", ["footer-icon-link"]],
                 ["aria-label", "LinkedIn"],
               ],
-              children: [{ type: "div", attributes: [["class", ["footer-icon", "icon-linkedin"]]], children: [] }],
+              children: [
+                {
+                  type: "div",
+                  attributes: [["class", ["footer-icon", "icon-linkedin"]]],
+                  children: [],
+                },
+              ],
             },
           ],
         },
@@ -773,7 +840,13 @@ export function renderSiteFooter(candidateName, githubUrl, linkedinUrl) {
                 ["class", ["footer-icon-link"]],
                 ["aria-label", "GitHub"],
               ],
-              children: [{ type: "div", attributes: [["class", ["footer-icon", "icon-github"]]], children: [] }],
+              children: [
+                {
+                  type: "div",
+                  attributes: [["class", ["footer-icon", "icon-github"]]],
+                  children: [],
+                },
+              ],
             },
           ],
         },
@@ -787,9 +860,7 @@ export function renderSiteFooter(candidateName, githubUrl, linkedinUrl) {
     children: [
       {
         type: "div",
-        children: [
-          `© ${new Date().getFullYear()} ${candidateName}. Propulsé par Vanilla-Engine & Strapi 5.`,
-        ],
+        children: [`© ${new Date().getFullYear()} ${candidateName}.`],
       },
       {
         type: "div",

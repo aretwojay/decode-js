@@ -24,7 +24,7 @@ export default async function PagePortfolio() {
   const currentTheme = getTheme();
 
   let projects = await offline.execute(
-    () => fetchProjects({ theme: currentTheme }),
+    () => fetchProjects(),
     { fallback: [] },
   );
 

@@ -302,7 +302,26 @@ async function apiFetch(endpoint, options = {}) {
 
   try {
     const response = await fetch(url, fetchOptions);
-    const data = await response.json();
+
+    let data = null;
+    if (response.status !== 204) {
+      if (typeof response.text === "function") {
+        const text = await response.text();
+        if (text && text.trim().length > 0) {
+          try {
+            data = JSON.parse(text);
+          } catch (parseErr) {
+            data = null;
+          }
+        }
+      } else if (typeof response.json === "function") {
+        try {
+          data = await response.json();
+        } catch (parseErr) {
+          data = null;
+        }
+      }
+    }
 
     if (!response.ok) {
       // If unauthorized on an authenticated request, clear token to prevent zombie state
@@ -679,7 +698,12 @@ export async function syncStoreFromApi(storeInstance = appStore) {
       error: null,
     };
 
-    if (profile) patch.profile = profile;
+    if (profile) {
+      patch.profile = profile;
+      if (profile.theme) {
+        patch.theme = profile.theme;
+      }
+    }
     if (projects && projects.length > 0) patch.projects = projects;
     if (experiences && experiences.length > 0) patch.experiences = experiences;
     if (skills && skills.length > 0) patch.skills = skills;
@@ -715,6 +739,101 @@ export async function syncStoreFromApi(storeInstance = appStore) {
   }
 }
 
+/**
+ * Uploads one or multiple files to the Strapi Media Library
+ * @param {File|FileList|Array<File>} files
+ * @param {Object} [options] - Optional Strapi ref, refId, field params
+ * @param {string} [options.ref] - Content type UID (e.g. "api::projet.projet")
+ * @param {string|number} [options.refId] - Entry ID
+ * @param {string} [options.field] - Target attribute field name (e.g. "image")
+ * @returns {Promise<Array<Object>>} Array of uploaded media objects
+ */
+export async function uploadMedia(files, options = {}) {
+  const fileList = Array.isArray(files)
+    ? files
+    : files instanceof FileList
+    ? Array.from(files)
+    : files instanceof File
+    ? [files]
+    : [];
+
+  if (fileList.length === 0) {
+    return [];
+  }
+
+  const formData = new FormData();
+  fileList.forEach((file) => {
+    formData.append("files", file);
+  });
+
+  if (options.ref) formData.append("ref", options.ref);
+  if (options.refId) formData.append("refId", String(options.refId));
+  if (options.field) formData.append("field", options.field);
+
+  const authHeaders = options.token
+    ? { Authorization: `Bearer ${options.token}` }
+    : authedHeaders();
+  const url = buildApiUrl("upload");
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      ...authHeaders,
+    },
+    body: formData,
+  });
+
+  let data = null;
+  if (typeof response.text === "function") {
+    const text = await response.text();
+    if (text && text.trim().length > 0) {
+      try {
+        data = JSON.parse(text);
+      } catch (parseErr) {
+        data = null;
+      }
+    }
+  } else if (typeof response.json === "function") {
+    try {
+      data = await response.json();
+    } catch (parseErr) {
+      data = null;
+    }
+  }
+
+  if (!response.ok) {
+    const errorMsg =
+      data?.error?.message || `Erreur d'upload média (HTTP ${response.status})`;
+    throw new Error(errorMsg);
+  }
+
+  return Array.isArray(data) ? data : data ? [data] : [];
+}
+
+/**
+ * Deletes a file from the Strapi Media Library by ID
+ * @param {number|string} mediaId
+ * @param {Object} [options]
+ * @returns {Promise<boolean>}
+ */
+export async function deleteMedia(mediaId, options = {}) {
+  if (!mediaId) return false;
+  try {
+    const authHeaders = options.token
+      ? { Authorization: `Bearer ${options.token}` }
+      : authedHeaders();
+    await apiFetch(`upload/files/${mediaId}`, {
+      method: "DELETE",
+      headers: authHeaders,
+    });
+    return true;
+  } catch (err) {
+    console.warn("[API Client] Failed to delete media:", err);
+    throw err;
+  }
+}
+
 export default {
   API_BASE_URL,
   extractBlocksText,
@@ -742,4 +861,6 @@ export default {
   formationCrud,
   sendMessage,
   syncStoreFromApi,
+  uploadMedia,
+  deleteMedia,
 };

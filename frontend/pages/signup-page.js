@@ -1,4 +1,5 @@
 import Header from "../components/header.js";
+import Footer from "../components/footer.js";
 import Link from "../components/router/link.js";
 import createState from "../lib/create-state.js";
 import reactive from "../lib/reactive.js";
@@ -22,18 +23,18 @@ export default function PageSignup() {
     if (!username || username.length < 3) {
       formState.set((s) => ({
         ...s,
-        error: "Le nom d'utilisateur doit faire au moins 3 caractères.",
+        error: "Le nom d'utilisateur doit comporter au moins 3 caractères.",
       }));
       return;
     }
     if (!email || !email.includes("@")) {
-      formState.set((s) => ({ ...s, error: "Adresse email invalide." }));
+      formState.set((s) => ({ ...s, error: "Veuillez saisir une adresse email valide." }));
       return;
     }
     if (!password || password.length < 6) {
       formState.set((s) => ({
         ...s,
-        error: "Le mot de passe doit faire au moins 6 caractères.",
+        error: "Le mot de passe doit comporter au moins 6 caractères.",
       }));
       return;
     }
@@ -43,151 +44,207 @@ export default function PageSignup() {
       await register({ username, email, password });
       navigate("/admin");
     } catch (err) {
-      formState.set((s) => ({ ...s, error: err.message, loading: false }));
+      formState.set((s) => ({ ...s, error: err.message || "Erreur lors de l'inscription.", loading: false }));
     }
   }
 
   return {
     type: "div",
-    attributes: [["class", ["page", "page-signup"]]],
+    attributes: [["class", ["page", "page-auth", "page-signup"]]],
     children: [
       Header("/signup"),
       {
         type: "main",
+        attributes: [
+          ["id", "main-content"],
+          ["tabindex", "-1"],
+          ["class", ["auth-main"]],
+        ],
         children: [
           {
-            type: "h1",
-            children: ["Créer mon compte"],
-          },
-          {
-            type: "form",
-            attributes: [
-              [
-                "style",
-                [
-                  ["display", "flex"],
-                  ["flexDirection", "column"],
-                  ["gap", "12px"],
-                  ["maxWidth", "400px"],
-                  ["marginTop", "20px"],
-                ],
-              ],
-            ],
-            events: [["submit", handleSubmit]],
+            type: "div",
+            attributes: [["class", ["auth-card"]]],
             children: [
+              // Header de la carte
               {
-                type: "label",
+                type: "div",
+                attributes: [["class", ["auth-card-header"]]],
                 children: [
-                  "Nom d'utilisateur",
                   {
-                    type: "input",
-                    attributes: [
-                      ["type", "text"],
-                      ["required", true],
-                      [
-                        "style",
-                        [
-                          ["width", "100%"],
-                          ["padding", "8px"],
-                          ["marginTop", "4px"],
-                        ],
-                      ],
-                    ],
-                    events: [
-                      [
-                        "input",
-                        (e) =>
-                          formState.set((s) => ({
-                            ...s,
-                            username: e.target.value,
-                          })),
-                      ],
+                    type: "div",
+                    attributes: [["class", ["auth-badge-icon"]]],
+                    children: ["✨"],
+                  },
+                  {
+                    type: "h1",
+                    attributes: [["class", ["auth-title"]]],
+                    children: ["Créer un compte"],
+                  },
+                  {
+                    type: "p",
+                    attributes: [["class", ["auth-subtitle"]]],
+                    children: [
+                      "Inscrivez-vous pour personnaliser votre profil et administrer vos projets.",
                     ],
                   },
                 ],
               },
+
+              // Formulaire
               {
-                type: "label",
-                children: [
-                  "Email",
-                  {
-                    type: "input",
-                    attributes: [
-                      ["type", "email"],
-                      ["required", true],
-                      [
-                        "style",
-                        [
-                          ["width", "100%"],
-                          ["padding", "8px"],
-                          ["marginTop", "4px"],
-                        ],
-                      ],
-                    ],
-                    events: [
-                      [
-                        "input",
-                        (e) =>
-                          formState.set((s) => ({
-                            ...s,
-                            email: e.target.value,
-                          })),
-                      ],
-                    ],
-                  },
-                ],
-              },
-              {
-                type: "label",
-                children: [
-                  "Mot de passe",
-                  {
-                    type: "input",
-                    attributes: [
-                      ["type", "password"],
-                      ["required", true],
-                      [
-                        "style",
-                        [
-                          ["width", "100%"],
-                          ["padding", "8px"],
-                          ["marginTop", "4px"],
-                        ],
-                      ],
-                    ],
-                    events: [
-                      [
-                        "input",
-                        (e) =>
-                          formState.set((s) => ({
-                            ...s,
-                            password: e.target.value,
-                          })),
-                      ],
-                    ],
-                  },
-                ],
-              },
-              {
-                type: "button",
+                type: "form",
                 attributes: [
-                  ["type", "submit"],
-                  ["class", ["btn", "btn-primary"]],
+                  ["id", "signup-form"],
+                  ["class", ["auth-form"]],
                 ],
-                children: ["Créer mon compte"],
+                events: [["submit", handleSubmit]],
+                children: [
+                  {
+                    type: "div",
+                    attributes: [["class", ["form-group"]]],
+                    children: [
+                      {
+                        type: "label",
+                        attributes: [["for", "signup-username"]],
+                        children: ["Nom d'utilisateur *"],
+                      },
+                      {
+                        type: "input",
+                        attributes: [
+                          ["id", "signup-username"],
+                          ["name", "username"],
+                          ["type", "text"],
+                          ["required", true],
+                          ["minlength", 3],
+                          ["autocomplete", "username"],
+                          ["placeholder", "ex: alexdev"],
+                          ["class", ["form-control"]],
+                        ],
+                        events: [
+                          [
+                            "input",
+                            (e) =>
+                              formState.set((s) => ({
+                                ...s,
+                                username: e.target.value,
+                              })),
+                          ],
+                        ],
+                      },
+                    ],
+                  },
+                  {
+                    type: "div",
+                    attributes: [["class", ["form-group"]]],
+                    children: [
+                      {
+                        type: "label",
+                        attributes: [["for", "signup-email"]],
+                        children: ["Adresse Email *"],
+                      },
+                      {
+                        type: "input",
+                        attributes: [
+                          ["id", "signup-email"],
+                          ["name", "email"],
+                          ["type", "email"],
+                          ["required", true],
+                          ["autocomplete", "email"],
+                          ["placeholder", "ex: alex@example.com"],
+                          ["class", ["form-control"]],
+                        ],
+                        events: [
+                          [
+                            "input",
+                            (e) =>
+                              formState.set((s) => ({
+                                ...s,
+                                email: e.target.value,
+                              })),
+                          ],
+                        ],
+                      },
+                    ],
+                  },
+                  {
+                    type: "div",
+                    attributes: [["class", ["form-group"]]],
+                    children: [
+                      {
+                        type: "label",
+                        attributes: [["for", "signup-password"]],
+                        children: ["Mot de passe *"],
+                      },
+                      {
+                        type: "input",
+                        attributes: [
+                          ["id", "signup-password"],
+                          ["name", "password"],
+                          ["type", "password"],
+                          ["required", true],
+                          ["minlength", 6],
+                          ["autocomplete", "new-password"],
+                          ["placeholder", "Au moins 6 caractères"],
+                          ["class", ["form-control"]],
+                        ],
+                        events: [
+                          [
+                            "input",
+                            (e) =>
+                              formState.set((s) => ({
+                                ...s,
+                                password: e.target.value,
+                              })),
+                          ],
+                        ],
+                      },
+                    ],
+                  },
+
+                  // Retour d'erreur ou chargement
+                  reactive(formState, (s) =>
+                    renderAuthFeedback(s, "Création du compte en cours…")
+                  ),
+
+                  // Bouton de soumission
+                  reactive(formState, (s) => ({
+                    type: "button",
+                    attributes: [
+                      ["type", "submit"],
+                      ["class", ["btn", "btn-primary", "btn-auth-submit"]],
+                      ...(s.loading ? [["disabled", "disabled"]] : []),
+                    ],
+                    children: [s.loading ? "Création…" : "Créer mon compte"],
+                  })),
+                ],
               },
-              reactive(formState, (s) =>
-                renderAuthFeedback(s, "Création du compte…")
-              ),
+
+              // Footer de la carte
+              {
+                type: "div",
+                attributes: [["class", ["auth-card-footer"]]],
+                children: [
+                  {
+                    type: "p",
+                    children: [
+                      "Déjà un compte ? ",
+                      Link("/login", "Se connecter", ["auth-link-accent"]),
+                    ],
+                  },
+                  {
+                    type: "div",
+                    attributes: [["class", ["auth-back-home"]]],
+                    children: [
+                      Link("/", "← Retour à l'accueil", ["auth-link-secondary"]),
+                    ],
+                  },
+                ],
+              },
             ],
-          },
-          {
-            type: "p",
-            attributes: [["style", [["marginTop", "16px"]]]],
-            children: ["Déjà un compte ? ", Link("/login", "Se connecter")],
           },
         ],
       },
+      Footer(),
     ],
   };
 }

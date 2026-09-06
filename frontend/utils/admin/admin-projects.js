@@ -11,6 +11,7 @@ import {
   extractBlocksText,
   textToBlocks,
   syncStoreFromApi,
+  uploadMedia,
 } from "../../lib/api.js";
 import { extractTechnologies } from "../portfolio.js";
 import {
@@ -22,7 +23,7 @@ import {
 } from "./admin-common.js";
 
 /**
- * 2. GESTIONNAIRE COMPLET DE PROJETS (CRUD ENRICHI)
+ * 2. GESTIONNAIRE COMPLET DE PROJETS (CRUD ENRICHI + UPLOAD MÉDIAS)
  */
 export function ProjectsManager(projects = []) {
   const editingProjectState = createState(null);
@@ -46,7 +47,7 @@ export function ProjectsManager(projects = []) {
             children: [
               "Gérez l'ensemble des projets de votre catalogue. Les projets au statut « Publié » apparaissent immédiatement sur ",
               Link("/portfolio", "la galerie publique /portfolio"),
-              ".",
+              ". Vous pouvez y associer des fichiers et visuels via la médiathèque.",
             ],
           },
         ],
@@ -56,6 +57,17 @@ export function ProjectsManager(projects = []) {
       reactive(editingProjectState, (editingProject) => {
         const isEditing = Boolean(editingProject);
         const allowedStatuts = getAllowedStatuts(editingProject?.statut);
+
+        // Médias existants rattachés au projet
+        const initialExistingMedia = Array.isArray(editingProject?.image)
+          ? editingProject.image
+          : editingProject?.image && typeof editingProject.image === "object"
+          ? [editingProject.image]
+          : [];
+
+        const existingMediaState = createState(initialExistingMedia);
+        const pendingFilesState = createState([]);
+        const isUploadingState = createState(false);
 
         async function handleProjectSubmit(event) {
           event.preventDefault();
@@ -71,21 +83,43 @@ export function ProjectsManager(projects = []) {
           const enVedette = Boolean(form.en_vedette.checked);
           const statut = form.statut.value;
 
-          const payload = {
-            titre,
-            slug: isEditing && editingProject.slug ? editingProject.slug : slugify(titre),
-            resume: resume || null,
-            description: textToBlocks(rawDesc),
-            technologies: technologies || null,
-            date_realisation: dateRealisation,
-            lien_demo: lienDemo,
-            lien_repo: lienRepo,
-            en_vedette: enVedette,
-            statut,
-            publishedAt: statut === "publie" ? new Date().toISOString() : null,
-          };
+          isUploadingState.set(true);
 
           try {
+            // 1. Uploader les nouveaux fichiers sélectionnés s'il y en a
+            const pendingFiles = pendingFilesState.get() || [];
+            let newlyUploadedMedia = [];
+
+            if (pendingFiles.length > 0) {
+              showToast(`Upload de ${pendingFiles.length} fichier(s) en cours...`, "info");
+              newlyUploadedMedia = await uploadMedia(pendingFiles);
+              showToast("Fichier(s) téléversé(s) dans la médiathèque avec succès !", "success");
+            }
+
+            // 2. Assembler la liste de tous les IDs de médias (conservés + nouvellement uploadés)
+            const remainingExistingIds = (existingMediaState.get() || [])
+              .map((m) => m.id)
+              .filter(Boolean);
+            const newMediaIds = newlyUploadedMedia
+              .map((m) => m.id)
+              .filter(Boolean);
+            const allMediaIds = [...remainingExistingIds, ...newMediaIds];
+
+            const payload = {
+              titre,
+              slug: isEditing && editingProject.slug ? editingProject.slug : slugify(titre),
+              resume: resume || null,
+              description: textToBlocks(rawDesc),
+              technologies: technologies || null,
+              date_realisation: dateRealisation,
+              lien_demo: lienDemo,
+              lien_repo: lienRepo,
+              en_vedette: enVedette,
+              statut,
+              publishedAt: statut === "publie" ? new Date().toISOString() : null,
+              image: allMediaIds,
+            };
+
             if (isEditing) {
               await projectCrud.update(editingProject.documentId, payload);
               showToast(`Projet « ${titre} » mis à jour avec succès !`, "success");
@@ -93,11 +127,16 @@ export function ProjectsManager(projects = []) {
               await projectCrud.create(payload);
               showToast(`Projet « ${titre} » créé avec succès !`, "success");
             }
+
             editingProjectState.set(null);
+            pendingFilesState.set([]);
             await syncStoreFromApi();
             refresh();
           } catch (err) {
+            console.error("[ProjectsManager] Erreur soumission projet:", err);
             showToast("Erreur lors de l'enregistrement du projet : " + err.message, "error");
+          } finally {
+            isUploadingState.set(false);
           }
         }
 
@@ -341,6 +380,170 @@ export function ProjectsManager(projects = []) {
               ],
             },
 
+            // SECTION UPLOAD FICHIERS & MÉDIATHÈQUE (T0029)
+            {
+              type: "div",
+              attributes: [["class", ["form-group", "admin-media-upload-section"]]],
+              children: [
+                {
+                  type: "label",
+                  attributes: [["for", "proj-files"], ["class", ["form-label-bold"]]],
+                  children: ["📁 Visuels & Médias du projet (Strapi Media Library)"],
+                },
+                {
+                  type: "p",
+                  attributes: [["class", ["form-help-text"]]],
+                  children: [
+                    "Ajoutez un ou plusieurs fichiers (PNG, JPEG, WebP, SVG, PDF). Les visuels seront affichés en couverture sur le catalogue et en galerie sur la fiche détaillée.",
+                  ],
+                },
+
+                // Sélecteur de fichiers
+                {
+                  type: "div",
+                  attributes: [["class", ["file-input-wrapper"]]],
+                  children: [
+                    {
+                      type: "input",
+                      attributes: [
+                        ["id", "proj-files"],
+                        ["name", "media_files"],
+                        ["type", "file"],
+                        ["multiple", true],
+                        ["accept", "image/*,application/pdf"],
+                        ["class", ["form-control-file"]],
+                      ],
+                      events: [
+                        [
+                          "change",
+                          (event) => {
+                            const files = Array.from(event.target.files || []);
+                            pendingFilesState.set(files);
+                          },
+                        ],
+                      ],
+                    },
+                  ],
+                },
+
+                // Aperçu réactif des nouveaux fichiers sélectionnés localement
+                reactive(pendingFilesState, (pendingFiles) => {
+                  if (!pendingFiles || pendingFiles.length === 0) {
+                    return { type: "span", children: [] };
+                  }
+                  return {
+                    type: "div",
+                    attributes: [["class", ["pending-media-box"]]],
+                    children: [
+                      {
+                        type: "p",
+                        attributes: [["class", ["pending-media-title"]]],
+                        children: [`📤 ${pendingFiles.length} nouveau(x) fichier(s) prêt(s) à être téléversé(s) :`],
+                      },
+                      {
+                        type: "ul",
+                        attributes: [["class", ["pending-media-list"]]],
+                        children: pendingFiles.map((file) => ({
+                          type: "li",
+                          attributes: [["class", ["pending-media-item"]]],
+                          children: [
+                            `📄 ${file.name} `,
+                            {
+                              type: "span",
+                              attributes: [["class", ["media-size-badge"]]],
+                              children: [`(${Math.round(file.size / 1024)} Ko)`],
+                            },
+                          ],
+                        })),
+                      },
+                    ],
+                  };
+                }),
+
+                // Aperçu réactif des médias déjà associés
+                reactive(existingMediaState, (mediaList) => {
+                  if (!mediaList || mediaList.length === 0) {
+                    return {
+                      type: "p",
+                      attributes: [["class", ["existing-media-empty"]]],
+                      children: ["Aucun fichier actuellement associé à ce projet."],
+                    };
+                  }
+
+                  return {
+                    type: "div",
+                    attributes: [["class", ["existing-media-wrapper"]]],
+                    children: [
+                      {
+                        type: "p",
+                        attributes: [["class", ["existing-media-title"]]],
+                        children: [`🖼️ Médias associés (${mediaList.length}) :`],
+                      },
+                      {
+                        type: "div",
+                        attributes: [["class", ["existing-media-grid"]]],
+                        children: mediaList.map((m) => {
+                          const isImg = m.mime?.startsWith("image/") || /\.(jpg|jpeg|png|webp|gif|svg)$/i.test(m.url || "");
+                          const mediaUrl = m.url?.startsWith("http") ? m.url : m.url ? m.url : "";
+
+                          return {
+                            type: "div",
+                            attributes: [["class", ["media-preview-card"]]],
+                            children: [
+                              isImg && mediaUrl
+                                ? {
+                                    type: "img",
+                                    attributes: [
+                                      ["src", mediaUrl],
+                                      ["alt", m.alternativeText || m.name || "Visuel projet"],
+                                      ["class", ["media-thumbnail"]],
+                                    ],
+                                  }
+                                : {
+                                    type: "div",
+                                    attributes: [["class", ["media-doc-placeholder"]]],
+                                    children: ["📄 Document"],
+                                  },
+                              {
+                                type: "div",
+                                attributes: [["class", ["media-card-info"]]],
+                                children: [
+                                  {
+                                    type: "span",
+                                    attributes: [["class", ["media-card-name"]], ["title", m.name || ""]],
+                                    children: [m.name || "Fichier"],
+                                  },
+                                ],
+                              },
+                              {
+                                type: "button",
+                                attributes: [
+                                  ["type", "button"],
+                                  ["class", ["btn", "btn-sm", "btn-danger", "media-remove-btn"]],
+                                  ["title", "Retirer ce fichier du projet"],
+                                ],
+                                events: [
+                                  [
+                                    "click",
+                                    () => {
+                                      const updated = existingMediaState.get().filter((item) => item.id !== m.id);
+                                      existingMediaState.set(updated);
+                                      showToast(`Média « ${m.name || ""} » retiré du projet. Enregistrez pour valider.`, "info");
+                                    },
+                                  ],
+                                ],
+                                children: ["✕ Retirer"],
+                              },
+                            ],
+                          };
+                        }),
+                      },
+                    ],
+                  };
+                }),
+              ],
+            },
+
             // Option En vedette
             {
               type: "div",
@@ -364,8 +567,8 @@ export function ProjectsManager(projects = []) {
               ],
             },
 
-            // Boutons d'action
-            {
+            // Boutons d'action & indicateur de chargement
+            reactive(isUploadingState, (isUploading) => ({
               type: "div",
               attributes: [["class", ["form-actions"]]],
               children: [
@@ -374,10 +577,17 @@ export function ProjectsManager(projects = []) {
                   attributes: [
                     ["type", "submit"],
                     ["class", ["btn", "btn-primary"]],
+                    ...(isUploading ? [["disabled", "disabled"]] : []),
                   ],
-                  children: [isEditing ? "Enregistrer les modifications" : "Créer le projet"],
+                  children: [
+                    isUploading
+                      ? "⏳ Téléversement & Enregistrement en cours..."
+                      : isEditing
+                      ? "Enregistrer les modifications"
+                      : "Créer le projet",
+                  ],
                 },
-                isEditing
+                isEditing && !isUploading
                   ? {
                       type: "button",
                       attributes: [
@@ -389,7 +599,7 @@ export function ProjectsManager(projects = []) {
                     }
                   : { type: "span", children: [] },
               ],
-            },
+            })),
           ],
         };
       }),
@@ -407,6 +617,8 @@ export function ProjectsManager(projects = []) {
             children: projects.map((p) => {
               const isDeleting = deletingId === p.documentId;
               const techs = extractTechnologies(p);
+              const projectImages = Array.isArray(p.image) ? p.image : p.image ? [p.image] : [];
+              const hasImages = projectImages.length > 0;
 
               return {
                 type: "article",
@@ -438,6 +650,13 @@ export function ProjectsManager(projects = []) {
                                 type: "span",
                                 attributes: [["class", ["badge-star"]]],
                                 children: ["⭐ En vedette"],
+                              }
+                            : { type: "span", children: [] },
+                          hasImages
+                            ? {
+                                type: "span",
+                                attributes: [["class", ["badge-media-count"]]],
+                                children: [`🖼️ ${projectImages.length} média(s)`],
                               }
                             : { type: "span", children: [] },
                         ],
