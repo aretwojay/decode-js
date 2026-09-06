@@ -1,6 +1,6 @@
 import Header, { NavLink } from "../components/header.js";
 import Footer from "../components/footer.js";
-import { fetchProfile, fetchProjects } from "../lib/api.js";
+import { fetchProfile, fetchProjects, fetchServices } from "../lib/api.js";
 import { appStore } from "../lib/store.js";
 import { getTheme } from "../lib/theme.js";
 import useOffline from "../lib/use-offline.js";
@@ -28,14 +28,15 @@ export default async function PageHome() {
 
   const currentTheme = getTheme();
 
-  const [profile, featuredProjects, allProjects] = await offline.execute(
+  const [profile, featuredProjects, allProjects, services] = await offline.execute(
     () =>
       Promise.all([
         fetchProfile({ theme: currentTheme }),
         fetchProjects({ featured: true, theme: currentTheme }),
         fetchProjects({ theme: currentTheme }),
+        fetchServices({ theme: currentTheme }),
       ]),
-    { fallback: [null, [], []] },
+    { fallback: [null, [], [], []] },
   );
 
   const isOffline = offline.isOffline();
@@ -86,7 +87,7 @@ export default async function PageHome() {
 
           ...(isIris ? [renderAboutSection(candidateData)] : []),
 
-          ...(isIris ? [renderServicesSection()] : []),
+          ...(isIris ? [renderServicesSection(services)] : []),
 
           // Featured Projects Showcase Section
           renderFeaturedSection(projectsToDisplay, hasFeatured),

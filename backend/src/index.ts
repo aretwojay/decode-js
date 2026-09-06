@@ -24,6 +24,8 @@ export default {
         'api::formation.formation.findOne',
         'api::profil.profil.find',
         'api::profil.profil.findOne',
+        'api::service.service.find',
+        'api::service.service.findOne',
         'api::message.message.create',
       ];
 
@@ -54,7 +56,7 @@ export default {
       });
 
       if (authenticatedRole) {
-        const contentTypes = ['profil', 'projet', 'competence', 'experience', 'formation'];
+        const contentTypes = ['profil', 'projet', 'competence', 'experience', 'formation', 'service'];
         const crud = ['find', 'findOne', 'create', 'update', 'delete'];
         const authenticatedActions = contentTypes.flatMap((ct) =>
           crud.map((action) => `api::${ct}.${ct}.${action}`)
