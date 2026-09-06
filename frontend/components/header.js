@@ -227,6 +227,12 @@ export default function Header(activePath) {
       }),
       ...(authenticated
         ? [
+            NavLink(
+              "/admin",
+              "Mon compte",
+              currentPath === "/admin" ? ["nav-link", "active"] : ["nav-link"],
+              currentPath === "/admin" ? [["aria-current", "page"]] : [],
+            ),
             {
               type: "span",
               attributes: [["class", ["nav-link", "user-status"]]],

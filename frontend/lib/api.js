@@ -41,6 +41,11 @@ function resolveApiBaseUrl() {
   }
 
   if (["localhost", "127.0.0.1"].includes(window.location.hostname)) {
+    // When served on standard ports (80 / 443 / empty) by Nginx reverse proxy,
+    // use same-origin /api path to avoid CORS preflight completely.
+    if (!window.location.port || window.location.port === "80" || window.location.port === "443") {
+      return window.location.origin.replace(/\/$/, "") + "/api";
+    }
     return "http://localhost:1337";
   }
 
@@ -225,17 +230,41 @@ export function normalizeCollection(response) {
   return response.data.map(normalizeEntity).filter(Boolean);
 }
 
+// Centralized auth token key so all auth and API code share the same contract
+export const AUTH_TOKEN_KEY = "imprint_jwt";
+
 /**
- * Base HTTP request helper with error resilience
+ * Returns Authorization header if a token is present in localStorage
+ * @returns {Object}
+ */
+export function authedHeaders() {
+  if (typeof window === "undefined" || !("localStorage" in window)) return {};
+
+  try {
+    const token = window.localStorage.getItem(AUTH_TOKEN_KEY);
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  } catch (error) {
+    console.warn(
+      "authedHeaders: unable to access localStorage",
+      error && error.message ? error.message : error,
+    );
+    return {};
+  }
+}
+
+/**
+ * Base HTTP request helper with error resilience and auto-Bearer token injection
  * @param {string} endpoint
  * @param {Object} options
  * @returns {Promise<Object>}
  */
 async function apiFetch(endpoint, options = {}) {
   const url = buildApiUrl(endpoint);
+  const defaultAuth = options.skipAuth ? {} : authedHeaders();
   const fetchOptions = {
     headers: {
       Accept: "application/json",
+      ...defaultAuth,
       ...(options.headers || {}),
     },
     ...options,
@@ -246,6 +275,26 @@ async function apiFetch(endpoint, options = {}) {
     const data = await response.json();
 
     if (!response.ok) {
+      // If unauthorized on an authenticated request, clear token to prevent zombie state
+      if (response.status === 401 && defaultAuth.Authorization) {
+        try {
+          if (typeof window !== "undefined" && window.localStorage) {
+            window.localStorage.removeItem(AUTH_TOKEN_KEY);
+            window.localStorage.removeItem("imprint_user");
+          }
+          if (appStore?.getState) {
+            const current = appStore.getState();
+            if (current?.isAuthenticated) {
+              appStore.setState((s) => ({
+                ...s,
+                user: null,
+                isAuthenticated: false,
+              }));
+            }
+          }
+        } catch (e) {}
+      }
+
       const errorMessage =
         data?.error?.message ||
         `HTTP ${response.status} - ${response.statusText}`;
@@ -408,25 +457,7 @@ export async function fetchProfile({ statut, theme } = {}) {
   }
 }
 
-// Pas d'import depuis auth.js ici : auth.js importe déjà API_BASE_URL
-// depuis ce fichier, un import inverse créerait une dépendance circulaire.
-// Keep the auth token key centralized so all auth-related code shares the same storage contract.
-export const AUTH_TOKEN_KEY = "imprint_jwt";
-
-function authedHeaders() {
-  if (typeof window === "undefined" || !("localStorage" in window)) return {};
-
-  try {
-    const token = window.localStorage.getItem(AUTH_TOKEN_KEY);
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  } catch (error) {
-    console.warn(
-      "authedHeaders: unable to access localStorage",
-      error && error.message ? error.message : error,
-    );
-    return {};
-  }
-}
+// AUTH_TOKEN_KEY and authedHeaders are defined above apiFetch for auto-injection
 
 /**
  * Fetches the profil belonging to the currently authenticated user

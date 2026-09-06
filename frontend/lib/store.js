@@ -3,10 +3,14 @@ import createState from "./create-state.js";
 const STORAGE_KEY = "vanilla_portfolio_store_v2";
 
 const initialPortfolioState = {
+  user: null,
+  isAuthenticated: false,
+  authLoading: false,
   profile: null,
   skills: [],
   experiences: [],
   projects: [],
+  formations: [],
 };
 
 function loadStoredState() {
@@ -14,6 +18,17 @@ function loadStoredState() {
     if (typeof localStorage !== "undefined") {
       // Clean up legacy store key containing initial mock items
       localStorage.removeItem("vanilla_portfolio_store");
+
+      let user = null;
+      let isAuthenticated = false;
+      try {
+        const token = localStorage.getItem("imprint_jwt");
+        const rawUser = localStorage.getItem("imprint_user");
+        if (token) {
+          isAuthenticated = true;
+          user = rawUser ? JSON.parse(rawUser) : null;
+        }
+      } catch (e) {}
 
       const saved = localStorage.getItem(STORAGE_KEY);
       if (saved) {
@@ -53,8 +68,19 @@ function loadStoredState() {
         if (parsed?.profile?.email === "jean.dupont@example.com") {
           parsed.profile = null;
         }
-        return parsed;
+        return {
+          ...initialPortfolioState,
+          ...parsed,
+          user: user || parsed.user || null,
+          isAuthenticated: isAuthenticated || Boolean(parsed.isAuthenticated),
+        };
       }
+
+      return {
+        ...initialPortfolioState,
+        user,
+        isAuthenticated,
+      };
     }
   } catch (error) {
     console.warn("Impossible de charger le store depuis localStorage :", error);
@@ -73,6 +99,29 @@ if (typeof localStorage !== "undefined") {
       console.warn("Impossible de sauvegarder le store dans localStorage :", error);
     }
   });
+}
+
+export function setAuthSession(user, token) {
+  appStore.setState((state) => ({
+    ...state,
+    user,
+    isAuthenticated: true,
+    authLoading: false,
+  }));
+}
+
+export function clearAuthSession() {
+  appStore.setState((state) => ({
+    ...state,
+    user: null,
+    isAuthenticated: false,
+    authLoading: false,
+    profile: null,
+    projects: [],
+    experiences: [],
+    skills: [],
+    formations: [],
+  }));
 }
 
 export function updateProfile(fields) {

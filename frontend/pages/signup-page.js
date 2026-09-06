@@ -41,7 +41,7 @@ export default function PageSignup() {
     formState.set((s) => ({ ...s, error: "", loading: true }));
     try {
       await register({ username, email, password });
-      navigate("/");
+      navigate("/admin");
     } catch (err) {
       formState.set((s) => ({ ...s, error: err.message, loading: false }));
     }

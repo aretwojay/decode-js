@@ -26,7 +26,7 @@ export default function PageLogin() {
     formState.set((s) => ({ ...s, error: "", loading: true }));
     try {
       await login({ identifier, password });
-      navigate("/");
+      navigate("/admin");
     } catch (err) {
       formState.set((s) => ({ ...s, error: err.message, loading: false }));
     }
