@@ -302,7 +302,26 @@ async function apiFetch(endpoint, options = {}) {
 
   try {
     const response = await fetch(url, fetchOptions);
-    const data = await response.json();
+
+    let data = null;
+    if (response.status !== 204) {
+      if (typeof response.text === "function") {
+        const text = await response.text();
+        if (text && text.trim().length > 0) {
+          try {
+            data = JSON.parse(text);
+          } catch (parseErr) {
+            data = null;
+          }
+        }
+      } else if (typeof response.json === "function") {
+        try {
+          data = await response.json();
+        } catch (parseErr) {
+          data = null;
+        }
+      }
+    }
 
     if (!response.ok) {
       // If unauthorized on an authenticated request, clear token to prevent zombie state
@@ -741,7 +760,23 @@ export async function uploadMedia(files, options = {}) {
     body: formData,
   });
 
-  const data = await response.json();
+  let data = null;
+  if (typeof response.text === "function") {
+    const text = await response.text();
+    if (text && text.trim().length > 0) {
+      try {
+        data = JSON.parse(text);
+      } catch (parseErr) {
+        data = null;
+      }
+    }
+  } else if (typeof response.json === "function") {
+    try {
+      data = await response.json();
+    } catch (parseErr) {
+      data = null;
+    }
+  }
 
   if (!response.ok) {
     const errorMsg =
@@ -749,7 +784,7 @@ export async function uploadMedia(files, options = {}) {
     throw new Error(errorMsg);
   }
 
-  return Array.isArray(data) ? data : [data];
+  return Array.isArray(data) ? data : data ? [data] : [];
 }
 
 /**
