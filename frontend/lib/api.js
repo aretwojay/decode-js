@@ -679,7 +679,12 @@ export async function syncStoreFromApi(storeInstance = appStore) {
       error: null,
     };
 
-    if (profile) patch.profile = profile;
+    if (profile) {
+      patch.profile = profile;
+      if (profile.theme) {
+        patch.theme = profile.theme;
+      }
+    }
     if (projects && projects.length > 0) patch.projects = projects;
     if (experiences && experiences.length > 0) patch.experiences = experiences;
     if (skills && skills.length > 0) patch.skills = skills;

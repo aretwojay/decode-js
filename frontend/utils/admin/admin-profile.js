@@ -5,6 +5,7 @@ import {
   syncStoreFromApi,
 } from "../../lib/api.js";
 import { refresh } from "./admin-common.js";
+import { setTheme, getTheme, AvailablesThemes } from "../../lib/theme.js";
 
 /**
  * 1. FORMULAIRE DE PROFIL UTILISATEUR
@@ -15,6 +16,7 @@ export function ProfileForm(profile) {
   async function handleSubmit(event) {
     event.preventDefault();
     const form = event.target;
+    const chosenTheme = form.theme?.value || "ruben";
     const data = {
       nom: form.nom.value.trim(),
       titre: form.titre.value.trim(),
@@ -24,7 +26,7 @@ export function ProfileForm(profile) {
       localisation: form.localisation?.value?.trim() || null,
       github: form.github?.value?.trim() || null,
       linkedin: form.linkedin?.value?.trim() || null,
-      theme: form.theme?.value || "ruben",
+      theme: chosenTheme,
     };
 
     try {
@@ -35,6 +37,7 @@ export function ProfileForm(profile) {
         await updateProfile(profile.documentId, data);
         showToast("Profil mis à jour avec succès !", "success");
       }
+      setTheme(chosenTheme);
       await syncStoreFromApi();
       refresh();
     } catch (err) {
@@ -220,14 +223,33 @@ export function ProfileForm(profile) {
                       ["id", "profile-theme"],
                       ["name", "theme"],
                     ],
+                    events: [
+                      [
+                        "change",
+                        (event) => {
+                          const chosenTheme = event.target.value;
+                          if (AvailablesThemes.includes(chosenTheme)) {
+                            setTheme(chosenTheme);
+                            showToast(`Thème « ${chosenTheme} » appliqué en direct ! Pensez à enregistrer pour le conserver.`, "info");
+                          }
+                        },
+                      ],
+                    ],
                     children: themes.map((t) => ({
                       type: "option",
                       attributes: [
                         ["value", t.value],
-                        ...(profile?.theme === t.value ? [["selected", "selected"]] : []),
+                        ...((profile?.theme || getTheme()) === t.value ? [["selected", "selected"]] : []),
                       ],
                       children: [t.label],
                     })),
+                  },
+                  {
+                    type: "p",
+                    attributes: [["class", ["form-help-text"]]],
+                    children: [
+                      "Ce thème définit le design et le CSS de l'ensemble du site. La sélection change le style instantanément pour tester le rendu.",
+                    ],
                   },
                 ],
               },

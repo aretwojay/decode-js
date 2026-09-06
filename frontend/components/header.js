@@ -1,4 +1,3 @@
-import ThemeSwitcher from "./theme-switcher.js";
 import { isAuthenticated, getCurrentUser, logout } from "../lib/auth.js";
 import { getTheme } from "../lib/theme.js";
 import { getMode, toggleMode } from "../lib/color-mode.js";
@@ -335,11 +334,6 @@ export default function Header(activePath) {
       children: [
         {
           type: "div",
-          attributes: [["class", ["header-topbar"]]],
-          children: [ThemeSwitcher()],
-        },
-        {
-          type: "div",
           attributes: [["class", ["header-mainrow"]]],
           children: [logo, nav, MobileMenuToggle()],
         },
@@ -350,6 +344,6 @@ export default function Header(activePath) {
   return {
     type: "header",
     attributes: [["class", ["site-header"]]],
-    children: [logo, nav, MobileMenuToggle(), ThemeSwitcher()],
+    children: [logo, nav, MobileMenuToggle()],
   };
 }

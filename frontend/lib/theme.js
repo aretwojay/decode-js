@@ -14,7 +14,22 @@ function readStoredTheme() {
   }
 }
 
-const themeState = createState(readStoredTheme() || AvailablesThemes[0]);
+function getInitialTheme() {
+  try {
+    const storeState =
+      appStore && typeof appStore.getState === "function"
+        ? appStore.getState()
+        : appStore && typeof appStore.get === "function"
+        ? appStore.get()
+        : null;
+    if (storeState?.profile?.theme && AvailablesThemes.includes(storeState.profile.theme)) {
+      return storeState.profile.theme;
+    }
+  } catch {}
+  return readStoredTheme() || "ruben";
+}
+
+const themeState = createState(getInitialTheme());
 
 export function getTheme() {
   return themeState.get();
@@ -34,7 +49,16 @@ export function setTheme(themeName) {
     appStore.setState((state) => ({
       ...state,
       theme: themeName,
+      ...(state?.profile ? { profile: { ...state.profile, theme: themeName } } : {}),
     }));
+  }
+}
+
+export function syncThemeFromProfile(profile) {
+  if (profile?.theme && AvailablesThemes.includes(profile.theme)) {
+    if (getTheme() !== profile.theme) {
+      setTheme(profile.theme);
+    }
   }
 }
 
@@ -56,8 +80,21 @@ export function applyTheme(themeName) {
     link.rel = "stylesheet";
     document.head.appendChild(link);
   }
-  link.href = `./themes/${themeName}.css`;
+  // Chemin absolu pour être valide sur toutes les sous-routes SPA (ex: /portfolio/:slug)
+  link.href = `/themes/${themeName}.css`;
 }
 
 subscribeTheme(applyTheme);
 applyTheme(getTheme());
+
+// Écoute réactive des mises à jour du profil dans le store
+if (appStore && typeof appStore.subscribe === "function") {
+  appStore.subscribe((state) => {
+    if (state?.profile?.theme && AvailablesThemes.includes(state.profile.theme)) {
+      if (getTheme() !== state.profile.theme) {
+        setTheme(state.profile.theme);
+      }
+    }
+  });
+}
+
