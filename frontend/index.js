@@ -8,6 +8,8 @@ import generateStructure from "./lib/generate-structure.js";
 const rootElement = document.getElementById("root");
 
 const routerContainer = document.createElement("div");
+routerContainer.id = "main-content";
+routerContainer.setAttribute("tabindex", "-1");
 rootElement.appendChild(routerContainer);
 BrowserRouter(routerContainer, routes);
 

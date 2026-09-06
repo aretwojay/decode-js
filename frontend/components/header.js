@@ -24,6 +24,7 @@ function MobileMenuToggle() {
       ["class", ["mobile-menu-toggle"]],
       ["aria-label", "Ouvrir le menu"],
       ["aria-expanded", "false"],
+      ["aria-controls", "main-navigation"],
     ],
     events: [
       [
@@ -33,6 +34,10 @@ function MobileMenuToggle() {
           const isOpen = nav?.classList.toggle("is-open");
           event.currentTarget.classList.toggle("is-open", isOpen);
           event.currentTarget.setAttribute("aria-expanded", String(Boolean(isOpen)));
+          event.currentTarget.setAttribute(
+            "aria-label",
+            isOpen ? "Fermer le menu" : "Ouvrir le menu"
+          );
         },
       ],
     ],
@@ -167,6 +172,7 @@ export default function Header(activePath) {
   const nav = {
     type: "nav",
     attributes: [
+      ["id", "main-navigation"],
       ["class", ["main-nav"]],
       ["aria-label", "Navigation principale"],
     ],
