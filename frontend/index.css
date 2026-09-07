@@ -2434,6 +2434,47 @@ img {
   color: #f59e0b;
 }
 
+/* Grille Services */
+.admin-services-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.service-admin-chip {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 14px 16px;
+  border-radius: var(--radius-md);
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  transition: all var(--transition-fast);
+}
+
+.service-admin-chip:hover {
+  border-color: var(--border-color-hover);
+}
+
+.service-chip-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.service-chip-title {
+  color: var(--text-primary);
+  font-size: 0.95rem;
+}
+
+.service-chip-desc {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  line-height: 1.5;
+  max-width: 640px;
+}
+
 .level-avance {
   background: rgba(56, 139, 253, 0.2);
   color: #58a6ff;
