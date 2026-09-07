@@ -4,6 +4,6 @@ backend/.env
 backend/.tmp
 backend/dist
 backend/build
-/docs
-*.md
 backend/types/generated
+docs/docs/
+docs/__MACOSX/
