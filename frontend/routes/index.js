@@ -20,6 +20,7 @@ export default {
   "/cv": PageCV,
   "/contact": PageContact,
   "/dashboard": PageAdmin,
+  "/admin": PageAdmin,
   "/table": PageTable,
   "/gallery": PageGallery,
   "/experiences": PageExperience,
