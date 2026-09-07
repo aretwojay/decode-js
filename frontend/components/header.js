@@ -2,6 +2,7 @@ import { isAuthenticated, getCurrentUser, logout } from "../lib/auth.js";
 import { getTheme } from "../lib/theme.js";
 import { getMode, toggleMode } from "../lib/color-mode.js";
 import { fetchProfile } from "../lib/api.js";
+import ThemeSwitcher from "./theme-switcher.js";
 
 function scheduleCvLinkUpdate() {
   if (typeof window === "undefined") return;
@@ -365,6 +366,11 @@ export default function Header(activePath) {
       children: [
         {
           type: "div",
+          attributes: [["class", ["header-topbar"]]],
+          children: [ThemeSwitcher()],
+        },
+        {
+          type: "div",
           attributes: [["class", ["header-mainrow"]]],
           children: [logo, nav, MobileMenuToggle()],
         },
@@ -377,6 +383,6 @@ export default function Header(activePath) {
     attributes: [
       ["class", isYaniss ? ["site-header", "site-header-yaniss"] : ["site-header"]],
     ],
-    children: [logo, nav, MobileMenuToggle()],
+    children: [logo, nav, MobileMenuToggle(), ThemeSwitcher()],
   };
 }
