@@ -318,6 +318,130 @@ export function renderPortfolioIris(projects) {
   };
 }
 
+export function renderPortfolioYaniss(projects, candidateData = {}) {
+  const tagline = candidateData.accrochePortfolio || "[ TABLEAU DE BORD TECHNIQUE & RÉALISATIONS ]";
+  const intro =
+    candidateData.introPortfolio ||
+    "Une sélection d'applications web robustes et scalables, mêlant architectures back-end complexes et intégrations front-end pixel-perfect.";
+
+  return {
+    type: "main",
+    children: [
+      {
+        type: "section",
+        attributes: [["class", ["section", "portfolio-hero-yaniss"]]],
+        children: [
+          {
+            type: "p",
+            attributes: [["class", ["portfolio-tagline-yaniss"]]],
+            children: [tagline],
+          },
+          {
+            type: "h1",
+            attributes: [["class", ["section-title"]]],
+            children: [
+              "MES ",
+              { type: "span", attributes: [["class", ["highlight"]]], children: ["PROJETS"] },
+            ],
+          },
+          {
+            type: "p",
+            attributes: [["class", ["portfolio-lead"]]],
+            children: [intro],
+          },
+        ],
+      },
+      projects.length > 0
+        ? {
+            type: "section",
+            attributes: [["class", ["section", "portfolio-list-yaniss"]]],
+            children: projects.map((project, index) => {
+              const coverImage =
+                Array.isArray(project.image) && project.image.length > 0
+                  ? project.image[0].formats?.medium?.url || project.image[0].url
+                  : null;
+              const techs = extractTechnologies(project);
+
+              return {
+                type: "article",
+                attributes: [
+                  ["id", `project-${project.slug || project.id}`],
+                  ["class", ["portfolio-card-yaniss"]],
+                ],
+                children: [
+                  {
+                    type: "div",
+                    attributes: [["class", ["portfolio-card-yaniss-image-wrap"]]],
+                    children: coverImage
+                      ? [{ type: "img", attributes: [["src", coverImage], ["alt", project.titre || "Projet"]] }]
+                      : [],
+                  },
+                  {
+                    type: "div",
+                    attributes: [["class", ["portfolio-card-yaniss-body"]]],
+                    children: [
+                      {
+                        type: "h2",
+                        attributes: [["class", ["portfolio-card-yaniss-title"]]],
+                        children: [`${String(index + 1).padStart(2, "0")} / ${project.titre || "Projet"}`],
+                      },
+                      techs.length > 0
+                        ? {
+                            type: "div",
+                            attributes: [["class", ["portfolio-tags-yaniss"]]],
+                            children: techs.map((t) => ({
+                              type: "span",
+                              attributes: [["class", ["tag-yaniss"]]],
+                              children: [t],
+                            })),
+                          }
+                        : { type: "span", children: [] },
+                      {
+                        type: "p",
+                        attributes: [["class", ["portfolio-card-yaniss-desc"]]],
+                        children: [
+                          project.resume ||
+                            (typeof project.description === "string"
+                              ? project.description
+                              : "Architecture et réalisation technique."),
+                        ],
+                      },
+                      NavLink(
+                        project.lien_demo || `/portfolio/${project.slug || project.id}`,
+                        "accès au projets",
+                        ["btn", "btn-primary"]
+                      ),
+                    ],
+                  },
+                ],
+              };
+            }),
+          }
+        : renderEmptyState(
+            globalOfflineState?.get && globalOfflineState.get().isOffline
+              ? {
+                  icon: "📡",
+                  title: "Mode hors-ligne : aucun projet disponible",
+                  description:
+                    "Le serveur distant est actuellement indisponible et aucun projet n'est enregistré en cache local.",
+                  actionText: "🔄 Réessayer la connexion",
+                  onAction: () => {
+                    if (typeof window !== "undefined") {
+                      window.location.reload();
+                    }
+                  },
+                }
+              : {
+                  icon: "📂",
+                  title: "Aucun projet publié",
+                  description: "Aucun projet n'a encore été publié dans ce portfolio.",
+                  actionText: null,
+                },
+          ),
+    ],
+  };
+}
+
 /**
  * Renders the reactive projects grid and metadata count bar
  * @param {Object} state - { search, techFilter, statusFilter }

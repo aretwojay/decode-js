@@ -185,10 +185,17 @@ export default function Header(activePath) {
   const authenticated = isAuthenticated();
   const currentUser = getCurrentUser();
   const isIris = getTheme() === "iris";
+  const isYaniss = getTheme() === "yaniss";
 
-  if (isIris) scheduleCvLinkUpdate();
+  if (isIris || isYaniss) scheduleCvLinkUpdate();
 
-  const links = isIris
+  const links = isYaniss
+    ? [
+        { url: "/", label: "Accueil" },
+        { url: "/portfolio", label: "Projet" },
+        { url: "/contact", label: "Contact" },
+      ]
+    : isIris
     ? [
         { url: "/", label: "Accueil" },
         { url: "/#about", label: "A Propos" },
@@ -207,11 +214,21 @@ export default function Header(activePath) {
   const logo = NavLink(
     "/",
     [
-      {
-        type: "span",
-        attributes: [["class", ["site-logo"]]],
-        children: [isIris ? "Iris" : "⚡ Portfolio.js"],
-      },
+      isYaniss
+        ? {
+            type: "span",
+            attributes: [["class", ["site-logo", "site-logo-yaniss"]]],
+            children: [
+              { type: "span", attributes: [["class", ["logo-accent"]]], children: ["Yaniss"] },
+              " ",
+              { type: "span", attributes: [["class", ["logo-muted"]]], children: ["LAMBEAU"] },
+            ],
+          }
+        : {
+            type: "span",
+            attributes: [["class", ["site-logo"]]],
+            children: [isIris ? "Iris" : "⚡ Portfolio.js"],
+          },
     ],
     ["logo-link"],
   );
@@ -291,7 +308,7 @@ export default function Header(activePath) {
               ],
             },
           ]
-        : isIris
+        : isIris || isYaniss
           ? []
           : [
               NavLink(
@@ -309,6 +326,20 @@ export default function Header(activePath) {
                 currentPath === "/signup" ? [["aria-current", "page"]] : [],
               ),
             ]),
+      ...(isYaniss
+        ? [
+            {
+              type: "a",
+              attributes: [
+                ["href", "/cv"],
+                ["target", "_blank"],
+                ["rel", "noopener noreferrer"],
+                ["class", ["nav-link", "cv-nav-link"]],
+              ],
+              children: ["Télécharger"],
+            },
+          ]
+        : []),
       ...(isIris
         ? [
             {
@@ -343,7 +374,9 @@ export default function Header(activePath) {
 
   return {
     type: "header",
-    attributes: [["class", ["site-header"]]],
+    attributes: [
+      ["class", isYaniss ? ["site-header", "site-header-yaniss"] : ["site-header"]],
+    ],
     children: [logo, nav, MobileMenuToggle()],
   };
 }

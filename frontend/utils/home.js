@@ -30,6 +30,16 @@ export function resolveCandidateProfile(profile, storeProfile) {
     candidatePhone: profile?.telephone || storeProfile?.telephone || "",
     candidateLocation:
       profile?.localisation || storeProfile?.localisation || "",
+    accrocheDisponibilite:
+      profile?.accroche_disponibilite || storeProfile?.accroche_disponibilite || "",
+    accrochePortfolio:
+      profile?.accroche_portfolio || storeProfile?.accroche_portfolio || "",
+    introPortfolio:
+      profile?.intro_portfolio || storeProfile?.intro_portfolio || "",
+    messageCollaboration:
+      profile?.message_collaboration || storeProfile?.message_collaboration || "",
+    accrocheContact:
+      profile?.accroche_contact || storeProfile?.accroche_contact || "",
   };
 }
 
@@ -68,6 +78,53 @@ export function renderHeroSection(candidateData) {
     candidateData;
 
   const isIris = getTheme() === "iris";
+  const isYaniss = getTheme() === "yaniss";
+
+  if (isYaniss) {
+    const titleWords = candidateTitle.trim().split(/\s+/);
+    const lastWord = titleWords.pop();
+    const availability =
+      candidateData.accrocheDisponibilite ||
+      (isAvailable
+        ? "Disponible pour de nouvelles opportunités"
+        : "Actuellement en mission");
+
+    return {
+      type: "section",
+      attributes: [
+        ["class", ["hero-section", "hero-section-yaniss"]],
+        ["aria-labelledby", "hero-heading"],
+      ],
+      children: [
+        {
+          type: "p",
+          attributes: [["class", ["hero-availability-yaniss"]]],
+          children: [`[ ${availability.toUpperCase()} ]`],
+        },
+        {
+          type: "h1",
+          attributes: [
+            ["id", "hero-heading"],
+            ["class", ["hero-title", "hero-title-yaniss"]],
+          ],
+          children: [
+            `${titleWords.join(" ")} `,
+            { type: "span", attributes: [["class", ["highlight"]]], children: [lastWord] },
+          ],
+        },
+        {
+          type: "p",
+          attributes: [["class", ["hero-bio", "hero-bio-yaniss"]]],
+          children: [candidateBio],
+        },
+        {
+          type: "div",
+          attributes: [["class", ["hero-actions"]]],
+          children: [NavLink("/portfolio", "voir mes projets", ["btn", "btn-primary"])],
+        },
+      ],
+    };
+  }
 
   if (isIris) {
     const nameParts = candidateName.trim().split(/\s+/);
@@ -230,6 +287,64 @@ export function renderHeroSection(candidateData) {
  * @returns {Object} Vanilla-engine structure object
  */
 export function renderAboutSection(candidateData) {
+  const isYaniss = getTheme() === "yaniss";
+
+  if (isYaniss) {
+    return {
+      type: "section",
+      attributes: [
+        ["id", "about"],
+        ["class", ["section", "about-section-yaniss"]],
+        ["aria-labelledby", "about-heading"],
+      ],
+      children: [
+        {
+          type: "h2",
+          attributes: [["id", "about-heading"], ["class", ["section-title"]]],
+          children: [
+            "QUI SUIS-",
+            { type: "span", attributes: [["class", ["highlight"]]], children: ["JE ?"] },
+          ],
+        },
+        {
+          type: "div",
+          attributes: [["class", ["about-yaniss-row"]]],
+          children: [
+            {
+              type: "div",
+              attributes: [["class", ["about-yaniss-photo-wrap"]]],
+              children: [
+                {
+                  type: "img",
+                  attributes: [
+                    ["src", "/public/yaniss/about-photo.png"],
+                    ["alt", `Photo de ${candidateData.candidateName}`],
+                    ["class", ["about-yaniss-photo"]],
+                  ],
+                },
+              ],
+            },
+            {
+              type: "div",
+              attributes: [["class", ["about-yaniss-text"]]],
+              children: [
+                {
+                  type: "p",
+                  attributes: [["class", ["about-yaniss-name"]]],
+                  children: [candidateData.candidateName],
+                },
+                {
+                  type: "p",
+                  children: [candidateData.candidateBio],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+    };
+  }
+
   return {
     type: "section",
     attributes: [
@@ -313,6 +428,7 @@ const SERVICES = [
  */
 export function renderServicesSection(cmsServices = []) {
   const isIris = getTheme() === "iris";
+  const isYaniss = getTheme() === "yaniss";
 
   const services =
     cmsServices.length > 0
@@ -338,6 +454,50 @@ export function renderServicesSection(cmsServices = []) {
 
   const regularServices = services.filter((s) => !s.affichage_large);
   const wideServices = services.filter((s) => s.affichage_large);
+
+  if (isYaniss) {
+    return {
+      type: "section",
+      attributes: [
+        ["id", "services"],
+        ["class", ["section", "expertise-section-yaniss"]],
+        ["aria-labelledby", "services-heading"],
+      ],
+      children: [
+        {
+          type: "h2",
+          attributes: [["id", "services-heading"], ["class", ["section-title"]]],
+          children: [
+            "CHAMPS D'",
+            { type: "span", attributes: [["class", ["highlight"]]], children: ["EXPERTISE"] },
+          ],
+        },
+        {
+          type: "div",
+          attributes: [["class", ["expertise-grid-yaniss"]]],
+          children: [...regularServices, ...wideServices].map((service) => ({
+            type: "div",
+            attributes: [["class", ["expertise-card-yaniss"]]],
+            children: [
+              {
+                type: "div",
+                attributes: [["class", ["expertise-icon-yaniss"]]],
+                children: [
+                  {
+                    type: "div",
+                    attributes: [["class", ["service-icon-glyph", `icon-${service.icone}`]]],
+                    children: [],
+                  },
+                ],
+              },
+              { type: "h3", attributes: [["class", ["card-title"]]], children: [service.titre] },
+              { type: "p", attributes: [["class", ["card-summary"]]], children: [service.description] },
+            ],
+          })),
+        },
+      ],
+    };
+  }
 
   return {
     type: "section",
@@ -466,6 +626,7 @@ export function renderServicesSection(cmsServices = []) {
  */
 export function renderFeaturedSection(projectsToDisplay, hasFeatured) {
   const isIris = getTheme() === "iris";
+  const isYaniss = getTheme() === "yaniss";
 
   return {
     type: "section",
@@ -479,7 +640,7 @@ export function renderFeaturedSection(projectsToDisplay, hasFeatured) {
         attributes: [
           [
             "class",
-            ["section-header", ...(isIris ? ["section-header-center"] : [])],
+            ["section-header", ...(isIris || isYaniss ? ["section-header-center"] : [])],
           ],
         ],
         children: [
@@ -492,19 +653,26 @@ export function renderFeaturedSection(projectsToDisplay, hasFeatured) {
                   ["id", "featured-heading"],
                   ["class", ["section-title"]],
                 ],
-                children: [
-                  isIris
-                    ? "Mes projets"
-                    : hasFeatured
-                      ? "Projets en Vedette"
-                      : "Projets Récents",
-                ],
+                children: isYaniss
+                  ? [
+                      "Mes 3 meilleurs ",
+                      { type: "span", attributes: [["class", ["highlight"]]], children: ["projets"] },
+                    ]
+                  : [
+                      isIris
+                        ? "Mes projets"
+                        : hasFeatured
+                          ? "Projets en Vedette"
+                          : "Projets Récents",
+                    ],
               },
               {
                 type: "p",
                 attributes: [["class", ["section-subtitle"]]],
                 children: [
-                  isIris
+                  isYaniss
+                    ? ""
+                    : isIris
                     ? "Une partie de mon travail"
                     : hasFeatured
                       ? "Sélection de réalisations techniques et architectures logicielles"
@@ -513,7 +681,7 @@ export function renderFeaturedSection(projectsToDisplay, hasFeatured) {
               },
             ],
           },
-          isIris
+          isIris || isYaniss
             ? { type: "span", children: [] }
             : NavLink("/portfolio", "Voir tout le catalogue →", [
                 "section-link",
@@ -557,6 +725,45 @@ export function renderFeaturedSection(projectsToDisplay, hasFeatured) {
                 Array.isArray(project.image) && project.image.length > 0
                   ? project.image[0].formats?.small?.url || project.image[0].url
                   : null;
+
+              if (isYaniss) {
+                return {
+                  type: "div",
+                  attributes: [["class", ["card", "project-card-yaniss"]]],
+                  children: [
+                    coverImage
+                      ? {
+                          type: "img",
+                          attributes: [
+                            ["src", coverImage],
+                            ["alt", project.titre || "Projet"],
+                            ["class", ["project-cover-yaniss"]],
+                          ],
+                        }
+                      : { type: "span", children: [] },
+                    {
+                      type: "h3",
+                      attributes: [["class", ["card-title"]]],
+                      children: [project.titre || "Projet"],
+                    },
+                    {
+                      type: "p",
+                      attributes: [["class", ["card-summary"]]],
+                      children: [
+                        project.resume ||
+                          (typeof project.description === "string"
+                            ? project.description
+                            : "Architecture et réalisation technique."),
+                      ],
+                    },
+                    NavLink(
+                      `/portfolio/${project.slug || project.id}`,
+                      "accès au projets",
+                      ["btn", "btn-primary"]
+                    ),
+                  ],
+                };
+              }
 
               if (isIris) {
                 return {
@@ -670,7 +877,13 @@ export function renderFeaturedSection(projectsToDisplay, hasFeatured) {
               ]),
             ],
           }
-        : { type: "div", children: [] },
+        : isYaniss
+          ? {
+              type: "div",
+              attributes: [["class", ["hero-actions", "centered-actions"]]],
+              children: [NavLink("/portfolio", "Voir plus", ["btn", "btn-primary"])],
+            }
+          : { type: "div", children: [] },
     ],
   };
 }

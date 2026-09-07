@@ -11,6 +11,10 @@ import { appStore } from "../lib/store.js";
  * @param {string} [options.githubUrl]
  * @param {string} [options.linkedinUrl]
  * @param {boolean} [options.isAvailable]
+ * @param {string} [options.phone]
+ * @param {string} [options.email]
+ * @param {string} [options.location]
+ * @param {string} [options.collaborationMessage]
  * @returns {Object} Vanilla-engine structure object
  */
 export default function Footer(options = {}) {
@@ -34,10 +38,96 @@ export default function Footer(options = {}) {
       : profile?.disponible !== undefined
         ? profile.disponible
         : true;
+  const phone = options.phone || profile?.telephone || "";
+  const email = options.email || profile?.email || "";
+  const location = options.location || profile?.localisation || "";
+  const collaborationMessage =
+    options.collaborationMessage || profile?.message_collaboration || "";
 
   const isIris = getTheme() === "iris";
+  const isYaniss = getTheme() === "yaniss";
   const currentPath =
     typeof window !== "undefined" ? window.location.pathname : "/";
+
+  if (isYaniss) {
+    const phoneHref = `tel:${phone.replace(/[^+\d]/g, "")}`;
+
+    return {
+      type: "footer",
+      attributes: [["class", ["site-footer", "site-footer-yaniss"]]],
+      children: [
+        {
+          type: "p",
+          attributes: [["class", ["footer-yaniss-title"]]],
+          children: [
+            "TRAVAILLONS ",
+            { type: "span", attributes: [["class", ["highlight"]]], children: ["ENSEMBLE"] },
+          ],
+        },
+        collaborationMessage
+          ? {
+              type: "p",
+              attributes: [["class", ["footer-yaniss-lead"]]],
+              children: [collaborationMessage],
+            }
+          : { type: "span", children: [] },
+        {
+          type: "div",
+          attributes: [["class", ["footer-yaniss-contacts"]]],
+          children: [
+            email
+              ? {
+                  type: "a",
+                  attributes: [["href", `mailto:${email}`], ["class", ["footer-yaniss-contact-item"]]],
+                  children: [
+                    { type: "span", attributes: [["class", ["footer-icon", "icon-mail"]]], children: [] },
+                    email,
+                  ],
+                }
+              : { type: "span", children: [] },
+            phone
+              ? {
+                  type: "a",
+                  attributes: [["href", phoneHref], ["class", ["footer-yaniss-contact-item"]]],
+                  children: [
+                    { type: "span", attributes: [["class", ["footer-icon", "icon-mail"]]], children: [] },
+                    phone,
+                  ],
+                }
+              : { type: "span", children: [] },
+            location
+              ? {
+                  type: "span",
+                  attributes: [["class", ["footer-yaniss-contact-item"]]],
+                  children: [
+                    { type: "span", attributes: [["class", ["footer-icon", "icon-mail"]]], children: [] },
+                    location,
+                  ],
+                }
+              : { type: "span", children: [] },
+          ],
+        },
+        {
+          type: "div",
+          attributes: [["class", ["footer-yaniss-actions"]]],
+          children: [
+            NavLink("/portfolio", "voir mes projets", ["btn", "btn-primary"]),
+            {
+              type: "a",
+              attributes: [
+                ["href", linkedinUrl],
+                ["target", "_blank"],
+                ["rel", "noopener noreferrer"],
+                ["class", ["btn", "btn-secondary"]],
+              ],
+              children: ["Profil linkedin"],
+            },
+            NavLink("/contact", "Me contactez directement", ["btn", "btn-primary"]),
+          ],
+        },
+      ],
+    };
+  }
 
   if (isIris) {
     return {

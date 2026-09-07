@@ -1,16 +1,18 @@
 import Header from "../components/header.js";
 import Footer from "../components/footer.js";
-import { fetchProjects } from "../lib/api.js";
+import { fetchProjects, fetchProfile } from "../lib/api.js";
 import { appStore } from "../lib/store.js";
 import createState from "../lib/create-state.js";
 import reactive from "../lib/reactive.js";
 import { getTheme } from "../lib/theme.js";
 import useOffline from "../lib/use-offline.js";
+import { resolveCandidateProfile } from "../utils/home.js";
 import {
   extractAllTechnologies,
   extractTechnologies,
   renderProjectsGrid,
   renderPortfolioIris,
+  renderPortfolioYaniss,
 } from "../utils/portfolio.js";
 
 /**
@@ -24,7 +26,7 @@ export default async function PagePortfolio() {
   const currentTheme = getTheme();
 
   let projects = await offline.execute(
-    () => fetchProjects(),
+    () => fetchProjects({ theme: currentTheme }),
     { fallback: [] },
   );
 
@@ -65,6 +67,39 @@ export default async function PagePortfolio() {
         ...offline.getBannerChildren(),
         renderPortfolioIris(irisProjects),
         Footer(),
+      ],
+    };
+  }
+
+  if (currentTheme === "yaniss") {
+    const yanissProjects =
+      initialTech !== "all"
+        ? projects.filter((p) =>
+            extractTechnologies(p).some(
+              (t) => t.toLowerCase() === initialTech.toLowerCase()
+            )
+          )
+        : projects;
+
+    const profile = await offline.execute(
+      () => fetchProfile({ theme: currentTheme }),
+      { fallback: null },
+    );
+    const candidateData = resolveCandidateProfile(profile, null);
+
+    return {
+      type: "div",
+      attributes: [["class", ["page", "page-portfolio"]]],
+      children: [
+        Header("/portfolio"),
+        ...offline.getBannerChildren(),
+        renderPortfolioYaniss(yanissProjects, candidateData),
+        Footer({
+          phone: candidateData.candidatePhone,
+          email: candidateData.candidateEmail,
+          location: candidateData.candidateLocation,
+          collaborationMessage: candidateData.messageCollaboration,
+        }),
       ],
     };
   }

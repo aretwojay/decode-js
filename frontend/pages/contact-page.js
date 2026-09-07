@@ -36,10 +36,19 @@ export default async function PageContact() {
             phone: candidateData.candidatePhone,
             email: candidateData.candidateEmail || undefined,
             location: candidateData.candidateLocation,
+            contactTagline: candidateData.accrocheContact,
           }),
         ],
       },
-      Footer(),
+      Footer({
+        candidateName: candidateData.candidateName,
+        githubUrl: candidateData.githubUrl,
+        linkedinUrl: candidateData.linkedinUrl,
+        phone: candidateData.candidatePhone,
+        email: candidateData.candidateEmail,
+        location: candidateData.candidateLocation,
+        collaborationMessage: candidateData.messageCollaboration,
+      }),
     ],
   };
 }
