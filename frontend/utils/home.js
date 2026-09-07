@@ -430,10 +430,15 @@ export function renderServicesSection(cmsServices = []) {
   const isIris = getTheme() === "iris";
   const isYaniss = getTheme() === "yaniss";
 
+  // Le contenu de repli ci-dessous est le texte propre au thème d'Iris : il ne
+  // doit s'afficher que pour elle, jamais comme repli générique pour un autre
+  // thème sans données Strapi (sinon "mes services" apparaît sur les autres
+  // portfolios tant qu'ils n'ont pas rempli les leurs).
   const services =
     cmsServices.length > 0
       ? cmsServices
-      : [
+      : isIris
+      ? [
           ...SERVICES.map((service) => ({
             titre: service.title,
             description: service.desc,
@@ -448,9 +453,10 @@ export function renderServicesSection(cmsServices = []) {
             icone: "cloud",
             emoji: "☁️",
             affichage_large: true,
-            image: isIris ? { url: "/public/iris/cloud.png" } : null,
+            image: { url: "/public/iris/cloud.png" },
           },
-        ];
+        ]
+      : [];
 
   const regularServices = services.filter((s) => !s.affichage_large);
   const wideServices = services.filter((s) => s.affichage_large);
