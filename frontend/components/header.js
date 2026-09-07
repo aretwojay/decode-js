@@ -1,4 +1,3 @@
-import ThemeSwitcher from "./theme-switcher.js";
 import { isAuthenticated, getCurrentUser, logout } from "../lib/auth.js";
 import { getTheme } from "../lib/theme.js";
 import { getMode, toggleMode } from "../lib/color-mode.js";
@@ -24,6 +23,7 @@ function MobileMenuToggle() {
       ["class", ["mobile-menu-toggle"]],
       ["aria-label", "Ouvrir le menu"],
       ["aria-expanded", "false"],
+      ["aria-controls", "main-navigation"],
     ],
     events: [
       [
@@ -33,6 +33,24 @@ function MobileMenuToggle() {
           const isOpen = nav?.classList.toggle("is-open");
           event.currentTarget.classList.toggle("is-open", isOpen);
           event.currentTarget.setAttribute("aria-expanded", String(Boolean(isOpen)));
+          event.currentTarget.setAttribute(
+            "aria-label",
+            isOpen ? "Fermer le menu" : "Ouvrir le menu"
+          );
+        },
+      ],
+      [
+        "keydown",
+        (event) => {
+          if (event.key === "Escape") {
+            const nav = document.querySelector(".main-nav");
+            if (nav?.classList.contains("is-open")) {
+              nav.classList.remove("is-open");
+              event.currentTarget.classList.remove("is-open");
+              event.currentTarget.setAttribute("aria-expanded", "false");
+              event.currentTarget.setAttribute("aria-label", "Ouvrir le menu");
+            }
+          }
         },
       ],
     ],
@@ -98,7 +116,13 @@ export function NavLink(url, children, classNames = [], extraAttrs = []) {
       [
         "click",
         (event) => {
-          event.preventDefault();
+          const isTargetBlank =
+            Array.isArray(extraAttrs) &&
+            extraAttrs.some(([k, v]) => k === "target" && v === "_blank");
+          if (isTargetBlank || (typeof url === "string" && url.startsWith("http"))) {
+            return;
+          }
+
           const nav = document.querySelector(".main-nav");
           if (nav && nav.classList.contains("is-open")) {
             nav.classList.remove("is-open");
@@ -108,6 +132,34 @@ export function NavLink(url, children, classNames = [], extraAttrs = []) {
               toggle.setAttribute("aria-expanded", "false");
             }
           }
+
+          if (typeof url === "string" && url.includes("#")) {
+            const [targetPath, targetHash] = url.split("#");
+            const currentPath =
+              typeof window !== "undefined"
+                ? window.location.pathname === "/"
+                  ? "/"
+                  : window.location.pathname.replace(/\/+$/, "")
+                : "";
+            const normalizedTargetPath =
+              targetPath === "" || targetPath === "/"
+                ? "/"
+                : targetPath.replace(/\/+$/, "");
+
+            if ((targetPath === "" || normalizedTargetPath === currentPath) && targetHash) {
+              event.preventDefault();
+              const target = document.getElementById(targetHash);
+              if (target) {
+                target.scrollIntoView({ behavior: "smooth" });
+                if (typeof window !== "undefined" && window.history?.replaceState) {
+                  window.history.replaceState(null, "", `#${targetHash}`);
+                }
+                return;
+              }
+            }
+          }
+
+          event.preventDefault();
           window.history.pushState({}, undefined, url);
           window.dispatchEvent(new Event("pushstate"));
         },
@@ -133,10 +185,17 @@ export default function Header(activePath) {
   const authenticated = isAuthenticated();
   const currentUser = getCurrentUser();
   const isIris = getTheme() === "iris";
+  const isYaniss = getTheme() === "yaniss";
 
-  if (isIris) scheduleCvLinkUpdate();
+  if (isIris || isYaniss) scheduleCvLinkUpdate();
 
-  const links = isIris
+  const links = isYaniss
+    ? [
+        { url: "/", label: "Accueil" },
+        { url: "/portfolio", label: "Projet" },
+        { url: "/contact", label: "Contact" },
+      ]
+    : isIris
     ? [
         { url: "/", label: "Accueil" },
         { url: "/#about", label: "A Propos" },
@@ -155,11 +214,21 @@ export default function Header(activePath) {
   const logo = NavLink(
     "/",
     [
-      {
-        type: "span",
-        attributes: [["class", ["site-logo"]]],
-        children: [isIris ? "Iris" : "⚡ Portfolio.js"],
-      },
+      isYaniss
+        ? {
+            type: "span",
+            attributes: [["class", ["site-logo", "site-logo-yaniss"]]],
+            children: [
+              { type: "span", attributes: [["class", ["logo-accent"]]], children: ["Yaniss"] },
+              " ",
+              { type: "span", attributes: [["class", ["logo-muted"]]], children: ["LAMBEAU"] },
+            ],
+          }
+        : {
+            type: "span",
+            attributes: [["class", ["site-logo"]]],
+            children: [isIris ? "Iris" : "⚡ Portfolio.js"],
+          },
     ],
     ["logo-link"],
   );
@@ -167,8 +236,29 @@ export default function Header(activePath) {
   const nav = {
     type: "nav",
     attributes: [
+      ["id", "main-navigation"],
       ["class", ["main-nav"]],
       ["aria-label", "Navigation principale"],
+    ],
+    events: [
+      [
+        "keydown",
+        (event) => {
+          if (event.key === "Escape") {
+            const navEl = document.querySelector(".main-nav");
+            if (navEl?.classList.contains("is-open")) {
+              navEl.classList.remove("is-open");
+              const toggle = document.querySelector(".mobile-menu-toggle");
+              if (toggle) {
+                toggle.classList.remove("is-open");
+                toggle.setAttribute("aria-expanded", "false");
+                toggle.setAttribute("aria-label", "Ouvrir le menu");
+                toggle.focus();
+              }
+            }
+          }
+        },
+      ],
     ],
     children: [
       ...links.map(({ url, label }) => {
@@ -182,10 +272,17 @@ export default function Header(activePath) {
           url,
           label,
           isActive ? ["nav-link", "active"] : ["nav-link"],
+          isActive ? [["aria-current", "page"]] : [],
         );
       }),
       ...(authenticated
         ? [
+            NavLink(
+              "/admin",
+              "Mon compte",
+              currentPath === "/admin" ? ["nav-link", "active"] : ["nav-link"],
+              currentPath === "/admin" ? [["aria-current", "page"]] : [],
+            ),
             {
               type: "span",
               attributes: [["class", ["nav-link", "user-status"]]],
@@ -211,22 +308,38 @@ export default function Header(activePath) {
               ],
             },
           ]
-        : isIris
+        : isIris || isYaniss
           ? []
           : [
               NavLink(
                 "/login",
-                "Login",
+                "Connexion",
                 currentPath === "/login" ? ["nav-link", "active"] : ["nav-link"],
+                currentPath === "/login" ? [["aria-current", "page"]] : [],
               ),
               NavLink(
                 "/signup",
-                "Signup",
+                "Inscription",
                 currentPath === "/signup"
                   ? ["nav-link", "active"]
                   : ["nav-link"],
+                currentPath === "/signup" ? [["aria-current", "page"]] : [],
               ),
             ]),
+      ...(isYaniss
+        ? [
+            {
+              type: "a",
+              attributes: [
+                ["href", "/cv"],
+                ["target", "_blank"],
+                ["rel", "noopener noreferrer"],
+                ["class", ["nav-link", "cv-nav-link"]],
+              ],
+              children: ["Télécharger"],
+            },
+          ]
+        : []),
       ...(isIris
         ? [
             {
@@ -252,11 +365,6 @@ export default function Header(activePath) {
       children: [
         {
           type: "div",
-          attributes: [["class", ["header-topbar"]]],
-          children: [ThemeSwitcher()],
-        },
-        {
-          type: "div",
           attributes: [["class", ["header-mainrow"]]],
           children: [logo, nav, MobileMenuToggle()],
         },
@@ -266,7 +374,9 @@ export default function Header(activePath) {
 
   return {
     type: "header",
-    attributes: [["class", ["site-header"]]],
-    children: [logo, nav, MobileMenuToggle(), ThemeSwitcher()],
+    attributes: [
+      ["class", isYaniss ? ["site-header", "site-header-yaniss"] : ["site-header"]],
+    ],
+    children: [logo, nav, MobileMenuToggle()],
   };
 }

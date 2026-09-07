@@ -14,18 +14,27 @@ const formState = createState({
 });
 
 function renderFeedback(state) {
-  if (state.status === "loading") return { type: "p", children: ["Envoi en cours…"] };
+  if (state.status === "loading") return { type: "p", attributes: [["role", "status"], ["aria-live", "polite"]], children: ["Envoi en cours…"] };
   if (state.status === "success") {
     return {
       type: "p",
-      attributes: [["class", ["form-feedback", "form-feedback-success"]]],
+      attributes: [
+        ["class", ["form-feedback", "form-feedback-success"]],
+        ["role", "status"],
+        ["aria-live", "polite"],
+      ],
       children: ["Message envoyé, merci ! Je reviens vers vous rapidement."],
     };
   }
   if (state.status === "error") {
     return {
       type: "p",
-      attributes: [["class", ["form-feedback", "form-feedback-error"]]],
+      attributes: [
+        ["class", ["form-feedback", "form-feedback-error"]],
+        ["role", "alert"],
+        ["aria-live", "assertive"],
+        ["id", "contact-form-error"],
+      ],
       children: [state.error],
     };
   }
@@ -38,8 +47,10 @@ export function renderContactSection({
   email = "contact@example.com",
   location = "",
   initialSubject = "",
+  contactTagline = "",
 } = {}) {
   const isIris = getTheme() === "iris";
+  const isYaniss = getTheme() === "yaniss";
   const phoneHref = `tel:${phone.replace(/[^+\d]/g, "")}`;
 
   // Pre-fill subject from parameters or URL if provided
@@ -79,6 +90,93 @@ export function renderContactSection({
       formState.set((s) => ({ ...s, status: "error", error: errText }));
       showToast(errText, "error");
     }
+  }
+
+  if (isYaniss) {
+    const state = formState.get();
+    const tagline = contactTagline || "[ Formulaire de contact pour une mise en relation direct ]";
+
+    return {
+      type: "section",
+      attributes: [
+        ["id", "contact"],
+        ["class", ["section", "contact-section-yaniss"]],
+      ],
+      children: [
+        {
+          type: "div",
+          attributes: [["class", ["section-header-center"]]],
+          children: [
+            {
+              type: "p",
+              attributes: [["class", ["contact-tagline-yaniss"]]],
+              children: [tagline],
+            },
+            {
+              type: headingTag,
+              attributes: [["class", ["section-title"]]],
+              children: [
+                "TRAVAILLONS ",
+                { type: "span", attributes: [["class", ["highlight"]]], children: ["ENSEMBLE"] },
+              ],
+            },
+          ],
+        },
+        {
+          type: "div",
+          attributes: [["class", ["contact-card-yaniss"]]],
+          children: [
+            {
+              type: "div",
+              attributes: [["class", ["contact-card-yaniss-image"]]],
+              children: [
+                { type: "img", attributes: [["src", "/public/yaniss/contact-envelope.png"], ["alt", ""]] },
+              ],
+            },
+            {
+              type: "form",
+              attributes: [["class", ["contact-form-yaniss"]]],
+              events: [["submit", handleSubmit]],
+              children: [
+                {
+                  type: "div",
+                  attributes: [["class", ["contact-form-yaniss-row"]]],
+                  children: [
+                    {
+                      type: "input",
+                      attributes: [["type", "text"], ["placeholder", "prénom"], ["value", state.nom || ""]],
+                      events: [["input", (e) => formState.set((s) => ({ ...s, nom: e.target.value }))]],
+                    },
+                    {
+                      type: "input",
+                      attributes: [["type", "text"], ["placeholder", "entreprise"], ["value", state.sujet || ""]],
+                      events: [["input", (e) => formState.set((s) => ({ ...s, sujet: e.target.value }))]],
+                    },
+                  ],
+                },
+                {
+                  type: "input",
+                  attributes: [["type", "email"], ["placeholder", "mail"], ["value", state.email || ""]],
+                  events: [["input", (e) => formState.set((s) => ({ ...s, email: e.target.value }))]],
+                },
+                {
+                  type: "textarea",
+                  attributes: [["rows", 6], ["placeholder", "message"]],
+                  events: [["input", (e) => formState.set((s) => ({ ...s, contenu: e.target.value }))]],
+                  children: [state.contenu || ""],
+                },
+                {
+                  type: "button",
+                  attributes: [["type", "submit"], ["class", ["btn", "btn-primary"]]],
+                  children: ["Envoyer le message"],
+                },
+                reactive(formState, renderFeedback),
+              ],
+            },
+          ],
+        },
+      ],
+    };
   }
 
   return {
@@ -165,33 +263,49 @@ export function renderContactSection({
             children: [
               {
                 type: "label",
+                attributes: [["for", "contact-nom"]],
                 children: [
-                  "Nom complet",
+                  "Nom complet *",
                   {
                     type: "input",
-                    attributes: [["type", "text"], ["placeholder", "John Doe"]],
+                    attributes: [
+                      ["id", "contact-nom"],
+                      ["type", "text"],
+                      ["required", "true"],
+                      ["aria-required", "true"],
+                      ["placeholder", "John Doe"],
+                    ],
                     events: [["input", (e) => formState.set((s) => ({ ...s, nom: e.target.value }))]],
                   },
                 ],
               },
               {
                 type: "label",
+                attributes: [["for", "contact-email"]],
                 children: [
-                  "Adresse mail",
+                  "Adresse mail *",
                   {
                     type: "input",
-                    attributes: [["type", "email"], ["placeholder", "example@mail.com"]],
+                    attributes: [
+                      ["id", "contact-email"],
+                      ["type", "email"],
+                      ["required", "true"],
+                      ["aria-required", "true"],
+                      ["placeholder", "example@mail.com"],
+                    ],
                     events: [["input", (e) => formState.set((s) => ({ ...s, email: e.target.value }))]],
                   },
                 ],
               },
               {
                 type: "label",
+                attributes: [["for", "contact-sujet"]],
                 children: [
                   "Sujet",
                   {
                     type: "input",
                     attributes: [
+                      ["id", "contact-sujet"],
                       ["type", "text"],
                       ["placeholder", "Objet du message..."],
                       ["value", formState.get().sujet || ""],
@@ -208,11 +322,18 @@ export function renderContactSection({
               },
               {
                 type: "label",
+                attributes: [["for", "contact-contenu"]],
                 children: [
-                  "Message",
+                  "Message *",
                   {
                     type: "textarea",
-                    attributes: [["rows", 5], ["placeholder", "Votre message..."]],
+                    attributes: [
+                      ["id", "contact-contenu"],
+                      ["rows", 5],
+                      ["required", "true"],
+                      ["aria-required", "true"],
+                      ["placeholder", "Votre message..."],
+                    ],
                     events: [["input", (e) => formState.set((s) => ({ ...s, contenu: e.target.value }))]],
                   },
                 ],

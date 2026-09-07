@@ -36,6 +36,11 @@ function resolveApiBaseUrl() {
   }
 
   if (["localhost", "127.0.0.1"].includes(window.location.hostname)) {
+    // When served on standard ports (80 / 443 / empty) by Nginx reverse proxy,
+    // use same-origin /api path to avoid CORS preflight completely.
+    if (!window.location.port || window.location.port === "80" || window.location.port === "443") {
+      return window.location.origin.replace(/\/$/, "") + "/api";
+    }
     return "http://localhost:1337";
   }
 
@@ -98,6 +103,42 @@ export function extractBlocksText(blocks) {
   return "";
 }
 
+/**
+ * Converts plain or multiline text into Strapi 5 rich text blocks
+ * @param {string|Array} text
+ * @returns {Array<Object>}
+ */
+export function textToBlocks(text) {
+  if (!text) return [];
+  if (Array.isArray(text)) return text;
+  const paragraphs = String(text)
+    .split(/\n\s*\n/)
+    .map((p) => p.trim())
+    .filter(Boolean);
+
+  if (paragraphs.length === 0) {
+    const trimmed = String(text).trim();
+    if (!trimmed) return [];
+    return [
+      {
+        type: "paragraph",
+        children: [{ type: "text", text: trimmed }],
+      },
+    ];
+  }
+
+  return paragraphs.map((para) => ({
+    type: "paragraph",
+    children: [{ type: "text", text: para }],
+  }));
+}
+
+/**
+ * Normalizes a media object or array of media objects from Strapi
+ * Ensures absolute URLs for images and attachments
+ * @param {Object|Array} media
+ * @returns {Object|Array|null}
+ */
 export function normalizeMedia(media) {
   if (!media) return null;
   if (Array.isArray(media)) {
@@ -187,11 +228,41 @@ export function normalizeCollection(response) {
   return response.data.map(normalizeEntity).filter(Boolean);
 }
 
+// Centralized auth token key so all auth and API code share the same contract
+export const AUTH_TOKEN_KEY = "imprint_jwt";
+
+/**
+ * Returns Authorization header if a token is present in localStorage
+ * @returns {Object}
+ */
+export function authedHeaders() {
+  if (typeof window === "undefined" || !("localStorage" in window)) return {};
+
+  try {
+    const token = window.localStorage.getItem(AUTH_TOKEN_KEY);
+    return token ? { Authorization: `Bearer ${token}` } : {};
+  } catch (error) {
+    console.warn(
+      "authedHeaders: unable to access localStorage",
+      error && error.message ? error.message : error,
+    );
+    return {};
+  }
+}
+
+/**
+ * Base HTTP request helper with error resilience and auto-Bearer token injection
+ * @param {string} endpoint
+ * @param {Object} options
+ * @returns {Promise<Object>}
+ */
 async function apiFetch(endpoint, options = {}) {
   const url = buildApiUrl(endpoint);
+  const defaultAuth = options.skipAuth ? {} : authedHeaders();
   const fetchOptions = {
     headers: {
       Accept: "application/json",
+      ...defaultAuth,
       ...(options.headers || {}),
     },
     ...options,
@@ -199,9 +270,48 @@ async function apiFetch(endpoint, options = {}) {
 
   try {
     const response = await fetch(url, fetchOptions);
-    const data = await response.json();
+
+    let data = null;
+    if (response.status !== 204) {
+      if (typeof response.text === "function") {
+        const text = await response.text();
+        if (text && text.trim().length > 0) {
+          try {
+            data = JSON.parse(text);
+          } catch (parseErr) {
+            data = null;
+          }
+        }
+      } else if (typeof response.json === "function") {
+        try {
+          data = await response.json();
+        } catch (parseErr) {
+          data = null;
+        }
+      }
+    }
 
     if (!response.ok) {
+      // If unauthorized on an authenticated request, clear token to prevent zombie state
+      if (response.status === 401 && defaultAuth.Authorization) {
+        try {
+          if (typeof window !== "undefined" && window.localStorage) {
+            window.localStorage.removeItem(AUTH_TOKEN_KEY);
+            window.localStorage.removeItem("imprint_user");
+          }
+          if (appStore?.getState) {
+            const current = appStore.getState();
+            if (current?.isAuthenticated) {
+              appStore.setState((s) => ({
+                ...s,
+                user: null,
+                isAuthenticated: false,
+              }));
+            }
+          }
+        } catch (e) {}
+      }
+
       const errorMessage =
         data?.error?.message ||
         `HTTP ${response.status} - ${response.statusText}`;
@@ -261,6 +371,30 @@ export async function fetchProjects({ featured = false, statut, theme } = {}) {
   }
 }
 
+/**
+ * Fetches published "Ce que je fais" service cards, ordered and theme-scoped
+ * @param {Object} [options]
+ * @param {string} [options.theme]
+ * @returns {Promise<Array>}
+ */
+export async function fetchServices({ theme } = {}) {
+  try {
+    let query = `services?populate=*&sort=ordre:asc`;
+    if (theme) {
+      query += `&filters[profil][theme][$eq]=${encodeURIComponent(theme)}`;
+    }
+    const res = await apiFetch(query);
+    return normalizeCollection(res);
+  } catch (err) {
+    return [];
+  }
+}
+
+/**
+ * Fetches a single published project by its slug
+ * @param {string} slug
+ * @returns {Promise<Object|null>}
+ */
 export async function fetchProjectBySlug(slug) {
   if (!slug) return null;
   try {
@@ -298,29 +432,6 @@ export async function fetchSkills({ statut, niveau } = {}) {
 
 export const fetchCompetences = fetchSkills;
 
-/**
- * Fetches expertise/service cards for a candidate's portfolio
- * @param {Object} [options]
- * @param {string} [options.statut] - Optional workflow status filter
- * @param {string} [options.theme] - Optional theme filter (via related profil)
- * @returns {Promise<Array>}
- */
-export async function fetchExpertises({ statut, theme } = {}) {
-  try {
-    let query = `expertises?populate=*&sort[0]=ordre:asc`;
-    if (statut) {
-      query += `&filters[statut][$eq]=${encodeURIComponent(statut)}`;
-    }
-    if (theme) {
-      query += `&filters[profil][theme][$eq]=${encodeURIComponent(theme)}`;
-    }
-    const res = await apiFetch(query);
-    return normalizeCollection(res);
-  } catch (err) {
-    return [];
-  }
-}
-
 export async function fetchFormations({ statut } = {}) {
   try {
     let query = `formations?populate=*&sort[0]=date_debut:desc`;
@@ -355,25 +466,7 @@ export async function fetchProfile({ statut, theme } = {}) {
   }
 }
 
-// Pas d'import depuis auth.js ici : auth.js importe déjà API_BASE_URL
-// depuis ce fichier, un import inverse créerait une dépendance circulaire.
-// Keep the auth token key centralized so all auth-related code shares the same storage contract.
-export const AUTH_TOKEN_KEY = "imprint_jwt";
-
-function authedHeaders() {
-  if (typeof window === "undefined" || !("localStorage" in window)) return {};
-
-  try {
-    const token = window.localStorage.getItem(AUTH_TOKEN_KEY);
-    return token ? { Authorization: `Bearer ${token}` } : {};
-  } catch (error) {
-    console.warn(
-      "authedHeaders: unable to access localStorage",
-      error && error.message ? error.message : error,
-    );
-    return {};
-  }
-}
+// AUTH_TOKEN_KEY and authedHeaders are defined above apiFetch for auto-injection
 
 /**
  * Fetches the profil belonging to the currently authenticated user
@@ -478,6 +571,7 @@ function makeCrud(resource) {
 export const experienceCrud = makeCrud("experiences");
 export const projectCrud = makeCrud("projets");
 export const competenceCrud = makeCrud("competences");
+export const formationCrud = makeCrud("formations");
 
 /**
  * Sends a contact message to the controlled public ingestion endpoint
@@ -524,7 +618,12 @@ export async function syncStoreFromApi(storeInstance = appStore) {
     ]);
 
     const patch = { loading: false, error: null };
-    if (profile) patch.profile = profile;
+    if (profile) {
+      patch.profile = profile;
+      if (profile.theme) {
+        patch.theme = profile.theme;
+      }
+    }
     if (projects?.length) patch.projects = projects;
     if (experiences?.length) patch.experiences = experiences;
     if (skills?.length) patch.skills = skills;
@@ -551,18 +650,114 @@ export async function syncStoreFromApi(storeInstance = appStore) {
   }
 }
 
+/**
+ * Uploads one or multiple files to the Strapi Media Library
+ * @param {File|FileList|Array<File>} files
+ * @param {Object} [options] - Optional Strapi ref, refId, field params
+ * @param {string} [options.ref] - Content type UID (e.g. "api::projet.projet")
+ * @param {string|number} [options.refId] - Entry ID
+ * @param {string} [options.field] - Target attribute field name (e.g. "image")
+ * @returns {Promise<Array<Object>>} Array of uploaded media objects
+ */
+export async function uploadMedia(files, options = {}) {
+  const fileList = Array.isArray(files)
+    ? files
+    : files instanceof FileList
+    ? Array.from(files)
+    : files instanceof File
+    ? [files]
+    : [];
+
+  if (fileList.length === 0) {
+    return [];
+  }
+
+  const formData = new FormData();
+  fileList.forEach((file) => {
+    formData.append("files", file);
+  });
+
+  if (options.ref) formData.append("ref", options.ref);
+  if (options.refId) formData.append("refId", String(options.refId));
+  if (options.field) formData.append("field", options.field);
+
+  const authHeaders = options.token
+    ? { Authorization: `Bearer ${options.token}` }
+    : authedHeaders();
+  const url = buildApiUrl("upload");
+
+  const response = await fetch(url, {
+    method: "POST",
+    headers: {
+      Accept: "application/json",
+      ...authHeaders,
+    },
+    body: formData,
+  });
+
+  let data = null;
+  if (typeof response.text === "function") {
+    const text = await response.text();
+    if (text && text.trim().length > 0) {
+      try {
+        data = JSON.parse(text);
+      } catch (parseErr) {
+        data = null;
+      }
+    }
+  } else if (typeof response.json === "function") {
+    try {
+      data = await response.json();
+    } catch (parseErr) {
+      data = null;
+    }
+  }
+
+  if (!response.ok) {
+    const errorMsg =
+      data?.error?.message || `Erreur d'upload média (HTTP ${response.status})`;
+    throw new Error(errorMsg);
+  }
+
+  return Array.isArray(data) ? data : data ? [data] : [];
+}
+
+/**
+ * Deletes a file from the Strapi Media Library by ID
+ * @param {number|string} mediaId
+ * @param {Object} [options]
+ * @returns {Promise<boolean>}
+ */
+export async function deleteMedia(mediaId, options = {}) {
+  if (!mediaId) return false;
+  try {
+    const authHeaders = options.token
+      ? { Authorization: `Bearer ${options.token}` }
+      : authedHeaders();
+    await apiFetch(`upload/files/${mediaId}`, {
+      method: "DELETE",
+      headers: authHeaders,
+    });
+    return true;
+  } catch (err) {
+    console.warn("[API Client] Failed to delete media:", err);
+    throw err;
+  }
+}
+
 export default {
   API_BASE_URL,
   extractBlocksText,
+  textToBlocks,
   normalizeMedia,
   normalizeEntity,
   normalizeCollection,
   fetchProjects,
   fetchProjectBySlug,
+  fetchServices,
   fetchExperiences,
   fetchSkills,
   fetchCompetences,
-  fetchExpertises,
   fetchFormations,
   fetchProfile,
   fetchMyProfile,
@@ -574,6 +769,9 @@ export default {
   experienceCrud,
   projectCrud,
   competenceCrud,
+  formationCrud,
   sendMessage,
   syncStoreFromApi,
+  uploadMedia,
+  deleteMedia,
 };

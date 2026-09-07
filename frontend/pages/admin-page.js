@@ -1,247 +1,26 @@
 import Header from "../components/header.js";
 import Link from "../components/router/link.js";
 import { navigate } from "../utils/navigation.js";
-import { isAuthenticated } from "../lib/auth.js";
-import createState from "../lib/create-state.js";
-import reactive from "../lib/reactive.js";
-import {
-  renderFeedbackBanner,
-  renderEmptyState,
-  renderInlineConfirm,
-  showToast,
-} from "../components/ui-feedback.js";
+import { isAuthenticated, getCurrentUser } from "../lib/auth.js";
+import { renderFeedbackBanner } from "../components/ui-feedback.js";
 import {
   fetchMyProfile,
-  createProfile,
-  updateProfile,
   fetchMyExperiences,
   fetchMyProjects,
   fetchMyCompetences,
-  experienceCrud,
-  projectCrud,
-  competenceCrud,
 } from "../lib/api.js";
 
-function refresh() {
-  window.dispatchEvent(new Event("pushstate"));
-}
+// Modular admin subcomponents
+import { AdminAnchorLink } from "../utils/admin/admin-common.js";
+import { ProfileForm } from "../utils/admin/admin-profile.js";
+import { ProjectsManager } from "../utils/admin/admin-projects.js";
+import { ExperiencesManager } from "../utils/admin/admin-experiences.js";
+import { CompetencesManager } from "../utils/admin/admin-competences.js";
 
-function ProfileForm(profile) {
-  const isNew = !profile;
-
-  async function handleSubmit(event) {
-    event.preventDefault();
-    const form = event.target;
-    const data = {
-      nom: form.nom.value,
-      titre: form.titre.value,
-      email: form.email.value,
-      biographie: form.biographie.value,
-    };
-    try {
-      if (isNew) {
-        await createProfile(data);
-        showToast("Profil créé avec succès !", "success");
-      } else {
-        await updateProfile(profile.documentId, data);
-        showToast("Profil mis à jour avec succès !", "success");
-      }
-      refresh();
-    } catch (err) {
-      showToast("Erreur lors de l'enregistrement : " + err.message, "error");
-    }
-  }
-
-  return {
-    type: "form",
-    attributes: [["class", ["admin-section"]]],
-    events: [["submit", handleSubmit]],
-    children: [
-      { type: "h2", children: [isNew ? "Créer mon profil" : "Mon profil"] },
-      !isNew
-        ? { type: "p", children: [] }
-        : {
-            type: "p",
-            children: [
-              "Créez votre profil pour commencer à publier votre portfolio.",
-            ],
-          },
-      {
-        type: "label",
-        children: [
-          "Nom complet",
-          {
-            type: "input",
-            attributes: [
-              ["name", "nom"],
-              ["type", "text"],
-              ["required", true],
-              ["value", profile?.nom || ""],
-            ],
-          },
-        ],
-      },
-      {
-        type: "label",
-        children: [
-          "Titre professionnel",
-          {
-            type: "input",
-            attributes: [
-              ["name", "titre"],
-              ["type", "text"],
-              ["required", true],
-              ["value", profile?.titre || ""],
-            ],
-          },
-        ],
-      },
-      {
-        type: "label",
-        children: [
-          "Email",
-          {
-            type: "input",
-            attributes: [
-              ["name", "email"],
-              ["type", "email"],
-              ["required", true],
-              ["value", profile?.email || ""],
-            ],
-          },
-        ],
-      },
-      {
-        type: "label",
-        children: [
-          "Biographie",
-          {
-            type: "textarea",
-            attributes: [["name", "biographie"], ["rows", 4]],
-            children: [profile?.biographie || ""],
-          },
-        ],
-      },
-      {
-        type: "button",
-        attributes: [["type", "submit"], ["class", ["btn", "btn-primary"]]],
-        children: [isNew ? "Créer mon profil" : "Enregistrer"],
-      },
-    ],
-  };
-}
-
-function CrudSection(title, items, labelField, crud, extraFields = {}) {
-  const deletingIdState = createState(null);
-
-  async function handleAdd(event) {
-    event.preventDefault();
-    const form = event.target;
-    const data = { [labelField]: form[labelField].value, ...extraFields };
-    try {
-      await crud.create(data);
-      showToast(`${title} ajouté(e) avec succès !`, "success");
-      form.reset();
-      refresh();
-    } catch (err) {
-      showToast("Erreur lors de l'ajout : " + err.message, "error");
-    }
-  }
-
-  async function handleDelete(documentId) {
-    try {
-      await crud.remove(documentId);
-      showToast(`Élément supprimé avec succès.`, "info");
-      deletingIdState.set(null);
-      refresh();
-    } catch (err) {
-      showToast("Erreur lors de la suppression : " + err.message, "error");
-    }
-  }
-
-  return {
-    type: "section",
-    attributes: [["class", ["admin-section"]]],
-    children: [
-      { type: "h2", children: [title] },
-      items.length === 0
-        ? renderEmptyState({
-            icon: "📋",
-            title: `Aucun élément dans « ${title} »`,
-            description: `Utilisez le formulaire ci-dessous pour ajouter votre premier élément à cette section.`,
-          })
-        : reactive(deletingIdState, (deletingId) => ({
-            type: "ul",
-            attributes: [["class", ["admin-list"]]],
-            children: items.map((item) => {
-              const isDeleting = deletingId === item.documentId;
-              return {
-                type: "li",
-                attributes: [["class", ["admin-row"]]],
-                children: [
-                  {
-                    type: "span",
-                    attributes: [["class", ["admin-row-title"]]],
-                    children: [item[labelField] || "(sans titre)"],
-                  },
-                  isDeleting
-                    ? renderInlineConfirm({
-                        message: "Supprimer définitivement ?",
-                        onConfirm: () => handleDelete(item.documentId),
-                        onCancel: () => deletingIdState.set(null),
-                      })
-                    : {
-                        type: "button",
-                        attributes: [
-                          ["type", "button"],
-                          ["class", ["btn", "btn-sm", "btn-secondary"]],
-                        ],
-                        children: ["Supprimer"],
-                        events: [
-                          ["click", () => deletingIdState.set(item.documentId)],
-                        ],
-                      },
-                ],
-              };
-            }),
-          })),
-      {
-        type: "form",
-        attributes: [["class", ["admin-add-form"]]],
-        events: [["submit", handleAdd]],
-        children: [
-          {
-            type: "input",
-            attributes: [
-              ["name", labelField],
-              ["type", "text"],
-              ["placeholder", `Nouveau : ${title.toLowerCase()}`],
-              ["required", true],
-            ],
-          },
-          {
-            type: "button",
-            attributes: [
-              ["type", "submit"],
-              ["class", ["btn", "btn-primary"]],
-            ],
-            children: ["Ajouter"],
-          },
-        ],
-      },
-    ],
-  };
-}
-
-function slugify(text) {
-  return text
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[̀-ͯ]/g, "")
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/^-+|-+$/g, "");
-}
-
+/**
+ * PAGE D'ADMINISTRATION PRINCIPALE & ÉDITEUR DE PORTFOLIO
+ * Coordonne l'authentification, le chargement des données et la composition des gestionnaires CRUD
+ */
 export default async function PageAdmin() {
   if (!isAuthenticated()) {
     return {
@@ -251,13 +30,23 @@ export default async function PageAdmin() {
         Header("/admin"),
         {
           type: "main",
+          attributes: [
+            ["id", "main-content"],
+            ["tabindex", "-1"],
+          ],
           children: [
-            { type: "h1", children: ["Mon compte"] },
             {
-              type: "p",
+              type: "section",
+              attributes: [["class", ["admin-unauth-box"]]],
               children: [
-                "Connecte-toi pour gérer ton portfolio. ",
-                Link("/login", "Se connecter"),
+                { type: "h1", children: ["Mon compte"] },
+                {
+                  type: "p",
+                  children: [
+                    "Connectez-vous pour gérer votre profil, vos projets et vos expériences. ",
+                    Link("/login", "Se connecter", ["btn", "btn-primary"]),
+                  ],
+                },
               ],
             },
           ],
@@ -270,6 +59,7 @@ export default async function PageAdmin() {
   let experiences = [];
   let projects = [];
   let competences = [];
+  const currentUser = getCurrentUser();
 
   try {
     profile = await fetchMyProfile();
@@ -280,7 +70,41 @@ export default async function PageAdmin() {
         attributes: [["class", ["page", "page-admin"]]],
         children: [
           Header("/admin"),
-          { type: "main", children: [ProfileForm(null)] },
+          {
+            type: "main",
+            attributes: [
+              ["id", "main-content"],
+              ["tabindex", "-1"],
+            ],
+            children: [
+              {
+                type: "header",
+                attributes: [["class", ["admin-main-header"]]],
+                children: [
+                  {
+                    type: "h1",
+                    children: ["Bienvenue sur votre espace d'administration"],
+                  },
+                  {
+                    type: "p",
+                    children: [
+                      `Session active pour `,
+                      {
+                        type: "strong",
+                        children: [
+                          currentUser?.username ||
+                            currentUser?.email ||
+                            "Utilisateur",
+                        ],
+                      },
+                      `. Créez votre profil pour démarrer.`,
+                    ],
+                  },
+                ],
+              },
+              ProfileForm(null),
+            ],
+          },
         ],
       };
     }
@@ -303,6 +127,10 @@ export default async function PageAdmin() {
         Header("/admin"),
         {
           type: "main",
+          attributes: [
+            ["id", "main-content"],
+            ["tabindex", "-1"],
+          ],
           children: [
             renderFeedbackBanner({
               type: "error",
@@ -325,44 +153,77 @@ export default async function PageAdmin() {
       Header("/admin"),
       {
         type: "main",
+        attributes: [
+          ["id", "main-content"],
+          ["tabindex", "-1"],
+        ],
         children: [
-          { type: "h1", children: ["Mon compte"] },
+          {
+            type: "header",
+            attributes: [["class", ["admin-main-header"]]],
+            children: [
+              {
+                type: "div",
+                attributes: [["class", ["admin-title-row"]]],
+                children: [
+                  {
+                    type: "h1",
+                    children: ["Éditeur de Portfolio & Administration"],
+                  },
+                  {
+                    type: "span",
+                    attributes: [["class", ["user-session-badge"]]],
+                    children: [
+                      `👤 ${currentUser?.username || currentUser?.email || "Connecté"}`,
+                    ],
+                  },
+                ],
+              },
+              {
+                type: "p",
+                attributes: [["class", ["admin-lead"]]],
+                children: [
+                  "Modifiez vos contenus en direct. Vos modifications publiées sont synchronisées avec le CMS Strapi et visibles immédiatement par les visiteurs.",
+                ],
+              },
+              {
+                type: "nav",
+                attributes: [
+                  ["class", ["admin-quick-nav"]],
+                  ["aria-label", "Accès rapide aux sections de gestion"],
+                ],
+                children: [
+                  AdminAnchorLink("profile-management", "👤 Mon Profil"),
+                  AdminAnchorLink(
+                    "projects-management",
+                    `💼 Projets (${projects.length})`,
+                  ),
+                  AdminAnchorLink(
+                    "experiences-management",
+                    `📋 Expériences (${experiences.length})`,
+                  ),
+                  AdminAnchorLink(
+                    "competences-management",
+                    `⚡ Compétences (${competences.length})`,
+                  ),
+                  {
+                    type: "a",
+                    attributes: [
+                      ["href", "/portfolio"],
+                      ["target", "_blank"],
+                      ["rel", "noopener noreferrer"],
+                      ["class", ["admin-nav-link", "admin-nav-link-ext"]],
+                    ],
+                    children: ["🌐 Voir le Portfolio Public"],
+                  },
+                ],
+              },
+            ],
+          },
           ProfileForm(profile),
-          CrudSection("Expériences", experiences, "titre", {
-            create: (data) =>
-              experienceCrud.create({
-                ...data,
-                slug: slugify(data.titre),
-                entreprise: "À compléter",
-                date_debut: new Date().toISOString().slice(0, 10),
-                description: [
-                  {
-                    type: "paragraph",
-                    children: [{ type: "text", text: "À compléter" }],
-                  },
-                ],
-              }),
-            remove: experienceCrud.remove,
-          }),
-          CrudSection("Projets", projects, "titre", {
-            create: (data) =>
-              projectCrud.create({
-                ...data,
-                slug: slugify(data.titre),
-                description: [
-                  {
-                    type: "paragraph",
-                    children: [{ type: "text", text: "À compléter" }],
-                  },
-                ],
-              }),
-            remove: projectCrud.remove,
-          }),
-          CrudSection("Compétences", competences, "titre", {
-            create: (data) =>
-              competenceCrud.create({ ...data, niveau: "intermediaire" }),
-            remove: competenceCrud.remove,
-          }),
+          ProjectsManager(projects),
+          ExperiencesManager(experiences),
+          CompetencesManager(competences),
         ],
       },
     ],

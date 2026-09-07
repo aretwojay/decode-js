@@ -81,7 +81,11 @@ export default async function PageProjectDetail(params = {}) {
       // Main Content Area
       {
         type: "main",
-        attributes: [["class", ["project-detail-main"]]],
+        attributes: [
+          ["id", "main-content"],
+          ["tabindex", "-1"],
+          ["class", ["project-detail-main"]],
+        ],
         children: [
           ...offline.getBannerChildren(),
           status === "success" && project

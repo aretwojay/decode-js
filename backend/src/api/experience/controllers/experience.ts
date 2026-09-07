@@ -25,16 +25,22 @@ export default factories.createCoreController('api::experience.experience', ({ s
 
   async findOne(ctx) {
     const { id } = ctx.params;
+    const isNumeric =
+      typeof id === 'number' ||
+      (!isNaN(Number(id)) && !isNaN(parseFloat(String(id))));
+    const where = isNumeric
+      ? { $or: [{ id: Number(id) }, { documentId: String(id) }] }
+      : { documentId: String(id) };
+
     const rows = await strapi.db
       .query('api::experience.experience')
-      .findMany({ where: { documentId: id }, populate: { profil: { populate: ['owner'] } } });
+      .findMany({ where, populate: ['profil'] });
     if (rows.length === 0) return ctx.notFound();
 
     const publishedRow = rows.find((r) => r.publishedAt);
-    const draftRow = rows.find((r) => !r.publishedAt);
     const isOwner = Boolean(
       ctx.state.user &&
-        [publishedRow, draftRow].some((r) => r?.profil?.owner?.id === ctx.state.user.id)
+        (await isOwnChildEntry(strapi, 'api::experience.experience', id, ctx.state.user.id))
     );
     if (!publishedRow && !isOwner) return ctx.forbidden();
 

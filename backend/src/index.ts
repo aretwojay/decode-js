@@ -24,9 +24,11 @@ export default {
         'api::formation.formation.findOne',
         'api::profil.profil.find',
         'api::profil.profil.findOne',
-        'api::expertise.expertise.find',
-        'api::expertise.expertise.findOne',
+        'api::service.service.find',
+        'api::service.service.findOne',
         'api::message.message.create',
+        'plugin::upload.content-api.find',
+        'plugin::upload.content-api.findOne',
       ];
 
       for (const action of publicActions) {
@@ -56,11 +58,17 @@ export default {
       });
 
       if (authenticatedRole) {
-        const contentTypes = ['profil', 'projet', 'competence', 'experience', 'formation', 'expertise'];
+        const contentTypes = ['profil', 'projet', 'competence', 'experience', 'formation', 'service'];
         const crud = ['find', 'findOne', 'create', 'update', 'delete'];
-        const authenticatedActions = contentTypes.flatMap((ct) =>
-          crud.map((action) => `api::${ct}.${ct}.${action}`)
-        );
+        const authenticatedActions = [
+          ...contentTypes.flatMap((ct) =>
+            crud.map((action) => `api::${ct}.${ct}.${action}`)
+          ),
+          'plugin::upload.content-api.upload',
+          'plugin::upload.content-api.find',
+          'plugin::upload.content-api.findOne',
+          'plugin::upload.content-api.destroy',
+        ];
 
         for (const action of authenticatedActions) {
           const existingPermission = await strapi.db
@@ -78,6 +86,19 @@ export default {
                 action,
                 role: authenticatedRole.id,
               },
+            });
+          }
+        }
+
+        // Assurer que tous les utilisateurs existants sont assignés au rôle Authenticated
+        const users = await strapi.db.query('plugin::users-permissions.user').findMany({
+          populate: ['role'],
+        });
+        for (const user of users) {
+          if (!user.role || user.role.type === 'public') {
+            await strapi.db.query('plugin::users-permissions.user').update({
+              where: { id: user.id },
+              data: { role: authenticatedRole.id },
             });
           }
         }

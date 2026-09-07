@@ -14,8 +14,12 @@ body {
 
   --accent-primary: #178396;
   --accent-secondary: #8A38F5;
-  --accent-gradient: linear-gradient(90deg, #178396 0%, #8A38F5 100%);
+  --accent-gradient: linear-gradient(90deg, #0E7A8C 0%, #8A38F5 100%);
   --accent-hover: #06B6D4;
+
+  --accent-primary-text: #3a96a6;
+  --accent-secondary-text: #9c56f7;
+  --accent-gradient-text: linear-gradient(90deg, #3a96a6 0%, #9c56f7 100%);
   --success-color: #22C55E;
   --success-bg: rgba(34, 197, 94, 0.12);
 
@@ -33,6 +37,7 @@ body {
   --glass-border: rgba(255, 255, 255, 0.12);
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.25);
   --panel-fade: linear-gradient(180deg, rgba(10, 13, 26, 0) 0%, rgba(10, 13, 26, 0.9) 65%);
+  --input-border: #5B6B8C;
 }
 
 body {
@@ -69,7 +74,7 @@ body {
 .section-subtitle {
   font-family: var(--font-heading);
   font-weight: 600;
-  background: var(--accent-gradient);
+  background: var(--accent-gradient-text);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
@@ -87,7 +92,7 @@ body {
 }
 
 .nav-link.active {
-  color: var(--accent-primary) !important;
+  color: var(--accent-primary-text) !important;
   background: none !important;
   border-color: transparent !important;
 }
@@ -258,13 +263,20 @@ body[data-mode="light"] {
 
   --text-primary: #0A0D1A;
   --text-secondary: #475569;
-  --text-muted: #64748B;
+  --text-muted: #5B6B85;
+
+  --accent-primary-text: #157687;
+  --accent-secondary-text: #8A38F5;
+  --accent-gradient-text: linear-gradient(90deg, #157687 0%, #8A38F5 100%);
+  --accent-hover: #0E7A8C;
+  --success-color: #0B7A34;
 
   --glass-bg: rgba(255, 255, 255, 0.65);
   --glass-bg-strong: rgba(255, 255, 255, 0.85);
   --glass-border: rgba(10, 13, 26, 0.1);
   --glass-shadow: 0 8px 24px rgba(31, 41, 82, 0.1);
   --panel-fade: linear-gradient(180deg, rgba(255, 255, 255, 0) 0%, rgba(255, 255, 255, 0.92) 65%);
+  --input-border: #7C88A6;
 
   --shadow-sm: 0 1px 3px rgba(31, 41, 82, 0.1);
   --shadow-glow: 0px 10px 32px rgba(23, 131, 150, 0.18);
@@ -287,7 +299,7 @@ body[data-mode="light"] .hero-title .highlight {
 }
 
 body[data-mode="light"] .btn-primary {
-  background: var(--accent-gradient);
+  background: var(--accent-gradient-text);
   color: #FFFFFF;
 }
 
@@ -333,7 +345,7 @@ body[data-mode="light"] .btn-primary::before {
 
 .btn-secondary {
   background: transparent;
-  color: var(--accent-primary);
+  color: var(--accent-primary-text);
   border: 1.5px solid var(--accent-primary);
   font-family: 'Poppins', sans-serif;
 }
@@ -364,7 +376,7 @@ body[data-mode="light"] .btn-primary::before {
 .card-tag-featured,
 .tag {
   background: var(--bg-tag);
-  color: var(--accent-primary);
+  color: var(--accent-primary-text);
   border: 1px solid rgba(23, 131, 150, 0.3);
   font-weight: 600;
 }
@@ -483,7 +495,7 @@ body[data-mode="light"] .btn-primary::before {
 input,
 textarea {
   background: var(--glass-bg);
-  border: 1px solid var(--glass-border);
+  border: 1px solid var(--input-border);
   color: var(--text-primary);
   border-radius: 8px;
 }
@@ -695,6 +707,10 @@ textarea:focus {
   color: #EF4444;
 }
 
+body[data-mode="light"] .form-feedback-error {
+  color: #B91C1C;
+}
+
 .project-card-wrap {
   display: flex;
   flex-direction: column;
@@ -702,7 +718,7 @@ textarea:focus {
 
 .project-index {
   display: block;
-  color: var(--accent-primary);
+  color: var(--accent-primary-text);
   font-size: 0.8rem;
   font-weight: 600;
   margin-bottom: 8px;
@@ -873,7 +889,7 @@ textarea:focus {
 
 .portfolio-tags .tag {
   background: rgba(138, 56, 245, 0.15);
-  color: var(--accent-secondary);
+  color: var(--accent-secondary-text);
   border-color: rgba(138, 56, 245, 0.3);
 }
 
@@ -946,7 +962,7 @@ textarea:focus {
 }
 
 .portfolio-action-link {
-  color: var(--accent-secondary);
+  color: var(--accent-secondary-text);
   text-decoration: underline;
   font-weight: 600;
   font-size: 0.85rem;
@@ -960,7 +976,7 @@ textarea:focus {
 }
 
 .portfolio-action-link-alt {
-  color: var(--accent-secondary);
+  color: var(--accent-secondary-text);
 }
 
 @media (max-width: 860px) {
@@ -977,4 +993,15 @@ textarea:focus {
 .back-to-top:hover {
   border-color: var(--border-color-hover);
   box-shadow: var(--shadow-glow);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }

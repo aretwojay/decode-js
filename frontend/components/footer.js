@@ -11,6 +11,10 @@ import { appStore } from "../lib/store.js";
  * @param {string} [options.githubUrl]
  * @param {string} [options.linkedinUrl]
  * @param {boolean} [options.isAvailable]
+ * @param {string} [options.phone]
+ * @param {string} [options.email]
+ * @param {string} [options.location]
+ * @param {string} [options.collaborationMessage]
  * @returns {Object} Vanilla-engine structure object
  */
 export default function Footer(options = {}) {
@@ -18,8 +22,8 @@ export default function Footer(options = {}) {
     appStore && typeof appStore.getState === "function"
       ? appStore.getState()
       : appStore && typeof appStore.get === "function"
-      ? appStore.get()
-      : null;
+        ? appStore.get()
+        : null;
   const profile = storeState?.profile;
 
   const candidateName =
@@ -32,10 +36,98 @@ export default function Footer(options = {}) {
     options.isAvailable !== undefined
       ? options.isAvailable
       : profile?.disponible !== undefined
-      ? profile.disponible
-      : true;
+        ? profile.disponible
+        : true;
+  const phone = options.phone || profile?.telephone || "";
+  const email = options.email || profile?.email || "";
+  const location = options.location || profile?.localisation || "";
+  const collaborationMessage =
+    options.collaborationMessage || profile?.message_collaboration || "";
 
   const isIris = getTheme() === "iris";
+  const isYaniss = getTheme() === "yaniss";
+  const currentPath =
+    typeof window !== "undefined" ? window.location.pathname : "/";
+
+  if (isYaniss) {
+    const phoneHref = `tel:${phone.replace(/[^+\d]/g, "")}`;
+
+    return {
+      type: "footer",
+      attributes: [["class", ["site-footer", "site-footer-yaniss"]]],
+      children: [
+        {
+          type: "p",
+          attributes: [["class", ["footer-yaniss-title"]]],
+          children: [
+            "TRAVAILLONS ",
+            { type: "span", attributes: [["class", ["highlight"]]], children: ["ENSEMBLE"] },
+          ],
+        },
+        collaborationMessage
+          ? {
+              type: "p",
+              attributes: [["class", ["footer-yaniss-lead"]]],
+              children: [collaborationMessage],
+            }
+          : { type: "span", children: [] },
+        {
+          type: "div",
+          attributes: [["class", ["footer-yaniss-contacts"]]],
+          children: [
+            email
+              ? {
+                  type: "a",
+                  attributes: [["href", `mailto:${email}`], ["class", ["footer-yaniss-contact-item"]]],
+                  children: [
+                    { type: "span", attributes: [["class", ["footer-icon", "icon-mail"]]], children: [] },
+                    email,
+                  ],
+                }
+              : { type: "span", children: [] },
+            phone
+              ? {
+                  type: "a",
+                  attributes: [["href", phoneHref], ["class", ["footer-yaniss-contact-item"]]],
+                  children: [
+                    { type: "span", attributes: [["class", ["footer-icon", "icon-mail"]]], children: [] },
+                    phone,
+                  ],
+                }
+              : { type: "span", children: [] },
+            location
+              ? {
+                  type: "span",
+                  attributes: [["class", ["footer-yaniss-contact-item"]]],
+                  children: [
+                    { type: "span", attributes: [["class", ["footer-icon", "icon-mail"]]], children: [] },
+                    location,
+                  ],
+                }
+              : { type: "span", children: [] },
+          ],
+        },
+        {
+          type: "div",
+          attributes: [["class", ["footer-yaniss-actions"]]],
+          children: [
+            NavLink("/portfolio", "voir mes projets", ["btn", "btn-primary"]),
+            {
+              type: "a",
+              attributes: [
+                ["href", linkedinUrl],
+                ["target", "_blank"],
+                ["rel", "noopener noreferrer"],
+                ["class", ["btn", "btn-secondary"]],
+              ],
+              children: ["Profil linkedin"],
+            },
+            NavLink("/contact", "Me contactez directement", ["btn", "btn-primary"]),
+          ],
+        },
+      ],
+    };
+  }
 
   if (isIris) {
     return {
@@ -54,7 +146,7 @@ export default function Footer(options = {}) {
                 ["target", "_blank"],
                 ["rel", "noopener noreferrer"],
                 ["class", ["footer-icon-link"]],
-                ["aria-label", "Instagram"],
+                ["aria-label", "Instagram (ouvre un nouvel onglet)"],
               ],
               children: [
                 {
@@ -76,7 +168,7 @@ export default function Footer(options = {}) {
                 ["target", "_blank"],
                 ["rel", "noopener noreferrer"],
                 ["class", ["footer-icon-link"]],
-                ["aria-label", "LinkedIn"],
+                ["aria-label", "LinkedIn (ouvre un nouvel onglet)"],
               ],
               children: [
                 {
@@ -100,7 +192,7 @@ export default function Footer(options = {}) {
                 ["target", "_blank"],
                 ["rel", "noopener noreferrer"],
                 ["class", ["footer-icon-link"]],
-                ["aria-label", "GitHub"],
+                ["aria-label", "GitHub (ouvre un nouvel onglet)"],
               ],
               children: [
                 {
@@ -131,9 +223,7 @@ export default function Footer(options = {}) {
               {
                 type: "p",
                 attributes: [["class", ["footer-copyright"]]],
-                children: [
-                  `© ${new Date().getFullYear()} ${candidateName}. Propulsé par Vanilla-Engine & Strapi 5.`,
-                ],
+                children: [`© ${new Date().getFullYear()} ${candidateName}.`],
               },
               isAvailable
                 ? {
@@ -159,12 +249,25 @@ export default function Footer(options = {}) {
               ["aria-label", "Navigation pied de page"],
             ],
             children: [
-              NavLink("/", "Accueil", ["footer-link"]),
-              NavLink("/portfolio", "Portfolio", ["footer-link"]),
-              NavLink("/experiences", "Expériences", ["footer-link"]),
-              NavLink("/cv", "CV", ["footer-link"]),
-              NavLink("/contact", "Contact", ["footer-link"]),
-            ],
+              { url: "/", label: "Accueil" },
+              { url: "/portfolio", label: "Portfolio" },
+              { url: "/experiences", label: "Expériences" },
+              { url: "/cv", label: "CV" },
+              { url: "/contact", label: "Contact" },
+            ].map(({ url, label }) => {
+              const isExactMatch = currentPath === url;
+              const isParentMatch =
+                url !== "/" &&
+                (currentPath.startsWith(url + "/") ||
+                  currentPath.startsWith(url + "?"));
+              const isActive = isExactMatch || isParentMatch;
+              return NavLink(
+                url,
+                label,
+                isActive ? ["footer-link", "active"] : ["footer-link"],
+                isActive ? [["aria-current", "page"]] : [],
+              );
+            }),
           },
           {
             type: "div",
@@ -177,6 +280,7 @@ export default function Footer(options = {}) {
                   ["target", "_blank"],
                   ["rel", "noopener noreferrer"],
                   ["class", ["footer-link", "footer-social-link"]],
+                  ["aria-label", "GitHub (ouvre un nouvel onglet)"],
                 ],
                 children: ["GitHub"],
               },
@@ -187,6 +291,7 @@ export default function Footer(options = {}) {
                   ["target", "_blank"],
                   ["rel", "noopener noreferrer"],
                   ["class", ["footer-link", "footer-social-link"]],
+                  ["aria-label", "LinkedIn (ouvre un nouvel onglet)"],
                 ],
                 children: ["LinkedIn"],
               },

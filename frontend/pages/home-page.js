@@ -1,6 +1,6 @@
 import Header, { NavLink } from "../components/header.js";
 import Footer from "../components/footer.js";
-import { fetchProfile, fetchProjects } from "../lib/api.js";
+import { fetchProfile, fetchProjects, fetchServices } from "../lib/api.js";
 import { appStore } from "../lib/store.js";
 import { getTheme } from "../lib/theme.js";
 import useOffline from "../lib/use-offline.js";
@@ -27,15 +27,17 @@ export default async function PageHome() {
   });
 
   const currentTheme = getTheme();
+  const isYaniss = currentTheme === "yaniss";
 
-  const [profile, featuredProjects, allProjects] = await offline.execute(
+  const [profile, featuredProjects, allProjects, services] = await offline.execute(
     () =>
       Promise.all([
         fetchProfile({ theme: currentTheme }),
         fetchProjects({ featured: true, theme: currentTheme }),
         fetchProjects({ theme: currentTheme }),
+        fetchServices({ theme: currentTheme }),
       ]),
-    { fallback: [null, [], []] },
+    { fallback: [null, [], [], []] },
   );
 
   const isOffline = offline.isOffline();
@@ -74,15 +76,19 @@ export default async function PageHome() {
       // Main Content Area
       {
         type: "main",
+        attributes: [
+          ["id", "main-content"],
+          ["tabindex", "-1"],
+        ],
         children: [
           ...offline.getBannerChildren(),
 
           // Hero Introduction Section
           renderHeroSection(candidateData),
 
-          ...(isIris ? [renderAboutSection(candidateData)] : []),
+          ...(isIris || isYaniss ? [renderAboutSection(candidateData)] : []),
 
-          ...(isIris ? [renderServicesSection()] : []),
+          ...(isIris || isYaniss ? [renderServicesSection(services)] : []),
 
           // Featured Projects Showcase Section
           renderFeaturedSection(projectsToDisplay, hasFeatured),
@@ -99,7 +105,7 @@ export default async function PageHome() {
             : []),
 
           // Quick Navigation & Overview Section
-          ...(isIris
+          ...(isIris || isYaniss
             ? []
             : [
                 renderOverviewSection(),
@@ -144,6 +150,10 @@ export default async function PageHome() {
         candidateName: candidateData.candidateName,
         githubUrl: candidateData.githubUrl,
         linkedinUrl: candidateData.linkedinUrl,
+        phone: candidateData.candidatePhone,
+        email: candidateData.candidateEmail,
+        location: candidateData.candidateLocation,
+        collaborationMessage: candidateData.messageCollaboration,
       }),
     ],
   };

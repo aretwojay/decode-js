@@ -1,11 +1,11 @@
 {
   "kind": "collectionType",
-  "collectionName": "expertises",
+  "collectionName": "services",
   "info": {
-    "singularName": "expertise",
-    "pluralName": "expertises",
-    "displayName": "Expertise",
-    "description": "Cartes de champs d'expertise / services affichées sur le portfolio"
+    "singularName": "service",
+    "pluralName": "services",
+    "displayName": "Service",
+    "description": "Cartes de présentation des services (section \"Ce que je fais\")"
   },
   "options": {
     "draftAndPublish": true
@@ -29,15 +29,29 @@
       "maxLength": 500
     },
     "icone": {
-      "type": "media",
-      "multiple": false,
-      "allowedTypes": [
-        "images"
+      "type": "enumeration",
+      "required": true,
+      "enum": [
+        "code",
+        "palette",
+        "search",
+        "cloud"
       ]
     },
     "ordre": {
       "type": "integer",
       "default": 0
+    },
+    "affichage_large": {
+      "type": "boolean",
+      "default": false
+    },
+    "image": {
+      "type": "media",
+      "multiple": false,
+      "allowedTypes": [
+        "images"
+      ]
     },
     "statut": {
       "type": "enumeration",

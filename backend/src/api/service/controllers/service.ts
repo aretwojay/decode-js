@@ -1,5 +1,5 @@
 /**
- * expertise controller
+ * service controller
  * Extends core controller with domain validation on create and update.
  * Core sanitization and validation are automatically handled by super methods.
  */
@@ -8,14 +8,15 @@ import { factories } from '@strapi/strapi';
 import { getOwnProfilId, isOwnChildEntry, dedupeByDocumentId } from '../../../utils/ownership';
 import { checkStatusTransition } from '../../../utils/workflow';
 
+const VALID_ICONES = ['code', 'palette', 'search', 'cloud'];
 const VALID_STATUTS = ['brouillon', 'pret_a_relire', 'publie', 'archive'];
 
-export default factories.createCoreController('api::expertise.expertise', ({ strapi }) => ({
+export default factories.createCoreController('api::service.service', ({ strapi }) => ({
   async find(ctx) {
     if (ctx.state.user) {
       const ownProfilId = await getOwnProfilId(strapi, ctx.state.user.id);
       const entries = await strapi.db
-        .query('api::expertise.expertise')
+        .query('api::service.service')
         .findMany({ where: { profil: ownProfilId } });
       return { data: dedupeByDocumentId(entries), meta: {} };
     }
@@ -25,7 +26,7 @@ export default factories.createCoreController('api::expertise.expertise', ({ str
   async findOne(ctx) {
     const { id } = ctx.params;
     const rows = await strapi.db
-      .query('api::expertise.expertise')
+      .query('api::service.service')
       .findMany({ where: { documentId: id }, populate: { profil: { populate: ['owner'] } } });
     if (rows.length === 0) return ctx.notFound();
 
@@ -41,7 +42,7 @@ export default factories.createCoreController('api::expertise.expertise', ({ str
   },
 
   async create(ctx) {
-    if (!ctx.state.user) return ctx.unauthorized('Vous devez être connecté pour créer une expertise.');
+    if (!ctx.state.user) return ctx.unauthorized('Vous devez être connecté pour créer un service.');
     const ownProfilId = await getOwnProfilId(strapi, ctx.state.user.id);
     if (!ownProfilId) return ctx.badRequest('Créez d\'abord votre profil.');
 
@@ -50,14 +51,20 @@ export default factories.createCoreController('api::expertise.expertise', ({ str
 
     const titre = typeof rawData.titre === 'string' ? rawData.titre.trim() : '';
     const description = typeof rawData.description === 'string' ? rawData.description.trim() : '';
+    const icone = typeof rawData.icone === 'string' ? rawData.icone.trim() : '';
+    const ordre = Number.isInteger(rawData.ordre) ? rawData.ordre : 0;
     const statut = typeof rawData.statut === 'string' ? rawData.statut.trim() : 'brouillon';
 
     if (!titre || titre.length < 2 || titre.length > 100) {
       errors.titre = 'Le titre est requis (entre 2 et 100 caractères).';
     }
 
-    if (!description || description.length < 2 || description.length > 500) {
-      errors.description = 'La description est requise (entre 2 et 500 caractères).';
+    if (!description || description.length > 500) {
+      errors.description = 'La description est requise (500 caractères maximum).';
+    }
+
+    if (!icone || !VALID_ICONES.includes(icone)) {
+      errors.icone = `L'icône est requise et doit être l'une des suivantes : ${VALID_ICONES.join(', ')}.`;
     }
 
     if (statut && !VALID_STATUTS.includes(statut)) {
@@ -73,6 +80,8 @@ export default factories.createCoreController('api::expertise.expertise', ({ str
         ...rawData,
         titre,
         description,
+        icone,
+        ordre,
         statut: statut || 'brouillon',
         profil: ownProfilId,
       },
@@ -83,14 +92,14 @@ export default factories.createCoreController('api::expertise.expertise', ({ str
 
   async update(ctx) {
     const { id } = ctx.params;
-    if (!ctx.state.user || !(await isOwnChildEntry(strapi, 'api::expertise.expertise', id, ctx.state.user.id))) {
+    if (!ctx.state.user || !(await isOwnChildEntry(strapi, 'api::service.service', id, ctx.state.user.id))) {
       return ctx.forbidden();
     }
 
     const rawData = (ctx.request.body?.data || ctx.request.body || {}) as Record<string, any>;
 
     if (rawData.statut !== undefined) {
-      const current = await strapi.db.query('api::expertise.expertise').findOne({ where: { documentId: id }, select: ['statut'] });
+      const current = await strapi.db.query('api::service.service').findOne({ where: { documentId: id }, select: ['statut'] });
       if (current && rawData.statut !== current.statut) {
         const transitionError = checkStatusTransition(current.statut, rawData.statut);
         if (transitionError) {
@@ -109,8 +118,15 @@ export default factories.createCoreController('api::expertise.expertise', ({ str
 
     if (rawData.description !== undefined) {
       const description = typeof rawData.description === 'string' ? rawData.description.trim() : '';
-      if (!description || description.length < 2 || description.length > 500) {
-        errors.description = 'La description doit comporter entre 2 et 500 caractères.';
+      if (!description || description.length > 500) {
+        errors.description = 'La description est requise (500 caractères maximum).';
+      }
+    }
+
+    if (rawData.icone !== undefined) {
+      const icone = typeof rawData.icone === 'string' ? rawData.icone.trim() : '';
+      if (!VALID_ICONES.includes(icone)) {
+        errors.icone = `L'icône doit être l'une des suivantes : ${VALID_ICONES.join(', ')}.`;
       }
     }
 
@@ -130,7 +146,7 @@ export default factories.createCoreController('api::expertise.expertise', ({ str
 
   async delete(ctx) {
     const { id } = ctx.params;
-    if (!ctx.state.user || !(await isOwnChildEntry(strapi, 'api::expertise.expertise', id, ctx.state.user.id))) {
+    if (!ctx.state.user || !(await isOwnChildEntry(strapi, 'api::service.service', id, ctx.state.user.id))) {
       return ctx.forbidden();
     }
     return await super.delete(ctx);

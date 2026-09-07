@@ -34,6 +34,7 @@ export default function ThemeSwitcher() {
             ["type", "button"],
             ["data-theme", themeName],
             ["aria-pressed", String(isActive)],
+            ["aria-label", `Activer le thème ${themeName}`],
           ],
           events: [
             [
