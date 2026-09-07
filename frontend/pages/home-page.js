@@ -27,7 +27,9 @@ export default async function PageHome() {
   });
 
   const currentTheme = getTheme();
+
   const isYaniss = currentTheme === "yaniss";
+
 
   const [profile, featuredProjects, allProjects, services] = await offline.execute(
     () =>
