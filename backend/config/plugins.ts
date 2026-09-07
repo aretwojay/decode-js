@@ -23,14 +23,15 @@ const deniedExecutableTypes = [
 ];
 
 const config = ({ env }: Core.Config.Shared.ConfigParams): Core.Config.Plugin => ({
+  // jwtManagement: 'refresh' emet des jetons courts renouveles via un cookie
+  // httpOnly, mais le frontend (auth.js) stocke un seul jeton en localStorage
+  // et ne sait pas le renouveler : le jeton expirait en cours de session,
+  // d'ou des echecs "Missing or invalid credentials" sur les formulaires
+  // longs (upload de projet). On repasse au JWT classique de Strapi.
   'users-permissions': {
     config: {
-      jwtManagement: 'refresh',
-      sessions: {
-        httpOnly: true,
-        cookie: {
-          secure: env.bool('COOKIE_SECURE', false),
-        },
+      jwt: {
+        expiresIn: '30d',
       },
     },
   },
