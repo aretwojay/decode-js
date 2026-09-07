@@ -1,8 +1,3 @@
-/**
- * API Client & Integration Layer (T0013)
- * Pure Vanilla JS fetch helpers and data adapters for Strapi 5 REST API
- */
-
 import { appStore } from "./store.js";
 import { globalOfflineState } from "./use-offline.js";
 
@@ -74,18 +69,11 @@ export function buildApiUrl(endpoint = "") {
   return `${base}${apiPrefix}/${normalizedEndpoint}`;
 }
 
-/**
- * Checks if a value represents a Strapi media file or array of media files
- * @param {*} val
- * @returns {boolean}
- */
 function isMediaObject(val) {
   if (!val || typeof val !== "object") return false;
-
   if (Array.isArray(val)) {
     return val.length > 0 && val.every((item) => isMediaObject(item));
   }
-
   return (
     typeof val.url === "string" &&
     (val.mime !== undefined ||
@@ -98,11 +86,6 @@ function isMediaObject(val) {
   );
 }
 
-/**
- * Extracts plain text from Strapi 5 rich text blocks
- * @param {Array|string} blocks
- * @returns {string}
- */
 export function extractBlocksText(blocks) {
   if (!blocks) return "";
   if (typeof blocks === "string") return blocks;
@@ -158,11 +141,9 @@ export function textToBlocks(text) {
  */
 export function normalizeMedia(media) {
   if (!media) return null;
-
   if (Array.isArray(media)) {
     return media.map(normalizeMedia).filter(Boolean);
   }
-
   const rawUrl = typeof media.url === "string" ? media.url : "";
   const fullUrl = rawUrl.startsWith("http")
     ? rawUrl
@@ -170,7 +151,6 @@ export function normalizeMedia(media) {
       ? `${MEDIA_BASE_URL}${rawUrl}`
       : "";
 
-  // Normalize responsive formats if present
   const normalizedFormats = {};
   if (media.formats && typeof media.formats === "object") {
     for (const [formatKey, formatVal] of Object.entries(media.formats)) {
@@ -199,11 +179,6 @@ export function normalizeMedia(media) {
   };
 }
 
-/**
- * Normalizes a single Strapi 5 entity into a clean Vanilla JS domain object
- * @param {Object} item
- * @returns {Object|null}
- */
 export function normalizeEntity(item) {
   if (!item || typeof item !== "object") return null;
 
@@ -223,9 +198,7 @@ export function normalizeEntity(item) {
     ) {
       continue;
     }
-
     if (value && typeof value === "object") {
-      // Check if it is a rich text blocks structure
       if (Array.isArray(value) && value[0]?.type && value[0]?.children) {
         normalized[key] = extractBlocksText(value);
         normalized[`${key}Blocks`] = value;
@@ -248,11 +221,6 @@ export function normalizeEntity(item) {
   return normalized;
 }
 
-/**
- * Normalizes a Strapi collection response ({ data: [...] })
- * @param {Object} response
- * @returns {Array}
- */
 export function normalizeCollection(response) {
   if (!response || !Array.isArray(response.data)) {
     return [];
@@ -439,18 +407,10 @@ export async function fetchProjectBySlug(slug) {
   }
 }
 
-/**
- * Fetches published professional experiences ordered by date_debut descending
- * @param {Object} [options]
- * @param {string} [options.statut] - Optional workflow status filter
- * @returns {Promise<Array>}
- */
 export async function fetchExperiences({ statut } = {}) {
   try {
     let query = `experiences?populate=*&sort[0]=date_debut:desc`;
-    if (statut) {
-      query += `&filters[statut][$eq]=${encodeURIComponent(statut)}`;
-    }
+    if (statut) query += `&filters[statut][$eq]=${encodeURIComponent(statut)}`;
     const res = await apiFetch(query);
     return normalizeCollection(res);
   } catch (err) {
@@ -458,22 +418,11 @@ export async function fetchExperiences({ statut } = {}) {
   }
 }
 
-/**
- * Fetches published skills / competences
- * @param {Object} [options]
- * @param {string} [options.statut] - Optional workflow status filter
- * @param {string} [options.niveau] - Optional level filter
- * @returns {Promise<Array>}
- */
 export async function fetchSkills({ statut, niveau } = {}) {
   try {
     let query = `competences?populate=*`;
-    if (statut) {
-      query += `&filters[statut][$eq]=${encodeURIComponent(statut)}`;
-    }
-    if (niveau) {
-      query += `&filters[niveau][$eq]=${encodeURIComponent(niveau)}`;
-    }
+    if (statut) query += `&filters[statut][$eq]=${encodeURIComponent(statut)}`;
+    if (niveau) query += `&filters[niveau][$eq]=${encodeURIComponent(niveau)}`;
     const res = await apiFetch(query);
     return normalizeCollection(res);
   } catch (err) {
@@ -483,18 +432,10 @@ export async function fetchSkills({ statut, niveau } = {}) {
 
 export const fetchCompetences = fetchSkills;
 
-/**
- * Fetches published formations / diplomas ordered by date_debut descending
- * @param {Object} [options]
- * @param {string} [options.statut] - Optional workflow status filter
- * @returns {Promise<Array>}
- */
 export async function fetchFormations({ statut } = {}) {
   try {
     let query = `formations?populate=*&sort[0]=date_debut:desc`;
-    if (statut) {
-      query += `&filters[statut][$eq]=${encodeURIComponent(statut)}`;
-    }
+    if (statut) query += `&filters[statut][$eq]=${encodeURIComponent(statut)}`;
     const res = await apiFetch(query);
     return normalizeCollection(res);
   } catch (err) {
@@ -645,31 +586,15 @@ export async function sendMessage(messageData) {
   try {
     const res = await apiFetch("messages", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ data: messageData }),
     });
-
-    return {
-      success: true,
-      data: normalizeEntity(res.data),
-    };
+    return { success: true, data: normalizeEntity(res.data) };
   } catch (err) {
-    return {
-      success: false,
-      error: err.message,
-      details: err.details || null,
-    };
+    return { success: false, error: err.message, details: err.details || null };
   }
 }
 
-/**
- * Synchronizes the reactive store with published CMS entities
- * Seamlessly updates appStore using its existing setState method
- * @param {Object} [storeInstance=appStore]
- * @returns {Promise<Object>}
- */
 export async function syncStoreFromApi(storeInstance = appStore) {
   const current = storeInstance.getState
     ? storeInstance.getState()
@@ -684,41 +609,30 @@ export async function syncStoreFromApi(storeInstance = appStore) {
   }
 
   try {
-    const [profile, projects, experiences, skills, formations] =
-      await Promise.all([
-        fetchProfile(),
-        fetchProjects(),
-        fetchExperiences(),
-        fetchSkills(),
-        fetchFormations(),
-      ]);
+    const [profile, projects, experiences, skills, formations] = await Promise.all([
+      fetchProfile(),
+      fetchProjects(),
+      fetchExperiences(),
+      fetchSkills(),
+      fetchFormations(),
+    ]);
 
-    const patch = {
-      loading: false,
-      error: null,
-    };
-
+    const patch = { loading: false, error: null };
     if (profile) {
       patch.profile = profile;
       if (profile.theme) {
         patch.theme = profile.theme;
       }
     }
-    if (projects && projects.length > 0) patch.projects = projects;
-    if (experiences && experiences.length > 0) patch.experiences = experiences;
-    if (skills && skills.length > 0) patch.skills = skills;
-    if (formations && formations.length > 0) patch.formations = formations;
+    if (projects?.length) patch.projects = projects;
+    if (experiences?.length) patch.experiences = experiences;
+    if (skills?.length) patch.skills = skills;
+    if (formations?.length) patch.formations = formations;
 
     if (storeInstance.setState) {
-      storeInstance.setState((state) => ({
-        ...state,
-        ...patch,
-      }));
+      storeInstance.setState((state) => ({ ...state, ...patch }));
     } else if (storeInstance.set) {
-      storeInstance.set({
-        ...current,
-        ...patch,
-      });
+      storeInstance.set({ ...current, ...patch });
     }
 
     return storeInstance.getState
@@ -726,10 +640,7 @@ export async function syncStoreFromApi(storeInstance = appStore) {
       : storeInstance.get();
   } catch (err) {
     console.error("[API Client] Failed to synchronize store with API:", err);
-    const errorPatch = {
-      loading: false,
-      error: err.message,
-    };
+    const errorPatch = { loading: false, error: err.message };
     if (storeInstance.setState) {
       storeInstance.setState((state) => ({ ...state, ...errorPatch }));
     }

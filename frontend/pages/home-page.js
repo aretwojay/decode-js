@@ -28,6 +28,9 @@ export default async function PageHome() {
 
   const currentTheme = getTheme();
 
+  const isYaniss = currentTheme === "yaniss";
+
+
   const [profile, featuredProjects, allProjects, services] = await offline.execute(
     () =>
       Promise.all([
@@ -85,9 +88,9 @@ export default async function PageHome() {
           // Hero Introduction Section
           renderHeroSection(candidateData),
 
-          ...(isIris ? [renderAboutSection(candidateData)] : []),
+          ...(isIris || isYaniss ? [renderAboutSection(candidateData)] : []),
 
-          ...(isIris ? [renderServicesSection(services)] : []),
+          ...(isIris || isYaniss ? [renderServicesSection(services)] : []),
 
           // Featured Projects Showcase Section
           renderFeaturedSection(projectsToDisplay, hasFeatured),
@@ -104,7 +107,7 @@ export default async function PageHome() {
             : []),
 
           // Quick Navigation & Overview Section
-          ...(isIris
+          ...(isIris || isYaniss
             ? []
             : [
                 renderOverviewSection(),
@@ -149,6 +152,10 @@ export default async function PageHome() {
         candidateName: candidateData.candidateName,
         githubUrl: candidateData.githubUrl,
         linkedinUrl: candidateData.linkedinUrl,
+        phone: candidateData.candidatePhone,
+        email: candidateData.candidateEmail,
+        location: candidateData.candidateLocation,
+        collaborationMessage: candidateData.messageCollaboration,
       }),
     ],
   };

@@ -47,8 +47,10 @@ export function renderContactSection({
   email = "contact@example.com",
   location = "",
   initialSubject = "",
+  contactTagline = "",
 } = {}) {
   const isIris = getTheme() === "iris";
+  const isYaniss = getTheme() === "yaniss";
   const phoneHref = `tel:${phone.replace(/[^+\d]/g, "")}`;
 
   // Pre-fill subject from parameters or URL if provided
@@ -88,6 +90,93 @@ export function renderContactSection({
       formState.set((s) => ({ ...s, status: "error", error: errText }));
       showToast(errText, "error");
     }
+  }
+
+  if (isYaniss) {
+    const state = formState.get();
+    const tagline = contactTagline || "[ Formulaire de contact pour une mise en relation direct ]";
+
+    return {
+      type: "section",
+      attributes: [
+        ["id", "contact"],
+        ["class", ["section", "contact-section-yaniss"]],
+      ],
+      children: [
+        {
+          type: "div",
+          attributes: [["class", ["section-header-center"]]],
+          children: [
+            {
+              type: "p",
+              attributes: [["class", ["contact-tagline-yaniss"]]],
+              children: [tagline],
+            },
+            {
+              type: headingTag,
+              attributes: [["class", ["section-title"]]],
+              children: [
+                "TRAVAILLONS ",
+                { type: "span", attributes: [["class", ["highlight"]]], children: ["ENSEMBLE"] },
+              ],
+            },
+          ],
+        },
+        {
+          type: "div",
+          attributes: [["class", ["contact-card-yaniss"]]],
+          children: [
+            {
+              type: "div",
+              attributes: [["class", ["contact-card-yaniss-image"]]],
+              children: [
+                { type: "img", attributes: [["src", "/public/yaniss/contact-envelope.png"], ["alt", ""]] },
+              ],
+            },
+            {
+              type: "form",
+              attributes: [["class", ["contact-form-yaniss"]]],
+              events: [["submit", handleSubmit]],
+              children: [
+                {
+                  type: "div",
+                  attributes: [["class", ["contact-form-yaniss-row"]]],
+                  children: [
+                    {
+                      type: "input",
+                      attributes: [["type", "text"], ["placeholder", "prénom"], ["value", state.nom || ""]],
+                      events: [["input", (e) => formState.set((s) => ({ ...s, nom: e.target.value }))]],
+                    },
+                    {
+                      type: "input",
+                      attributes: [["type", "text"], ["placeholder", "entreprise"], ["value", state.sujet || ""]],
+                      events: [["input", (e) => formState.set((s) => ({ ...s, sujet: e.target.value }))]],
+                    },
+                  ],
+                },
+                {
+                  type: "input",
+                  attributes: [["type", "email"], ["placeholder", "mail"], ["value", state.email || ""]],
+                  events: [["input", (e) => formState.set((s) => ({ ...s, email: e.target.value }))]],
+                },
+                {
+                  type: "textarea",
+                  attributes: [["rows", 6], ["placeholder", "message"]],
+                  events: [["input", (e) => formState.set((s) => ({ ...s, contenu: e.target.value }))]],
+                  children: [state.contenu || ""],
+                },
+                {
+                  type: "button",
+                  attributes: [["type", "submit"], ["class", ["btn", "btn-primary"]]],
+                  children: ["Envoyer le message"],
+                },
+                reactive(formState, renderFeedback),
+              ],
+            },
+          ],
+        },
+      ],
+    };
   }
 
   return {
