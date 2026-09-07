@@ -572,6 +572,20 @@ export const experienceCrud = makeCrud("experiences");
 export const projectCrud = makeCrud("projets");
 export const competenceCrud = makeCrud("competences");
 export const formationCrud = makeCrud("formations");
+export const serviceCrud = makeCrud("services");
+
+/**
+ * Fetches the authenticated user's own service cards (draft or published)
+ * @returns {Promise<Array>}
+ */
+export async function fetchMyServices() {
+  try {
+    const res = await apiFetch("services?sort=ordre:asc", { headers: authedHeaders() });
+    return normalizeCollection(res);
+  } catch (err) {
+    return [];
+  }
+}
 
 /**
  * Sends a contact message to the controlled public ingestion endpoint
@@ -766,10 +780,12 @@ export default {
   fetchMyExperiences,
   fetchMyProjects,
   fetchMyCompetences,
+  fetchMyServices,
   experienceCrud,
   projectCrud,
   competenceCrud,
   formationCrud,
+  serviceCrud,
   sendMessage,
   syncStoreFromApi,
   uploadMedia,

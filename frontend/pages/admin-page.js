@@ -8,6 +8,7 @@ import {
   fetchMyExperiences,
   fetchMyProjects,
   fetchMyCompetences,
+  fetchMyServices,
 } from "../lib/api.js";
 
 // Modular admin subcomponents
@@ -16,6 +17,7 @@ import { ProfileForm } from "../utils/admin/admin-profile.js";
 import { ProjectsManager } from "../utils/admin/admin-projects.js";
 import { ExperiencesManager } from "../utils/admin/admin-experiences.js";
 import { CompetencesManager } from "../utils/admin/admin-competences.js";
+import { ServicesManager } from "../utils/admin/admin-services.js";
 
 /**
  * PAGE D'ADMINISTRATION PRINCIPALE & ÉDITEUR DE PORTFOLIO
@@ -59,6 +61,7 @@ export default async function PageAdmin() {
   let experiences = [];
   let projects = [];
   let competences = [];
+  let services = [];
   const currentUser = getCurrentUser();
 
   try {
@@ -109,15 +112,17 @@ export default async function PageAdmin() {
       };
     }
 
-    const [exp, proj, comp] = await Promise.all([
+    const [exp, proj, comp, serv] = await Promise.all([
       fetchMyExperiences(),
       fetchMyProjects(),
       fetchMyCompetences(),
+      fetchMyServices(),
     ]);
 
     experiences = exp || [];
     projects = proj || [];
     competences = comp || [];
+    services = serv || [];
   } catch (err) {
     console.error("[PageAdmin] Failed to load admin data:", err);
     return {
@@ -206,6 +211,10 @@ export default async function PageAdmin() {
                     "competences-management",
                     `⚡ Compétences (${competences.length})`,
                   ),
+                  AdminAnchorLink(
+                    "services-management",
+                    `🧩 Services (${services.length})`,
+                  ),
                   {
                     type: "a",
                     attributes: [
@@ -224,6 +233,7 @@ export default async function PageAdmin() {
           ProjectsManager(projects),
           ExperiencesManager(experiences),
           CompetencesManager(competences),
+          ServicesManager(services),
         ],
       },
     ],
