@@ -153,6 +153,18 @@ img {
   border-color: var(--border-color-hover);
   font-weight: 700;
 }
+.header-account {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-left: 14px;
+  margin-left: auto;
+  border-left: 1px solid var(--border-color);
+}
+.header-account .user-status {
+  color: var(--text-muted);
+  font-size: 0.85rem;
+}
 .theme-switcher-container {
   display: flex;
   align-items: center;
