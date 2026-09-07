@@ -27,6 +27,11 @@ export function ProfileForm(profile) {
       github: form.github?.value?.trim() || null,
       linkedin: form.linkedin?.value?.trim() || null,
       theme: chosenTheme,
+      accroche_disponibilite: form.accroche_disponibilite?.value?.trim() || null,
+      accroche_portfolio: form.accroche_portfolio?.value?.trim() || null,
+      intro_portfolio: form.intro_portfolio?.value?.trim() || null,
+      message_collaboration: form.message_collaboration?.value?.trim() || null,
+      accroche_contact: form.accroche_contact?.value?.trim() || null,
     };
 
     try {
@@ -306,7 +311,83 @@ export function ProfileForm(profile) {
             ],
           },
 
-          // Ligne 5 : Biographie
+          // Ligne 5 : Accroches courtes (disponibilité, portfolio, contact)
+          {
+            type: "div",
+            attributes: [["class", ["form-row-2col"]]],
+            children: [
+              {
+                type: "div",
+                attributes: [["class", ["form-group"]]],
+                children: [
+                  {
+                    type: "label",
+                    attributes: [["for", "profile-accroche-disponibilite"]],
+                    children: ["Accroche de disponibilité"],
+                  },
+                  {
+                    type: "input",
+                    attributes: [
+                      ["id", "profile-accroche-disponibilite"],
+                      ["name", "accroche_disponibilite"],
+                      ["type", "text"],
+                      ["maxlength", 200],
+                      ["placeholder", "ex: Disponible pour une alternance dès septembre 2026"],
+                      ["value", profile?.accroche_disponibilite || ""],
+                    ],
+                  },
+                ],
+              },
+              {
+                type: "div",
+                attributes: [["class", ["form-group"]]],
+                children: [
+                  {
+                    type: "label",
+                    attributes: [["for", "profile-accroche-portfolio"]],
+                    children: ["Accroche du portfolio"],
+                  },
+                  {
+                    type: "input",
+                    attributes: [
+                      ["id", "profile-accroche-portfolio"],
+                      ["name", "accroche_portfolio"],
+                      ["type", "text"],
+                      ["maxlength", 150],
+                      ["placeholder", "ex: Développeur passionné par le web moderne"],
+                      ["value", profile?.accroche_portfolio || ""],
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+
+          // Ligne 6 : Accroche de contact
+          {
+            type: "div",
+            attributes: [["class", ["form-group"]]],
+            children: [
+              {
+                type: "label",
+                attributes: [["for", "profile-accroche-contact"]],
+                children: ["Accroche de la section Contact"],
+              },
+              {
+                type: "input",
+                attributes: [
+                  ["id", "profile-accroche-contact"],
+                  ["name", "accroche_contact"],
+                  ["type", "text"],
+                  ["maxlength", 150],
+                  ["placeholder", "ex: Une question, un projet ? Écrivez-moi"],
+                  ["value", profile?.accroche_contact || ""],
+                ],
+              },
+            ],
+          },
+
+          // Ligne 7 : Biographie
           {
             type: "div",
             attributes: [["class", ["form-group"]]],
@@ -325,6 +406,54 @@ export function ProfileForm(profile) {
                   ["placeholder", "Présentez votre parcours, vos spécialités et votre vision technique..."],
                 ],
                 children: [profile?.biographie || ""],
+              },
+            ],
+          },
+
+          // Ligne 8 : Introduction du portfolio
+          {
+            type: "div",
+            attributes: [["class", ["form-group"]]],
+            children: [
+              {
+                type: "label",
+                attributes: [["for", "profile-intro-portfolio"]],
+                children: ["Introduction du portfolio"],
+              },
+              {
+                type: "textarea",
+                attributes: [
+                  ["id", "profile-intro-portfolio"],
+                  ["name", "intro_portfolio"],
+                  ["rows", 3],
+                  ["maxlength", 400],
+                  ["placeholder", "Le texte d'introduction affiché en haut de votre page projets..."],
+                ],
+                children: [profile?.intro_portfolio || ""],
+              },
+            ],
+          },
+
+          // Ligne 9 : Message de collaboration
+          {
+            type: "div",
+            attributes: [["class", ["form-group"]]],
+            children: [
+              {
+                type: "label",
+                attributes: [["for", "profile-message-collaboration"]],
+                children: ["Message de collaboration"],
+              },
+              {
+                type: "textarea",
+                attributes: [
+                  ["id", "profile-message-collaboration"],
+                  ["name", "message_collaboration"],
+                  ["rows", 3],
+                  ["maxlength", 400],
+                  ["placeholder", "Le message affiché pour inviter les visiteurs à collaborer avec vous..."],
+                ],
+                children: [profile?.message_collaboration || ""],
               },
             ],
           },
