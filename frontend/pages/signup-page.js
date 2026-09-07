@@ -11,6 +11,7 @@ const formState = createState({
   username: "",
   email: "",
   password: "",
+  consentement: false,
   error: "",
   loading: false,
 });
@@ -18,7 +19,7 @@ const formState = createState({
 export default function PageSignup() {
   async function handleSubmit(event) {
     event.preventDefault();
-    const { username, email, password } = formState.get();
+    const { username, email, password, consentement } = formState.get();
 
     if (!username || username.length < 3) {
       formState.set((s) => ({
@@ -35,6 +36,13 @@ export default function PageSignup() {
       formState.set((s) => ({
         ...s,
         error: "Le mot de passe doit comporter au moins 6 caractères.",
+      }));
+      return;
+    }
+    if (!consentement) {
+      formState.set((s) => ({
+        ...s,
+        error: "Vous devez accepter la politique de confidentialité pour créer un compte.",
       }));
       return;
     }
@@ -196,6 +204,41 @@ export default function PageSignup() {
                                 password: e.target.value,
                               })),
                           ],
+                        ],
+                      },
+                    ],
+                  },
+
+                  {
+                    type: "div",
+                    attributes: [["class", ["form-group", "form-group-checkbox"]]],
+                    children: [
+                      {
+                        type: "label",
+                        attributes: [["class", ["checkbox-label"]]],
+                        children: [
+                          {
+                            type: "input",
+                            attributes: [
+                              ["id", "signup-consentement"],
+                              ["name", "consentement"],
+                              ["type", "checkbox"],
+                              ["required", true],
+                            ],
+                            events: [
+                              [
+                                "change",
+                                (e) =>
+                                  formState.set((s) => ({
+                                    ...s,
+                                    consentement: e.target.checked,
+                                  })),
+                              ],
+                            ],
+                          },
+                          " J'accepte que mes données soient traitées conformément à la ",
+                          Link("/confidentialite", "politique de confidentialité", ["auth-link-accent"]),
+                          " *",
                         ],
                       },
                     ],

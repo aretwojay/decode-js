@@ -3,6 +3,22 @@ import { NavLink } from "./header.js";
 import { appStore } from "../lib/store.js";
 
 /**
+ * Liens légaux/RGPD partagés entre les 3 variantes de footer
+ * @returns {Object} Vanilla-engine structure object
+ */
+function LegalLinks() {
+  return {
+    type: "div",
+    attributes: [["class", ["footer-legal-links"]]],
+    children: [
+      NavLink("/mentions-legales", "Mentions légales", ["footer-legal-link"]),
+      { type: "span", attributes: [["class", ["footer-sep"]]], children: ["·"] },
+      NavLink("/confidentialite", "Confidentialité", ["footer-legal-link"]),
+    ],
+  };
+}
+
+/**
  * Reusable Global Footer Component (T0020)
  * Provides consistent navigation, social links, availability status, and dynamic copyright.
  *
@@ -125,6 +141,7 @@ export default function Footer(options = {}) {
             NavLink("/contact", "Me contactez directement", ["btn", "btn-primary"]),
           ],
         },
+        LegalLinks(),
       ],
     };
   }
@@ -204,6 +221,7 @@ export default function Footer(options = {}) {
             },
           ],
         },
+        LegalLinks(),
       ],
     };
   }
@@ -297,6 +315,7 @@ export default function Footer(options = {}) {
               },
             ],
           },
+          LegalLinks(),
         ],
       },
     ],
