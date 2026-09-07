@@ -61,6 +61,79 @@ function MobileMenuToggle() {
   };
 }
 
+/**
+ * Renders the account-related controls (login/signup, or account/logout),
+ * kept separate from the primary portfolio navigation links.
+ * @param {string} currentPath
+ * @param {boolean} authenticated
+ * @param {Object} currentUser
+ * @param {boolean} isIris
+ * @param {boolean} isYaniss
+ * @returns {Object} Vanilla-engine structure object
+ */
+function AccountLinks(currentPath, authenticated, currentUser, isIris, isYaniss) {
+  const children = authenticated
+    ? [
+        NavLink(
+          "/admin",
+          "Mon compte",
+          currentPath === "/admin" ? ["nav-link", "active"] : ["nav-link"],
+          currentPath === "/admin" ? [["aria-current", "page"]] : [],
+        ),
+        {
+          type: "span",
+          attributes: [["class", ["nav-link", "user-status"]]],
+          children: [`👤 ${currentUser?.username ?? ""}`],
+        },
+        {
+          type: "a",
+          attributes: [
+            ["href", "#"],
+            ["class", ["nav-link", "logout-btn"]],
+          ],
+          children: ["Déconnexion"],
+          events: [
+            [
+              "click",
+              (event) => {
+                event.preventDefault();
+                logout();
+                window.history.pushState({}, undefined, "/");
+                window.dispatchEvent(new Event("pushstate"));
+              },
+            ],
+          ],
+        },
+      ]
+    : isIris || isYaniss
+      ? []
+      : [
+          NavLink(
+            "/login",
+            "Connexion",
+            currentPath === "/login" ? ["nav-link", "active"] : ["nav-link"],
+            currentPath === "/login" ? [["aria-current", "page"]] : [],
+          ),
+          NavLink(
+            "/signup",
+            "Inscription",
+            currentPath === "/signup" ? ["nav-link", "active"] : ["nav-link"],
+            currentPath === "/signup" ? [["aria-current", "page"]] : [],
+          ),
+        ];
+
+  if (children.length === 0) return { type: "span", children: [] };
+
+  return {
+    type: "div",
+    attributes: [
+      ["class", ["header-account"]],
+      ["aria-label", "Compte utilisateur"],
+    ],
+    children,
+  };
+}
+
 function ModeToggle() {
   const mode = getMode();
   return {
@@ -276,57 +349,6 @@ export default function Header(activePath) {
           isActive ? [["aria-current", "page"]] : [],
         );
       }),
-      ...(authenticated
-        ? [
-            NavLink(
-              "/admin",
-              "Mon compte",
-              currentPath === "/admin" ? ["nav-link", "active"] : ["nav-link"],
-              currentPath === "/admin" ? [["aria-current", "page"]] : [],
-            ),
-            {
-              type: "span",
-              attributes: [["class", ["nav-link", "user-status"]]],
-              children: [`👤 ${currentUser?.username ?? ""}`],
-            },
-            {
-              type: "a",
-              attributes: [
-                ["href", "#"],
-                ["class", ["nav-link", "logout-btn"]],
-              ],
-              children: ["Déconnexion"],
-              events: [
-                [
-                  "click",
-                  (event) => {
-                    event.preventDefault();
-                    logout();
-                    window.history.pushState({}, undefined, "/");
-                    window.dispatchEvent(new Event("pushstate"));
-                  },
-                ],
-              ],
-            },
-          ]
-        : isIris || isYaniss
-          ? []
-          : [
-              NavLink(
-                "/login",
-                "Connexion",
-                currentPath === "/login" ? ["nav-link", "active"] : ["nav-link"],
-                currentPath === "/login" ? [["aria-current", "page"]] : [],
-              ),
-              NavLink(
-                "/signup",
-                "Inscription",
-                currentPath === "/signup"
-                  ? ["nav-link", "active"]
-                  : ["nav-link"],
-                currentPath === "/signup" ? [["aria-current", "page"]] : [],
-              ),
-            ]),
       ...(isYaniss
         ? [
             {
@@ -359,6 +381,8 @@ export default function Header(activePath) {
     ],
   };
 
+  const accountLinks = AccountLinks(currentPath, authenticated, currentUser, isIris, isYaniss);
+
   if (isIris) {
     return {
       type: "header",
@@ -367,7 +391,7 @@ export default function Header(activePath) {
         {
           type: "div",
           attributes: [["class", ["header-topbar"]]],
-          children: [ThemeSwitcher()],
+          children: [ThemeSwitcher(), accountLinks],
         },
         {
           type: "div",
@@ -383,6 +407,6 @@ export default function Header(activePath) {
     attributes: [
       ["class", isYaniss ? ["site-header", "site-header-yaniss"] : ["site-header"]],
     ],
-    children: [logo, nav, MobileMenuToggle(), ThemeSwitcher()],
+    children: [logo, nav, MobileMenuToggle(), accountLinks, ThemeSwitcher()],
   };
 }
