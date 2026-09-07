@@ -3050,6 +3050,23 @@ img {
   }
 }
 
+.footer-legal-links {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.82rem;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+.footer-legal-link {
+  color: var(--text-muted);
+  text-decoration: none;
+}
+.footer-legal-link:hover {
+  color: var(--text-secondary);
+  text-decoration: underline;
+}
+
 /* ==========================================================================
    Bandeau de consentement cookies (RGPD)
    ========================================================================== */
