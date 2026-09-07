@@ -244,6 +244,32 @@ export function NavLink(url, children, classNames = [], extraAttrs = []) {
 }
 
 /**
+ * Minimal, theme-agnostic header for auth pages (login/signup).
+ * Deliberately does not reuse Header(): those pages must stay isolated
+ * from the selected portfolio's navbar, links and theme switcher.
+ * @returns {Object} Vanilla-engine structure object
+ */
+export function AuthHeader() {
+  return {
+    type: "header",
+    attributes: [["class", ["site-header", "site-header-auth"]]],
+    children: [
+      NavLink(
+        "/",
+        [
+          {
+            type: "span",
+            attributes: [["class", ["site-logo"]]],
+            children: ["Portfolio.js"],
+          },
+        ],
+        ["logo-link"],
+      ),
+    ],
+  };
+}
+
+/**
  * Reusable Header & Navigation component
  * @param {string} [activePath]
  * @returns {Object} Vanilla-engine structure object
