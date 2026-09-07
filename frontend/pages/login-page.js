@@ -1,4 +1,4 @@
-import Header from "../components/header.js";
+import { AuthHeader } from "../components/header.js";
 import Footer from "../components/footer.js";
 import Link from "../components/router/link.js";
 import createState from "../lib/create-state.js";
@@ -37,7 +37,7 @@ export default function PageLogin() {
     type: "div",
     attributes: [["class", ["page", "page-auth", "page-login"]]],
     children: [
-      Header("/login"),
+      AuthHeader(),
       {
         type: "main",
         attributes: [
