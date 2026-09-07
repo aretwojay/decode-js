@@ -9,6 +9,8 @@
     { "source": "/gallery", "destination": "/index.html" },
     { "source": "/experiences", "destination": "/index.html" },
     { "source": "/signup", "destination": "/index.html" },
-    { "source": "/login", "destination": "/index.html" }
+    { "source": "/login", "destination": "/index.html" },
+    { "source": "/mentions-legales", "destination": "/index.html" },
+    { "source": "/confidentialite", "destination": "/index.html" }
   ]
 }
