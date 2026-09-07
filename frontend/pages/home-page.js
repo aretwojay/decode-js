@@ -26,18 +26,18 @@ export default async function PageHome() {
     defaultMessage: "Mode hors-ligne : serveur distant indisponible.",
   });
 
-  const [profile, featuredProjects, allProjects] = await offline.execute(
+  const currentTheme = getTheme();
+
+  const [profile, featuredProjects, allProjects, services] = await offline.execute(
     () =>
       Promise.all([
-        fetchProfile(),
-        fetchProjects({ featured: true }),
-        fetchProjects(),
-        fetchServices(),
+        fetchProfile({ theme: currentTheme }),
+        fetchProjects({ featured: true, theme: currentTheme }),
+        fetchProjects({ theme: currentTheme }),
+        fetchServices({ theme: currentTheme }),
       ]),
     { fallback: [null, [], [], []] },
   );
-
-  const currentTheme = profile?.theme || getTheme();
 
   const isOffline = offline.isOffline();
   const storeState = isOffline
